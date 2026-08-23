@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Greville Shadow Visualiser — v1.1-AB</title>
+<style>
+:root{
+  --bg:#0e1113; --panel:#161a1d; --line:#2a3136; --txt:#dfe5e8; --dim:#8c979d;
+  --acc:#4a9fd8; --warn:#c8862a; --app:#e8a13a; --cmp:#5ec2a6; --inc:#d8564a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+  font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+#app{position:fixed;inset:0}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block}
+#topbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 14px;background:rgba(14,17,19,.86);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px);z-index:5}
+.brand .ttl{font-weight:600;letter-spacing:.08em;font-size:12px}
+.brand .sub{color:var(--dim);margin-left:10px;font-size:11px}
+.modelid{display:flex;align-items:center;gap:6px;font-size:11px;flex-wrap:wrap}
+.modelid .k{color:var(--dim);letter-spacing:.06em}
+.modelid .v{color:var(--txt)}
+.modelid .warn{margin-left:10px;color:var(--warn);border:1px solid var(--warn);
+  padding:1px 7px;border-radius:2px;letter-spacing:.05em;font-size:10px}
+aside{position:absolute;top:44px;bottom:0;width:290px;overflow-y:auto;z-index:4;
+  background:rgba(22,26,29,.93);backdrop-filter:blur(6px)}
+#left{left:0;border-right:1px solid var(--line)}
+#right{right:0;border-left:1px solid var(--line)}
+aside section{padding:12px 14px;border-bottom:1px solid var(--line)}
+aside h3{margin:0 0 9px;font-size:11px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;font-weight:600}
+aside h4{margin:10px 0 6px;font-size:10px;letter-spacing:.08em;color:var(--dim);font-weight:600}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.row label{color:var(--dim);min-width:64px;font-size:11px}
+.row input[type=range]{flex:1;accent-color:var(--acc)}
+.row select,.row input[type=date]{flex:1;background:#0f1315;color:var(--txt);
+  border:1px solid var(--line);border-radius:2px;padding:4px 6px;font-size:12px}
+.btns{gap:4px}
+button{background:#1d2226;color:var(--txt);border:1px solid var(--line);border-radius:2px;
+  padding:4px 8px;font-size:11px;cursor:pointer}
+button:hover{border-color:var(--acc);color:#fff}
+button.on{border-color:var(--acc);background:#1d2f3c;color:#fff}
+.presets{display:flex;flex-wrap:wrap;gap:4px}
+.presets button{flex:1 1 auto}
+.readout{margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+.readout div{display:flex;justify-content:space-between;padding:1px 0}
+.readout span{color:var(--dim);font-size:11px}
+.chk{margin-bottom:4px}
+.chk label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px}
+table.res{width:100%;border-collapse:collapse;font-size:11.5px}
+table.res td{padding:3px 0;border-bottom:1px solid rgba(42,49,54,.6)}
+table.res td:first-child{color:var(--dim)}
+table.res td:last-child{text-align:right}
+table.res tr.hi td{color:#fff;font-weight:600}
+table.res tr.hi td:first-child{color:var(--acc)}
+.note{margin-top:8px;color:var(--dim);font-size:10.5px;line-height:1.4}
+.prov{margin:-3px 0 8px;color:var(--dim);font-size:10px;line-height:1.35}
+.tag{display:inline-block;font-size:9px;letter-spacing:.06em;padding:1px 5px;border-radius:2px;
+  border:1px solid;margin-right:5px;vertical-align:1px}
+.t-ps{color:#7fc4e8;border-color:#2f5f7a}
+.t-sd{color:#9fd8a8;border-color:#3a6b43}
+.t-fr{color:#d8c07f;border-color:#6b5c2f}
+.t-ba{color:#e0a06a;border-color:#7a512f}
+.t-pr{color:#b9a8d8;border-color:#4f4370}
+.t-pq{color:#e08a8a;border-color:#7a3f3f}
+#prov-list div{margin-bottom:6px;font-size:10.5px;color:var(--dim);line-height:1.4}
+#qa-panel{position:absolute;left:300px;bottom:10px;width:420px;max-height:44%;overflow:auto;
+  background:rgba(14,17,19,.95);border:1px solid var(--line);border-radius:3px;padding:10px 12px;z-index:6}
+#qa-panel h3{margin:0 0 7px;font-size:10px;letter-spacing:.1em;color:var(--dim)}
+#qa-text{margin:0;font-size:10.5px;color:#a9d8b8;white-space:pre-wrap}
+.hidden{display:none}
+#banner{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:7;
+  background:rgba(200,134,42,.14);border:1px solid var(--warn);color:#e8bd7a;
+  padding:6px 14px;border-radius:2px;font-size:11px;display:none}
+#banner.show{display:block}
+@media(max-width:1100px){aside{width:240px}#qa-panel{left:250px;width:340px}}
+@media(max-width:820px){
+  aside{position:absolute;width:100%;height:42%;top:auto;bottom:0;border:0;border-top:1px solid var(--line)}
+  #right{display:none}#qa-panel{left:10px;width:calc(100% - 20px)}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <header id="topbar">
+    <div class="brand">
+      <span class="ttl">GREVILLE SHADOW VISUALISER</span>
+      <span class="sub">Cluster 5 · A006835434</span>
+    </div>
+    <div class="modelid">
+      <span class="k">MODEL</span><span class="v">v1.1-AB</span>
+      <span class="k">SHA-256</span><span class="v mono" id="sha">6df4dde6…d4f0</span>
+      <span class="k">CLASS</span><span class="v">A — internal forensic physical model</span>
+      <span class="warn">NOT YET INDEPENDENT EXPERT EVIDENCE</span>
+    </div>
+  </header>
+
+  <aside id="left">
+    <section>
+      <h3>Time</h3>
+      <div class="row"><input type="date" id="date" value="2026-01-11"></div>
+      <div class="row"><label>Day of year</label><input type="range" id="doy" min="1" max="365" value="11"><span id="doyv" class="mono">11</span></div>
+      <div class="row"><label>Minute</label><input type="range" id="min" min="240" max="720" value="440"><span id="timev" class="mono">07:20</span></div>
+      <div class="row btns">
+        <button id="play">▶</button>
+        <button data-step="-15">−15m</button><button data-step="-1">−1m</button>
+        <button data-step="1">+1m</button><button data-step="15">+15m</button>
+      </div>
+      <div class="readout mono">
+        <div><span>AEST</span><b id="r-time">—</b></div>
+        <div><span>Azimuth</span><b id="r-az">—</b></div>
+        <div><span>Altitude</span><b id="r-alt">—</b></div>
+        <div><span>Sunrise</span><b id="r-rise">—</b></div>
+        <div><span>Sunset</span><b id="r-set">—</b></div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Preset evidence views</h3>
+      <div class="presets" id="presets-peak"></div>
+      <h4>Clock times</h4>
+      <div class="presets" id="presets-clock"></div>
+    </section>
+
+    <section>
+      <h3>Interpretations</h3>
+      <div class="row"><label>POS</label>
+        <select id="pos">
+          <option value="yard">Drawn rear yard (4.2515 m)</option>
+          <option value="sched">Schedule-derived 35 m²</option>
+        </select></div>
+      <div class="prov" id="pos-prov"></div>
+      <div class="row"><label>Fence</label>
+        <select id="fence">
+          <option value="f000">Open-batten bound</option>
+          <option value="f150">Opaque-batten bound (1.500 m)</option>
+          <option value="f180">Legacy 1.8 m opaque — SENSITIVITY</option>
+        </select></div>
+      <div class="prov" id="fence-prov"></div>
+    </section>
+
+    <section>
+      <h3>Layers</h3>
+      <div class="chk"><label><input type="checkbox" id="l-approved" checked> Approved A+B massing</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-comp"> Eight-storey comparator</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-sh-app" checked> Approved shadow</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-sh-comp"> Comparator shadow</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-sh-inc"> Proposal-only incremental</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-cad" checked> Cadastre &amp; lots</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-pos" checked> Receptor POS</label></div>
+      <div class="chk"><label><input type="checkbox" id="l-qa"> QA overlay</label></div>
+      <div class="row"><label>Comparator RL</label>
+        <select id="comprl"><option>46</option><option>48</option><option>50</option><option>52</option><option selected>55.75</option></select></div>
+      <div class="row"><label>Attribution</label>
+        <select id="attr"><option value="AB">A + B</option><option value="A">A only</option><option value="B">B only</option></select></div>
+    </section>
+
+    <section>
+      <h3>Camera</h3>
+      <div class="presets">
+        <button data-cam="top">Top-down</button>
+        <button data-cam="obl">Oblique</button>
+        <button data-cam="rec">Cluster 5 receptor</button>
+        <button data-cam="align">B → Cluster 5</button>
+      </div>
+      <div class="row"><label>Compare</label>
+        <select id="cmpmode"><option value="off">Off</option><option value="swipe">Swipe 8-storey / approved</option><option value="diff">Difference only</option></select></div>
+    </section>
+  </aside>
+
+  <aside id="right">
+    <section>
+      <h3>Result — <span id="r-lot-name">Lot 63</span></h3>
+      <div class="row"><label>Lot</label>
+        <select id="lot">
+          <option value="60SP354191">Lot 60 — TYPE G MIR + END</option>
+          <option value="61SP354191">Lot 61 — TYPE G</option>
+          <option value="62SP354191">Lot 62 — TYPE G</option>
+          <option value="63SP354191" selected>Lot 63 — TYPE G + END</option>
+        </select></div>
+      <table class="res mono">
+        <tr><td>POS area</td><td id="v-pos">—</td></tr>
+        <tr><td>Otherwise-sunlit</td><td id="v-base">—</td></tr>
+        <tr><td>Approved-proposal sunlit</td><td id="v-propsun">—</td></tr>
+        <tr><td>Comparator sunlit</td><td id="v-compsun">—</td></tr>
+        <tr class="hi"><td>Proposal-only loss</td><td id="v-loss">—</td></tr>
+        <tr class="hi"><td>Proposal-only loss %</td><td id="v-losspct">—</td></tr>
+        <tr><td>Building A contribution</td><td id="v-a">—</td></tr>
+        <tr><td>Building B contribution</td><td id="v-b">—</td></tr>
+        <tr><td>Solar azimuth</td><td id="v-az">—</td></tr>
+        <tr><td>Solar altitude</td><td id="v-alt">—</td></tr>
+      </table>
+      <div class="note" id="live-note"></div>
+    </section>
+
+    <section>
+      <h3>Frozen model — this lot</h3>
+      <table class="res mono" id="frozen-tbl"></table>
+      <div class="note">Values above are read directly from the frozen v1.1-AB outputs. The live panel recomputes the same geometry at the selected instant and is QA-gated to reproduce them.</div>
+    </section>
+
+    <section>
+      <h3>Comparator</h3>
+      <table class="res mono" id="cmp-tbl"></table>
+      <div class="note">First-contact RL is the minimum comparator top RL that touches this POS at this instant. At low solar altitude a comparator <b>can</b> reach — the non-reach finding is instant-qualified, not universal.</div>
+    </section>
+
+    <section>
+      <h3>Provenance</h3>
+      <div id="prov-list"></div>
+    </section>
+  </aside>
+
+  <div id="qa-panel" class="hidden"><h3>QA readout</h3><pre id="qa-text" class="mono"></pre></div>
+  <div id="banner"></div>
+</div>
+<script>
+const __MODEL__ = {"model":{"version":"v1.1-AB","archive":"greville_shadow_model_v1.1-AB.tar.gz","sha256":"6df4dde6b3f11a087c8dea33d8b4e3da9609f4237f9e6c3740ffc54d2c76d4f0","classification":"A - internal forensic physical model","disclaimer":"NOT YET INDEPENDENT EXPERT EVIDENCE"},"crs":{"epsg":7856,"local_origin_E":504045,"local_origin_N":6966712,"note":"local = EPSG:7856 minus the local origin, in metres. Exact and reversible."},"solar":{"latitude":-27.422924,"longitude":153.041035,"tz_offset_h":10.0,"algorithm":"NOAA geometric solar position, no atmospheric refraction","year":2026},"cadastre":{"parcel_913SP337678_part":[[89.2635,52.2755],[122.6565,46.8835],[125.0643,45.8139],[127.3453,44.501],[129.4775,42.9562],[131.4365,41.196],[133.201,39.2428],[134.7526,37.1156],[135.8581,35.208],[125.0622,-34.0319],[119.9259,-33.2304],[119.796,-34.0655],[72.8802,-26.7494],[84.2892,46.407],[85.7536,49.7158],[89.2635,52.2755]],"lots":{"60SP354191":[[-18.1355,-5.6517],[-15.0404,14.0992],[-6.1523,12.7065],[-9.2378,-7.0469],[-18.1355,-5.6517]],"61SP354191":[[-9.2378,-7.0469],[-6.1523,12.7065],[1.2846,11.5405],[-1.7819,-8.2146],[-9.2378,-7.0469]],"62SP354191":[[-1.7819,-8.2146],[1.2846,11.5405],[8.6904,10.3802],[5.6351,-9.3774],[-1.7819,-8.2146]],"63SP354191":[[5.6351,-9.3774],[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[13.4282,-8.5242],[13.1109,-10.5485],[5.6351,-9.3774]]}},"lot_meta":{"60SP354191":{"label":"Lot 60","dwelling":"TYPE G MIR + END TYPE","ffl":23.91,"position":"westernmost"},"61SP354191":{"label":"Lot 61","dwelling":"TYPE G","ffl":23.91,"position":""},"62SP354191":{"label":"Lot 62","dwelling":"TYPE G","ffl":23.615,"position":""},"63SP354191":{"label":"Lot 63","dwelling":"TYPE G + END TYPE","ffl":23.32,"position":"easternmost"}},"approved":{"building_A":{"footprint":[[84.6052,28.8657],[86.954,43.9236],[115.9824,39.3955],[115.6196,37.0699],[116.9915,36.8559],[117.3543,39.1815],[132.0609,36.8875],[130.3149,25.6944],[127.0356,26.2059],[126.8738,25.1686],[129.8017,24.7119],[128.0714,13.6192],[113.5991,15.8767],[113.3042,13.9861],[104.5371,15.3537],[104.9912,18.2649],[101.9294,18.7425],[101.7781,17.7721],[93.446,19.0718],[93.0232,16.3614],[82.901,17.9403],[84.6052,28.8657]],"top_rl":66.6,"base_rl":0.0,"area_m2":null},"building_B_plate":{"footprint":[[95.8554,-0.3102],[95.7719,-0.8456],[99.1851,-1.378],[99.5661,1.0647],[108.1826,-0.2794],[107.9477,-1.7852],[122.8718,-4.1131],[122.5638,-6.0874],[125.7929,-6.5911],[125.0047,-11.6439],[124.7774,-12.0026],[124.5259,-12.1861],[123.8949,-12.2762],[123.6104,-14.0999],[123.9205,-14.1997],[124.2405,-14.4553],[124.4022,-14.7376],[124.4593,-15.1406],[122.3244,-28.8266],[79.6436,-22.1689],[80.6223,-15.8948],[77.7613,-15.4485],[78.3955,-11.3829],[78.6735,-10.8093],[79.1841,-10.3919],[79.6865,-10.2475],[81.4679,-10.4739],[81.6349,-9.4032],[80.8564,-9.2303],[80.4218,-8.9397],[80.0625,-8.3867],[79.9683,-7.8921],[80.9354,-1.5819],[82.8093,-1.8742],[83.3574,1.6393],[95.8554,-0.3102]],"top_rl":62.9,"base_rl":0.0,"area_m2":null},"building_B_communal_roof":{"footprint":[[94.8525,-1.5762],[98.9181,-2.2104],[98.738,-3.3649],[109.0443,-4.9725],[108.1492,-10.7113],[113.2689,-11.5099],[111.6455,-21.9166],[92.1539,-18.8761],[94.8525,-1.5762]],"top_rl":66.4,"base_rl":0.0,"area_m2":null},"building_B_lift_overrun":{"footprint":[[97.7149,-5.6389],[96.9137,-10.7753],[99.9755,-11.2529],[100.7767,-6.1165],[97.7149,-5.6389]],"top_rl":67.5,"base_rl":0.0,"area_m2":null}},"comparator":{"A":[[84.1007,21.2596],[129.0671,14.247],[132.961,39.2152],[87.9945,46.2278],[84.1007,21.2596]],"B":[[76.9917,-24.3303],[121.9187,-31.3367],[125.8326,-6.2401],[80.9056,0.7664],[76.9917,-24.3303]],"permitted_slack_along_m":2.753,"permitted_slack_across_m":0.05,"test_heights":[46.0,48.0,50.0,52.0,55.75]},"receptors":{"yard":{"60SP354191":[[-15.0404,14.0992],[-6.1523,12.7065],[-6.8074,8.5124],[-15.6986,9.899],[-15.0404,14.0992]],"61SP354191":[[-6.1523,12.7065],[1.2846,11.5405],[0.6334,7.3454],[-6.8084,8.506],[-6.1523,12.7065]],"62SP354191":[[1.2846,11.5405],[8.6904,10.3802],[8.0414,6.1839],[0.6324,7.3393],[1.2846,11.5405]],"63SP354191":[[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[15.5489,5.0077],[8.0406,6.1787],[8.6904,10.3802]]},"sched":{"60SP354191":[[-15.0404,14.0992],[-6.1523,12.7065],[-6.7507,8.8754],[-15.6417,10.262],[-15.0404,14.0992]],"61SP354191":[[-6.1523,12.7065],[1.2846,11.5405],[0.5741,6.9637],[-6.868,8.1244],[-6.1523,12.7065]],"62SP354191":[[1.2846,11.5405],[8.6904,10.3802],[7.9801,5.7869],[0.5708,6.9424],[1.2846,11.5405]],"63SP354191":[[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[15.4948,4.6627],[7.9873,5.8336],[8.6904,10.3802]]}},"receptor_meta":{"yard":{"60SP354191":{"depth_m":4.2515,"width_m":9.01124395877606,"area_m2":38.224359187844506},"61SP354191":{"depth_m":4.2515,"width_m":7.546786011247963,"area_m2":31.989401747494462},"62SP354191":{"depth_m":4.2515,"width_m":7.521837933960391,"area_m2":31.8552958219441},"63SP354191":{"depth_m":4.2515,"width_m":7.607530620708372,"area_m2":32.294403907520234}},"sched":{"60SP354191":{"depth_m":3.8840364504740172,"width_m":9.01124395877606,"area_m2":34.917701144211264},"61SP354191":{"depth_m":4.637735845144531,"width_m":7.546786011247963,"area_m2":34.89850434829318},"62SP354191":{"depth_m":4.653118068654243,"width_m":7.521837933960391,"area_m2":34.86689916158288},"63SP354191":{"depth_m":4.600704452602123,"width_m":7.607530620708372,"area_m2":34.94788739258749}}},"occluders":{"60SP354191":{"footprint":[[-15.6432,10.253],[-6.7521,8.8664],[-9.2378,-7.0469],[-18.1355,-5.6517],[-15.6432,10.253]],"top_rl":33.41},"61SP354191":{"footprint":[[-6.8701,8.1111],[0.5721,6.9504],[-1.7819,-8.2146],[-9.2378,-7.0469],[-6.8701,8.1111]],"top_rl":33.41},"62SP354191":{"footprint":[[0.5681,6.9249],[7.9774,5.7694],[5.6351,-9.3774],[-1.7819,-8.2146],[0.5681,6.9249]],"top_rl":33.115},"63SP354191":{"footprint":[[7.9862,5.8268],[15.4938,4.656],[13.4282,-8.5242],[13.1109,-10.5485],[5.6351,-9.3774],[7.9862,5.8268]],"top_rl":32.82}},"fences":{"60SP354191":{"lines":[[[-15.0404,14.0992],[-6.1523,12.7065]],[[-6.1523,12.7065],[-6.7521,8.8664]],[[-15.6432,10.253],[-15.0404,14.0992]]],"legacy_top_rl":25.71},"61SP354191":{"lines":[[[-6.1523,12.7065],[1.2846,11.5405]],[[1.2846,11.5405],[0.5721,6.9504]],[[-6.8701,8.1111],[-6.1523,12.7065]]],"legacy_top_rl":25.71},"62SP354191":{"lines":[[[1.2846,11.5405],[8.6904,10.3802]],[[8.6904,10.3802],[7.9774,5.7694]],[[0.5681,6.9249],[1.2846,11.5405]]],"legacy_top_rl":25.415},"63SP354191":{"lines":[[[8.6904,10.3802],[16.0682,9.2241]],[[16.0682,9.2241],[16.1846,9.064]],[[16.1846,9.064],[15.4938,4.656]],[[7.9862,5.8268],[8.6904,10.3802]]],"legacy_top_rl":25.12}},"receiver_rl":{"60SP354191":23.91,"61SP354191":23.91,"62SP354191":23.615,"63SP354191":23.32},"casting_edge":{"union_bbox":[80.40810867468826,-7.325533412396908,91.02836623799521,-0.9050511680543423],"centroid":[85.8206289410009,-4.189991435967386]},"frozen":{"fullyear":{"yard":{"f000/60SP354191":{"peak":35.0,"pct":100.0,"instant":"2026-02-02T07:02:00","days":283,"first_time":"04:54","last_time":"07:50","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":35.0},"f000/61SP354191":{"peak":31.989,"pct":100.0,"instant":"2026-10-29T05:54:00","days":303,"first_time":"04:50","last_time":"07:59","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":31.989},"f000/62SP354191":{"peak":31.855,"pct":100.0,"instant":"2026-01-21T07:17:00","days":331,"first_time":"04:50","last_time":"08:09","l0800":26.935,"l0830":0.0,"l0900":0.0,"cmp48":31.855},"f000/63SP354191":{"peak":32.294,"pct":100.0,"instant":"2026-01-11T07:20:00","days":365,"first_time":"04:50","last_time":"08:21","l0800":32.294,"l0830":0.0,"l0900":0.0,"cmp48":32.294},"f150/60SP354191":{"peak":20.114,"pct":100.0,"instant":"2026-02-01T07:04:00","days":239,"first_time":"05:36","last_time":"07:47","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":11.029},"f150/61SP354191":{"peak":17.555,"pct":100.0,"instant":"2026-01-26T07:11:00","days":250,"first_time":"05:43","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":8.472},"f150/62SP354191":{"peak":18.748,"pct":100.0,"instant":"2026-11-22T06:52:00","days":262,"first_time":"05:43","last_time":"08:05","l0800":10.312,"l0830":0.0,"l0900":0.0,"cmp48":10.694},"f150/63SP354191":{"peak":20.513,"pct":100.0,"instant":"2026-01-14T07:24:00","days":275,"first_time":"05:43","last_time":"08:17","l0800":17.46,"l0830":0.0,"l0900":0.0,"cmp48":13.359},"f180/60SP354191":{"peak":17.139,"pct":100.0,"instant":"2026-02-01T07:04:00","days":228,"first_time":"05:44","last_time":"07:46","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":6.339},"f180/61SP354191":{"peak":14.667,"pct":100.0,"instant":"2026-01-26T07:11:00","days":237,"first_time":"05:54","last_time":"07:54","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":3.807},"f180/62SP354191":{"peak":16.125,"pct":100.0,"instant":"2026-11-22T06:52:00","days":248,"first_time":"05:54","last_time":"08:05","l0800":7.893,"l0830":0.0,"l0900":0.0,"cmp48":6.46},"f180/63SP354191":{"peak":18.155,"pct":100.0,"instant":"2026-01-14T07:24:00","days":264,"first_time":"05:53","last_time":"08:17","l0800":14.984,"l0830":0.0,"l0900":0.0,"cmp48":9.576}},"sched":{"f000/60SP354191":{"peak":34.918,"pct":100.0,"instant":"2026-02-01T07:04:00","days":283,"first_time":"04:54","last_time":"07:50","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":34.918},"f000/61SP354191":{"peak":34.899,"pct":100.0,"instant":"2026-03-13T07:41:00","days":304,"first_time":"04:50","last_time":"07:59","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":34.899},"f000/62SP354191":{"peak":34.865,"pct":100.0,"instant":"2026-04-26T07:00:00","days":335,"first_time":"04:50","last_time":"08:09","l0800":29.534,"l0830":0.0,"l0900":0.0,"cmp48":34.865},"f000/63SP354191":{"peak":34.948,"pct":100.0,"instant":"2026-01-23T07:26:00","days":365,"first_time":"04:50","last_time":"08:21","l0800":34.948,"l0830":0.0,"l0900":0.0,"cmp48":34.948},"f150/60SP354191":{"peak":20.07,"pct":100.0,"instant":"2026-02-01T07:04:00","days":239,"first_time":"05:36","last_time":"07:47","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":11.029},"f150/61SP354191":{"peak":18.712,"pct":100.0,"instant":"2026-11-13T06:42:00","days":251,"first_time":"05:43","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":8.819},"f150/62SP354191":{"peak":20.053,"pct":100.0,"instant":"2026-11-15T06:51:00","days":265,"first_time":"05:43","last_time":"08:06","l0800":11.899,"l0830":0.0,"l0900":0.0,"cmp48":11.305},"f150/63SP354191":{"peak":21.961,"pct":100.0,"instant":"2026-11-23T07:03:00","days":279,"first_time":"05:43","last_time":"08:17","l0800":19.087,"l0830":0.0,"l0900":0.0,"cmp48":14.172},"f180/60SP354191":{"peak":17.139,"pct":100.0,"instant":"2026-01-30T07:04:00","days":228,"first_time":"05:44","last_time":"07:46","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":6.339},"f180/61SP354191":{"peak":15.486,"pct":100.0,"instant":"2026-11-13T06:42:00","days":239,"first_time":"05:54","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":3.961},"f180/62SP354191":{"peak":17.127,"pct":100.0,"instant":"2026-01-27T07:19:00","days":253,"first_time":"05:54","last_time":"08:05","l0800":9.348,"l0830":0.0,"l0900":0.0,"cmp48":6.823},"f180/63SP354191":{"peak":19.417,"pct":100.0,"instant":"2026-11-23T07:03:00","days":270,"first_time":"05:53","last_time":"08:17","l0800":16.42,"l0830":0.0,"l0900":0.0,"cmp48":10.122}}},"incremental":{"yard":{"f000/60SP354191":{"RL48.0":{"incremental":35.0,"instant":"2026-02-02T07:02:00","prop":35.0,"comp":0.0,"days":234},"RL55.75":{"incremental":35.0,"instant":"2026-02-02T07:02:00","prop":35.0,"comp":0.0,"days":213}},"f000/61SP354191":{"RL48.0":{"incremental":31.989,"instant":"2026-11-13T06:35:00","prop":31.989,"comp":0.0,"days":243},"RL55.75":{"incremental":31.989,"instant":"2026-11-13T06:35:00","prop":31.989,"comp":0.0,"days":219}},"f000/62SP354191":{"RL48.0":{"incremental":31.855,"instant":"2026-01-21T07:17:00","prop":31.855,"comp":-0.0,"days":253},"RL55.75":{"incremental":31.855,"instant":"2026-01-21T07:17:00","prop":31.855,"comp":-0.0,"days":226}},"f000/63SP354191":{"RL48.0":{"incremental":32.294,"instant":"2026-01-11T07:20:00","prop":32.294,"comp":0.0,"days":263},"RL55.75":{"incremental":32.294,"instant":"2026-01-11T07:20:00","prop":32.294,"comp":0.0,"days":235}}},"sched":{"f000/60SP354191":{"RL48.0":{"incremental":34.918,"instant":"2026-02-01T07:04:00","prop":34.918,"comp":0.0,"days":234},"RL55.75":{"incremental":34.918,"instant":"2026-02-01T07:04:00","prop":34.918,"comp":0.0,"days":213}},"f000/61SP354191":{"RL48.0":{"incremental":34.899,"instant":"2026-03-13T07:41:00","prop":34.899,"comp":0.0,"days":245},"RL55.75":{"incremental":34.899,"instant":"2026-03-13T07:41:00","prop":34.899,"comp":0.0,"days":222}},"f000/62SP354191":{"RL48.0":{"incremental":34.865,"instant":"2026-04-09T07:42:00","prop":34.865,"comp":0.0,"days":254},"RL55.75":{"incremental":34.865,"instant":"2026-04-07T07:47:00","prop":34.865,"comp":0.0,"days":228}},"f000/63SP354191":{"RL48.0":{"incremental":34.948,"instant":"2026-01-23T07:26:00","prop":34.948,"comp":0.0,"days":267},"RL55.75":{"incremental":34.948,"instant":"2026-01-23T07:26:00","prop":34.948,"comp":0.0,"days":236}}}},"peaks":{"yard/f000/60SP354191":{"peak_loss_m2":35.00000000594237,"instant":"2026-02-03T07:00:00","otherwise_sunlit_m2":35.00000000594237,"pos_area_m2":38.22435918533449},"yard/f000/61SP354191":{"peak_loss_m2":31.989401746226402,"instant":"2026-10-19T05:30:00","otherwise_sunlit_m2":31.989401746226402,"pos_area_m2":31.989401746194982},"yard/f000/62SP354191":{"peak_loss_m2":31.855295819794534,"instant":"2026-01-22T07:15:00","otherwise_sunlit_m2":31.855295819794534,"pos_area_m2":31.855295819794538},"yard/f000/63SP354191":{"peak_loss_m2":32.294403907407826,"instant":"2026-01-11T07:20:00","otherwise_sunlit_m2":32.294403907407826,"pos_area_m2":32.294403907407826},"yard/f150/60SP354191":{"peak_loss_m2":20.021792196704222,"instant":"2026-11-12T06:35:00","otherwise_sunlit_m2":20.121644557063398,"pos_area_m2":38.22435918533449},"yard/f150/61SP354191":{"peak_loss_m2":17.555054370123376,"instant":"2026-01-26T07:11:00","otherwise_sunlit_m2":17.555054370123376,"pos_area_m2":31.989401746194982},"yard/f150/62SP354191":{"peak_loss_m2":18.747753282988434,"instant":"2026-11-22T06:52:00","otherwise_sunlit_m2":18.747753282988434,"pos_area_m2":31.855295819794538},"yard/f150/63SP354191":{"peak_loss_m2":20.51303784406661,"instant":"2026-01-14T07:24:00","otherwise_sunlit_m2":20.51303784406661,"pos_area_m2":32.294403907407826},"yard/f180/60SP354191":{"peak_loss_m2":17.127478582239462,"instant":"2026-11-13T06:35:00","otherwise_sunlit_m2":17.127478582239462,"pos_area_m2":38.22435918533449},"yard/f180/61SP354191":{"peak_loss_m2":14.667049870921655,"instant":"2026-01-26T07:11:00","otherwise_sunlit_m2":14.667049870921655,"pos_area_m2":31.989401746194982},"yard/f180/62SP354191":{"peak_loss_m2":16.125444552463563,"instant":"2026-11-22T06:52:00","otherwise_sunlit_m2":16.125444552463563,"pos_area_m2":31.855295819794538},"yard/f180/63SP354191":{"peak_loss_m2":18.155153012120234,"instant":"2026-01-14T07:24:00","otherwise_sunlit_m2":18.155153012120234,"pos_area_m2":32.294403907407826},"sched/f000/60SP354191":{"peak_loss_m2":34.917701143916645,"instant":"2026-02-03T07:00:00","otherwise_sunlit_m2":34.917701143916645,"pos_area_m2":34.91770114391664},"sched/f000/61SP354191":{"peak_loss_m2":34.898504345423845,"instant":"2026-03-14T07:40:00","otherwise_sunlit_m2":34.898504345423845,"pos_area_m2":34.898504345569826},"sched/f000/62SP354191":{"peak_loss_m2":34.86546680500596,"instant":"2026-04-26T07:00:00","otherwise_sunlit_m2":34.86546680500596,"pos_area_m2":34.866899161852515},"sched/f000/63SP354191":{"peak_loss_m2":34.94788739233498,"instant":"2026-01-24T07:25:00","otherwise_sunlit_m2":34.94788739233498,"pos_area_m2":34.94788739233498},"sched/f150/60SP354191":{"peak_loss_m2":20.021792196704222,"instant":"2026-11-12T06:35:00","otherwise_sunlit_m2":20.121644557063398,"pos_area_m2":34.91770114391664},"sched/f150/61SP354191":{"peak_loss_m2":18.655485049904858,"instant":"2026-01-30T07:11:00","otherwise_sunlit_m2":18.655485049904858,"pos_area_m2":34.898504345569826},"sched/f150/62SP354191":{"peak_loss_m2":20.04772005902806,"instant":"2026-01-27T07:19:00","otherwise_sunlit_m2":20.04772005902806,"pos_area_m2":34.866899161852515},"sched/f150/63SP354191":{"peak_loss_m2":21.96098250955684,"instant":"2026-11-23T07:03:00","otherwise_sunlit_m2":21.96098250955684,"pos_area_m2":34.94788739233498},"sched/f180/60SP354191":{"peak_loss_m2":17.12747858070381,"instant":"2026-11-13T06:35:00","otherwise_sunlit_m2":17.12747858070381,"pos_area_m2":34.91770114391664},"sched/f180/61SP354191":{"peak_loss_m2":15.459573399692793,"instant":"2026-01-29T07:11:00","otherwise_sunlit_m2":15.459573399692793,"pos_area_m2":34.898504345569826},"sched/f180/62SP354191":{"peak_loss_m2":17.12682224851318,"instant":"2026-01-27T07:19:00","otherwise_sunlit_m2":17.12682224851318,"pos_area_m2":34.866899161852515},"sched/f180/63SP354191":{"peak_loss_m2":19.417030870015573,"instant":"2026-11-23T07:03:00","otherwise_sunlit_m2":19.417030870015573,"pos_area_m2":34.94788739233498}},"attribution":{"yard/f000/60SP354191":{"full":35.00000000594237,"A_only":0.0,"B_only":35.00000000594237,"base":35.00000000594237,"instant":"2026-02-02T07:02:00"},"yard/f000/61SP354191":{"full":31.989401746231763,"A_only":0.0,"B_only":31.989401746231763,"base":31.989401746231763,"instant":"2026-10-29T05:54:00"},"yard/f000/62SP354191":{"full":31.855295819794534,"A_only":-3.552713678800501e-15,"B_only":31.855295819794534,"base":31.855295819794534,"instant":"2026-01-22T07:15:00"},"yard/f000/63SP354191":{"full":32.294403907407826,"A_only":7.105427357601002e-15,"B_only":32.294403907407826,"base":32.294403907407826,"instant":"2026-01-11T07:20:00"},"yard/f150/60SP354191":{"full":20.021792196704222,"A_only":0.0,"B_only":20.021792196704222,"base":20.121644557063398,"instant":"2026-11-12T06:35:00"},"yard/f150/61SP354191":{"full":17.555054370123376,"A_only":3.552713678800501e-15,"B_only":17.555054370123376,"base":17.555054370123376,"instant":"2026-01-26T07:11:00"},"yard/f150/62SP354191":{"full":18.747753282988434,"A_only":3.552713678800501e-15,"B_only":18.747753282988434,"base":18.747753282988434,"instant":"2026-11-22T06:52:00"},"yard/f150/63SP354191":{"full":20.51303784406661,"A_only":-3.552713678800501e-15,"B_only":20.51303784406661,"base":20.51303784406661,"instant":"2026-01-14T07:24:00"}},"comp_at_peaks":{"yard/f000/60SP354191":{"peak":35.0,"instant":"2026-02-02T07:02:00","alt":20.834005510126403,"az":98.80729455311166,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":35.0,"incr_RL5575":35.0,"first_contact_RL":57.363947996718736,"days":283},"yard/f000/61SP354191":{"peak":31.989,"instant":"2026-10-29T05:54:00","alt":10.988817935421608,"az":99.42409141838516,"comp_RL48":31.988400000000002,"comp_RL5575":31.988400000000002,"incr_RL48":0.0005999999999986017,"incr_RL5575":0.0005999999999986017,"first_contact_RL":39.50282460165719,"days":303},"yard/f000/62SP354191":{"peak":31.855,"instant":"2026-01-21T07:17:00","alt":25.84266968886361,"az":100.15107474021374,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":31.855,"incr_RL5575":31.855,"first_contact_RL":58.83840433453537,"days":331},"yard/f000/63SP354191":{"peak":32.294,"instant":"2026-01-11T07:20:00","alt":27.92456993998129,"az":101.51252911666737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":32.294,"incr_RL5575":32.294,"first_contact_RL":57.79508617646201,"days":365},"yard/f150/60SP354191":{"peak":20.114,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.114,"incr_RL5575":20.114,"first_contact_RL":58.38528461829098,"days":239},"yard/f150/61SP354191":{"peak":17.555,"instant":"2026-01-26T07:11:00","alt":23.81034845109592,"az":99.65656906932257,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.555,"incr_RL5575":17.555,"first_contact_RL":59.33209117982159,"days":250},"yard/f150/62SP354191":{"peak":18.748,"instant":"2026-11-22T06:52:00","alt":25.915359447805358,"az":100.21867497038987,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":18.748,"incr_RL5575":18.748,"first_contact_RL":58.94921532600269,"days":262},"yard/f150/63SP354191":{"peak":20.513,"instant":"2026-01-14T07:24:00","alt":28.371562625721573,"az":100.72504653080316,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.513,"incr_RL5575":20.513,"first_contact_RL":58.4765787113553,"days":275},"yard/f180/60SP354191":{"peak":17.139,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.139,"incr_RL5575":17.139,"first_contact_RL":58.38528461829098,"days":228},"yard/f180/61SP354191":{"peak":14.667,"instant":"2026-01-26T07:11:00","alt":23.81034845109592,"az":99.65656906932257,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":14.667,"incr_RL5575":14.667,"first_contact_RL":59.33209117982159,"days":237},"yard/f180/62SP354191":{"peak":16.125,"instant":"2026-11-22T06:52:00","alt":25.915359447805358,"az":100.21867497038987,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":16.125,"incr_RL5575":16.125,"first_contact_RL":58.94921532600269,"days":248},"sched/f000/60SP354191":{"peak":34.918,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.918,"incr_RL5575":34.918,"first_contact_RL":58.3994774827876,"days":283},"sched/f000/61SP354191":{"peak":34.899,"instant":"2026-03-13T07:41:00","alt":24.29963723953621,"az":80.29276379263523,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.899,"incr_RL5575":34.899,"first_contact_RL":61.84959775951705,"days":304},"sched/f000/62SP354191":{"peak":34.865,"instant":"2026-04-26T07:00:00","alt":9.676836953622143,"az":69.29629209394597,"comp_RL48":34.867200000000004,"comp_RL5575":34.867200000000004,"incr_RL48":0.0,"incr_RL5575":0.0,"first_contact_RL":37.76078337510694,"days":335},"sched/f000/63SP354191":{"peak":34.948,"instant":"2026-01-23T07:26:00","alt":27.524611218977803,"az":98.85983171147025,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.948,"incr_RL5575":34.948,"first_contact_RL":57.316752452620264,"days":365},"sched/f150/60SP354191":{"peak":20.07,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.07,"incr_RL5575":20.07,"first_contact_RL":58.3994774827876,"days":239},"sched/f150/61SP354191":{"peak":18.712,"instant":"2026-11-13T06:42:00","alt":23.291409014859852,"az":98.79884063990718,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":18.712,"incr_RL5575":18.712,"first_contact_RL":58.49847849688918,"days":251},"sched/f150/62SP354191":{"peak":20.053,"instant":"2026-11-15T06:51:00","alt":25.40209068729547,"az":98.46158835585558,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.053,"incr_RL5575":20.053,"first_contact_RL":58.224689291344276,"days":265},"sched/f150/63SP354191":{"peak":21.961,"instant":"2026-11-23T07:03:00","alt":28.339847826480323,"az":99.41638121062516,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":21.961,"incr_RL5575":21.961,"first_contact_RL":58.47374079025062,"days":279},"sched/f180/60SP354191":{"peak":17.139,"instant":"2026-01-30T07:04:00","alt":21.70240161909284,"az":99.38736534221785,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.139,"incr_RL5575":17.139,"first_contact_RL":58.87900143888531,"days":228},"sched/f180/61SP354191":{"peak":15.486,"instant":"2026-11-13T06:42:00","alt":23.291409014859852,"az":98.79884063990718,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":15.486,"incr_RL5575":15.486,"first_contact_RL":58.49847849688918,"days":239}}},"fence_cases":{"f000":{"label":"Open-batten bound","height":null,"status":"BOUNDED ASSUMPTION","note":"Optically open. Lower shadow bound for the approved 1500H metal batten fence."},"f150":{"label":"Opaque-batten bound","height":1.5,"status":"BOUNDED ASSUMPTION","note":"1.500 m fully opaque. Upper shadow bound for the approved 1500H metal batten fence."},"f180":{"label":"Legacy 1.8 m opaque (SENSITIVITY)","height":1.8,"status":"SUPERSEDED SENSITIVITY","note":"NOT the approved condition. Retained only for continuity with v1.0.2/v0.1-AB/v0.2-AB."}}};
+// Exact port of v1.0.2 scripts/solar.py — NOAA geometric solar position, no refraction.
+// Australia/Brisbane = UTC+10, no DST. DO NOT "improve" this: it is the frozen convention.
+const TZ_OFFSET_H = 10.0;
+
+function julianDay(y, m, d, hourFrac) {
+  if (m <= 2) { y -= 1; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1))
+       + d + hourFrac / 24.0 + B - 1524.5;
+}
+
+// dt: {y,m,d,hh,mm} in LOCAL AEST. Returns {alt, az} in degrees, az from north clockwise.
+function sunPosition(dt, latDeg, lonDeg) {
+  // local -> UTC
+  let totalMin = dt.hh * 60 + dt.mm - TZ_OFFSET_H * 60;
+  let y = dt.y, m = dt.m, d = dt.d;
+  let dayShift = Math.floor(totalMin / 1440);
+  let minInDay = totalMin - dayShift * 1440;
+  // apply day shift via Date arithmetic on a UTC calendar (safe: no TZ involvement)
+  const base = Date.UTC(y, m - 1, d) + dayShift * 86400000;
+  const bd = new Date(base);
+  y = bd.getUTCFullYear(); m = bd.getUTCMonth() + 1; d = bd.getUTCDate();
+  const hourFrac = minInDay / 60.0;
+
+  const jd = julianDay(y, m, d, hourFrac);
+  const T = (jd - 2451545.0) / 36525.0;
+  const L0 = ((280.46646 + T * (36000.76983 + T * 0.0003032)) % 360 + 360) % 360;
+  const M = 357.52911 + T * (35999.05029 - 0.0001537 * T);
+  const Mr = M * Math.PI / 180;
+  const C = Math.sin(Mr) * (1.914602 - T * (0.004817 + 0.000014 * T))
+          + Math.sin(2 * Mr) * (0.019993 - 0.000101 * T)
+          + Math.sin(3 * Mr) * 0.000289;
+  const trueLong = L0 + C;
+  const omega = 125.04 - 1934.136 * T;
+  const appLong = trueLong - 0.00569 - 0.00478 * Math.sin(omega * Math.PI / 180);
+  const e0 = 23 + (26 + ((21.448 - T * (46.815 + T * (0.00059 - T * 0.001813)))) / 60) / 60;
+  const e = e0 + 0.00256 * Math.cos(omega * Math.PI / 180);
+  const decl = Math.asin(Math.sin(e * Math.PI / 180) * Math.sin(appLong * Math.PI / 180)) * 180 / Math.PI;
+  const yv = Math.pow(Math.tan(e / 2 * Math.PI / 180), 2);
+  const eo = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
+  const L0r = L0 * Math.PI / 180;
+  const Eq = 4 * (180 / Math.PI) * (yv * Math.sin(2 * L0r) - 2 * eo * Math.sin(Mr)
+            + 4 * eo * yv * Math.sin(Mr) * Math.cos(2 * L0r)
+            - 0.5 * yv * yv * Math.sin(4 * L0r) - 1.25 * eo * eo * Math.sin(2 * Mr));
+  const mins = dt.hh * 60 + dt.mm;                       // LOCAL clock minutes
+  let tst = (mins + Eq + 4 * lonDeg - 60 * TZ_OFFSET_H) % 1440;
+  if (tst < 0) tst += 1440;
+  const ha = tst / 4.0 - 180.0;
+  const lr = latDeg * Math.PI / 180, dr = decl * Math.PI / 180, hr = ha * Math.PI / 180;
+  let cz = Math.sin(lr) * Math.sin(dr) + Math.cos(lr) * Math.cos(dr) * Math.cos(hr);
+  cz = Math.max(-1, Math.min(1, cz));
+  const zen = Math.acos(cz);
+  const alt = 90 - zen * 180 / Math.PI;
+  const altr = alt * Math.PI / 180;
+  let az;
+  if (Math.cos(altr) < 1e-9) az = 0;
+  else {
+    const sA = -Math.cos(dr) * Math.sin(hr) / Math.cos(altr);
+    const cA = (Math.sin(dr) - Math.sin(lr) * Math.sin(altr)) / (Math.cos(lr) * Math.cos(altr));
+    az = Math.atan2(sA, cA) * 180 / Math.PI;
+  }
+  return { alt, az: ((az % 360) + 360) % 360 };
+}
+
+// direction shadows fall (away from the sun) — exact port of shadow_model.sun_dir
+function sunDir(azDeg) {
+  const a = azDeg * Math.PI / 180;
+  return [-Math.sin(a), -Math.cos(a)];
+}
+
+// Faithful port of the FROZEN v1.1-AB shadow geometry.
+//  - prismShadowParts(): the exact per-edge Minkowski sweep of shadow_model.sweep()
+//    (footprint translated to both offsets + one quad per ring edge). Used for DISPLAY;
+//    the visual union is obtained by compositing, never by re-deriving geometry.
+//  - occludedMask(): exact per-point ray occlusion, used for AREA readout. A point is
+//    shadowed by a prism of top RL T iff the segment from the point toward the sun of
+//    length (T - z)/tan(alt) meets the footprint.
+function prismShadowParts(fp, topRl, baseRl, z, alt, az) {
+  if (alt <= 0.05) return null;
+  const t = Math.tan(alt * Math.PI / 180);
+  const h = topRl - z;
+  if (h <= 0) return null;
+  const L1 = h / t, L0 = Math.max(0, baseRl - z) / t;
+  const d = sunDir(az);
+  const o0 = [d[0] * L0, d[1] * L0], o1 = [d[0] * L1, d[1] * L1];
+  const parts = [];
+  parts.push(fp.map(p => [p[0] + o0[0], p[1] + o0[1]]));
+  parts.push(fp.map(p => [p[0] + o1[0], p[1] + o1[1]]));
+  const dx = o1[0] - o0[0], dy = o1[1] - o0[1];
+  for (let i = 0; i < fp.length; i++) {
+    const a = fp[i], b = fp[(i + 1) % fp.length];
+    parts.push([
+      [a[0] + o0[0], a[1] + o0[1]], [b[0] + o0[0], b[1] + o0[1]],
+      [b[0] + o0[0] + dx, b[1] + o0[1] + dy], [a[0] + o0[0] + dx, a[1] + o0[1] + dy]
+    ]);
+  }
+  return parts;
+}
+
+// thin line caster (fence): sweep the segment only
+function lineShadowParts(ln, topRl, z, alt, az) {
+  if (alt <= 0.05) return null;
+  const t = Math.tan(alt * Math.PI / 180);
+  const h = topRl - z;
+  if (h <= 0) return null;
+  const L = h / t, d = sunDir(az);
+  const a = ln[0], b = ln[1];
+  return [[[a[0], a[1]], [b[0], b[1]],
+           [b[0] + d[0] * L, b[1] + d[1] * L], [a[0] + d[0] * L, a[1] + d[1] * L]]];
+}
+function pointInPoly(px, py, poly) {
+  let inside = false;
+  for (let i = 0, n = poly.length; i < n; i++) {
+    const a = poly[i], b = poly[(i + 1) % n];
+    if ((a[1] > py) !== (b[1] > py)) {
+      const xint = (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0];
+      if (px < xint) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function segSeg(px, py, dx, dy, L, a, b) {
+  const rx = dx * L, ry = dy * L;
+  const sx = b[0] - a[0], sy = b[1] - a[1];
+  const rxs = rx * sy - ry * sx;
+  if (Math.abs(rxs) < 1e-14) return false;
+  const qx = a[0] - px, qy = a[1] - py;
+  const t = (qx * sy - qy * sx) / rxs;
+  const u = (qx * ry - qy * rx) / rxs;
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+}
+
+// does the ray from (px,py) toward the sun, of length L, meet polygon poly?
+function segPoly(px, py, dx, dy, L, poly) {
+  if (pointInPoly(px, py, poly)) return true;
+  if (pointInPoly(px + dx * L, py + dy * L, poly)) return true;
+  for (let i = 0, n = poly.length; i < n; i++)
+    if (segSeg(px, py, dx, dy, L, poly[i], poly[(i + 1) % n])) return true;
+  return false;
+}
+
+// casters: [{fp, topRl}] ; lines: [{ln, topRl}]
+function occludedMask(pts, z, alt, az, casters, lines) {
+  const n = pts.length;
+  const out = new Uint8Array(n);
+  if (alt <= 0.05) return out;
+  const a = az * Math.PI / 180;
+  const dx = Math.sin(a), dy = Math.cos(a);          // toward the sun
+  const t = Math.tan(alt * Math.PI / 180);
+  for (const c of casters) {
+    const L = (c.topRl - z) / t;
+    if (L <= 0) continue;
+    for (let i = 0; i < n; i++)
+      if (!out[i] && segPoly(pts[i][0], pts[i][1], dx, dy, L, c.fp)) out[i] = 1;
+  }
+  for (const l of lines) {
+    const L = (l.topRl - z) / t;
+    if (L <= 0) continue;
+    for (let i = 0; i < n; i++)
+      if (!out[i] && segSeg(pts[i][0], pts[i][1], dx, dy, L, l.ln[0], l.ln[1])) out[i] = 1;
+  }
+  return out;
+}
+function gridInPolygon(poly, cell) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of poly) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+  const pts = [];
+  for (let y = y0 + cell / 2; y < y1; y += cell)
+    for (let x = x0 + cell / 2; x < x1; x += cell)
+      if (pointInPoly(x, y, poly)) pts.push([x, y]);
+  return pts;
+}
+
+
+
+const $ = s => document.querySelector(s);
+let D = null;
+const cv = $('#scene'), cx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+const state = {
+  y: 2026, m: 1, d: 11, minute: 440,
+  pos: 'yard', fence: 'f000', lot: '63SP354191',
+  compRL: 55.75, attr: 'AB',
+  layers: { approved:1, comp:0, shApp:1, shComp:0, shInc:0, cad:1, posL:1, qa:0 },
+  cam: { az: 0, el: 90, zoom: 1, panx: 0, pany: 0 },   // el 90 = plan
+  cmp: 'off', swipe: 0.5, playing: false
+};
+
+// ---------- projection: metres (local ENU) -> screen -------------------------
+function proj(x, y, z) {
+  const a = state.cam.az * Math.PI/180, e = state.cam.el * Math.PI/180;
+  const ca=Math.cos(a), sa=Math.sin(a);
+  let X = x*ca - y*sa;
+  let Y = x*sa + y*ca;
+  const se=Math.sin(e), ce=Math.cos(e);
+  const sx = X;
+  const sy = -(Y*se) - (z||0)*ce;
+  const s = state.cam.zoom;
+  return [W/2 + (sx*s) + state.cam.panx, H/2 + (sy*s) + state.cam.pany];
+}
+function polyPath(ring, z){ cx.beginPath();
+  ring.forEach((p,i)=>{ const q=proj(p[0],p[1],z||0); i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]); });
+  cx.closePath(); }
+
+// ---------- model helpers ----------------------------------------------------
+const propParts = () => {
+  const A = D.approved;
+  const sel = state.attr;
+  const out = [];
+  if (sel!=='B') out.push(A.building_A);
+  if (sel!=='A') { out.push(A.building_B_plate, A.building_B_communal_roof, A.building_B_lift_overrun); }
+  return out;
+};
+const propCasters = () => propParts().map(o=>({fp:o.footprint, topRl:o.top_rl}));
+const compCasters = () => [
+  {fp:D.comparator.A, topRl:state.compRL},
+  {fp:D.comparator.B, topRl:state.compRL}];
+function fenceLines(lp){
+  const h = D.fence_cases[state.fence].height;
+  if (h==null) return [];
+  const z = D.receiver_rl[lp];
+  return D.fences[lp].lines.map(ln=>({ln, topRl: z+h}));
+}
+const occAll = () => Object.values(D.occluders).map(o=>({fp:o.footprint, topRl:o.top_rl}));
+
+function solar(){
+  const {alt,az} = sunPosition({y:state.y,m:state.m,d:state.d,
+    hh:Math.floor(state.minute/60),mm:state.minute%60}, D.solar.latitude, D.solar.longitude);
+  return {alt,az};
+}
+function sunRiseSet(){
+  let rise=null,set=null;
+  for(let mm=200;mm<=780;mm++){
+    const s=sunPosition({y:state.y,m:state.m,d:state.d,hh:Math.floor(mm/60),mm:mm%60},
+      D.solar.latitude,D.solar.longitude);
+    if(rise===null&&s.alt>0) rise=mm;
+  }
+  for(let mm=1000;mm<=1320;mm++){
+    const s=sunPosition({y:state.y,m:state.m,d:state.d,hh:Math.floor(mm/60),mm:mm%60},
+      D.solar.latitude,D.solar.longitude);
+    if(s.alt>0) set=mm;
+  }
+  return {rise,set};
+}
+const hhmm = mm => String(Math.floor(mm/60)).padStart(2,'0')+':'+String(mm%60).padStart(2,'0');
+
+// ---------- shadow rendering (exact union by compositing) ---------------------
+function drawShadowSet(casters, lines, z, alt, az, style){
+  if (alt<=0.05) return;
+  const off = document.createElement('canvas');
+  off.width=cv.width; off.height=cv.height;
+  const o = off.getContext('2d');
+  o.setTransform(DPR,0,0,DPR,0,0);
+  o.fillStyle='#000';
+  const put = ring => { o.beginPath();
+    ring.forEach((p,i)=>{const q=proj(p[0],p[1],z); i?o.lineTo(q[0],q[1]):o.moveTo(q[0],q[1]);});
+    o.closePath(); o.fill(); };
+  for(const c of casters){
+    const parts = prismShadowParts(c.fp, c.topRl, 0.0, z, alt, az);
+    if (parts) parts.forEach(put);
+  }
+  for(const l of lines){
+    const parts = lineShadowParts(l.ln, l.topRl, z, alt, az);
+    if (parts) parts.forEach(put);
+  }
+  cx.save();
+  cx.globalAlpha = style.alpha;
+  cx.globalCompositeOperation = 'source-over';
+  // tint the composited union
+  const t = document.createElement('canvas'); t.width=cv.width; t.height=cv.height;
+  const tc=t.getContext('2d'); tc.setTransform(DPR,0,0,DPR,0,0);
+  tc.fillStyle=style.color; tc.fillRect(0,0,W,H);
+  tc.globalCompositeOperation='destination-in'; tc.drawImage(off,0,0,W,H);
+  cx.drawImage(t,0,0,W,H);
+  cx.restore();
+}
+
+function drawBox(fp, topRl, baseRl, fill, edge){
+  // extruded massing, painter's order back-to-front by projected depth
+  const faces=[];
+  for(let i=0;i<fp.length;i++){
+    const a=fp[i], b=fp[(i+1)%fp.length];
+    faces.push({pts:[[a[0],a[1],baseRl],[b[0],b[1],baseRl],[b[0],b[1],topRl],[a[0],a[1],topRl]],
+                depth:(a[1]+b[1])/2});
+  }
+  faces.sort((p,q)=>p.depth-q.depth);
+  cx.lineWidth=1;
+  for(const f of faces){
+    cx.beginPath();
+    f.pts.forEach((p,i)=>{const q=proj(p[0],p[1],p[2]); i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]);});
+    cx.closePath(); cx.fillStyle=fill; cx.fill(); cx.strokeStyle=edge; cx.stroke();
+  }
+  cx.beginPath();
+  fp.forEach((p,i)=>{const q=proj(p[0],p[1],topRl); i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]);});
+  cx.closePath(); cx.fillStyle=fill; cx.fill(); cx.strokeStyle=edge; cx.stroke();
+}
+
+// ---------- main render ------------------------------------------------------
+function render(){
+  if(!D) return;
+  DPR = Math.min(2, window.devicePixelRatio||1);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W*DPR; cv.height = H*DPR;
+  cx.setTransform(DPR,0,0,DPR,0,0);
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#0e1113'; cx.fillRect(0,0,W,H);
+
+  const {alt,az} = solar();
+  const z = D.receiver_rl[state.lot];
+
+  // ground: cadastre
+  if(state.layers.cad){
+    cx.lineWidth=1; cx.strokeStyle='#3c464d';
+    polyPath(D.cadastre.parcel_913SP337678_part,0); cx.stroke();
+    cx.strokeStyle='#4d5a62';
+    for(const [lp,r] of Object.entries(D.cadastre.lots)){ polyPath(r,0); cx.stroke(); }
+  }
+
+  // shadows (ground plane at the selected lot's receiver RL)
+  const showApp = state.layers.shApp && state.cmp!=='diff';
+  const showCmp = (state.layers.shComp || state.cmp!=='off') && state.cmp!=='diff';
+  if(showCmp) drawShadowSet(compCasters(), [], z, alt, az, {color:'#5ec2a6',alpha:0.26});
+  if(showApp) drawShadowSet(propCasters(), fenceLines(state.lot), z, alt, az, {color:'#e8a13a',alpha:0.28});
+  if(state.layers.shInc || state.cmp==='diff'){
+    // incremental = proposal-shadowed AND comparator-lit, shown as a distinct wash
+    drawShadowSet(propCasters(), [], z, alt, az, {color:'#d8564a',alpha:0.42});
+  }
+
+  // POS receptors
+  if(state.layers.posL){
+    for(const [lp,r] of Object.entries(D.receptors[state.pos])){
+      polyPath(r,0);
+      cx.fillStyle = lp===state.lot ? 'rgba(120,200,255,.28)' : 'rgba(120,200,255,.10)';
+      cx.fill();
+      cx.strokeStyle = lp===state.lot ? '#8fd0ff' : '#4d7f99'; cx.lineWidth= lp===state.lot?2:1.1; cx.stroke();
+    }
+  }
+
+  // massing
+  if(state.layers.comp){
+    drawBox(D.comparator.A, state.compRL, 21.6, 'rgba(94,194,166,.20)', 'rgba(94,194,166,.75)');
+    drawBox(D.comparator.B, state.compRL, 21.6, 'rgba(94,194,166,.20)', 'rgba(94,194,166,.75)');
+  }
+  if(state.layers.approved){
+    const sel=state.attr;
+    if(sel!=='B') drawBox(D.approved.building_A.footprint, D.approved.building_A.top_rl, 21.6,
+                          'rgba(232,161,58,.16)','rgba(232,161,58,.8)');
+    if(sel!=='A'){
+      drawBox(D.approved.building_B_plate.footprint, D.approved.building_B_plate.top_rl, 21.6,
+              'rgba(232,161,58,.16)','rgba(232,161,58,.8)');
+      drawBox(D.approved.building_B_communal_roof.footprint, D.approved.building_B_communal_roof.top_rl,
+              D.approved.building_B_plate.top_rl,'rgba(232,161,58,.22)','rgba(232,161,58,.9)');
+      drawBox(D.approved.building_B_lift_overrun.footprint, D.approved.building_B_lift_overrun.top_rl,
+              D.approved.building_B_communal_roof.top_rl,'rgba(232,161,58,.28)','rgba(232,161,58,.95)');
+    }
+  }
+
+  // lot labels
+  if(state.layers.cad){
+    cx.font='11px ui-monospace,monospace'; cx.textAlign='center';
+    for(const [lp,r] of Object.entries(D.cadastre.lots)){
+      const c=r.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/r.length);
+      const q=proj(c[0],c[1],0);
+      cx.fillStyle= lp===state.lot?'#cfe6f5':'#7f8c94';
+      cx.fillText(D.lot_meta[lp].label,q[0],q[1]+22);
+      cx.fillStyle='#5d6970'; cx.font='9px ui-monospace,monospace';
+      cx.fillText('FFL '+D.lot_meta[lp].ffl.toFixed(3),q[0],q[1]+33);
+      cx.font='11px ui-monospace,monospace';
+    }
+  }
+
+  // QA overlay
+  if(state.layers.qa) drawQA(alt,az,z);
+
+  updatePanels(alt,az,z);
+}
+
+function drawQA(alt,az,z){
+  cx.save();
+  cx.strokeStyle='#7fe0a0'; cx.fillStyle='#7fe0a0'; cx.lineWidth=1;
+  const dot=(p,zz)=>{const q=proj(p[0],p[1],zz||0); cx.fillRect(q[0]-1.5,q[1]-1.5,3,3);};
+  D.cadastre.parcel_913SP337678_part.forEach(p=>dot(p,0));
+  Object.values(D.cadastre.lots).forEach(r=>r.forEach(p=>dot(p,0)));
+  [D.approved.building_A,D.approved.building_B_plate,D.approved.building_B_communal_roof,
+   D.approved.building_B_lift_overrun].forEach(o=>o.footprint.forEach(p=>dot(p,o.top_rl)));
+  Object.values(D.receptors[state.pos]).forEach(r=>r.forEach(p=>dot(p,0)));
+  cx.strokeStyle='rgba(127,224,160,.5)';
+  Object.entries(D.fences).forEach(([lp,f])=>f.lines.forEach(ln=>{
+    const a=proj(ln[0][0],ln[0][1],0), b=proj(ln[1][0],ln[1][1],0);
+    cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();}));
+  cx.restore();
+  const lp=state.lot, m=D.receptor_meta[state.pos][lp];
+  $('#qa-text').textContent =
+`LOCAL ORIGIN   E ${D.crs.local_origin_E}  N ${D.crs.local_origin_N}  (EPSG:${D.crs.epsg})
+LOT            ${lp}   ${D.lot_meta[lp].dwelling}
+receiver RL    ${D.receiver_rl[lp].toFixed(3)}   FFL ${D.lot_meta[lp].ffl.toFixed(3)}
+POS variant    ${state.pos}   depth ${m.depth_m.toFixed(4)} m  width ${m.width_m.toFixed(3)} m
+POS area       ${m.area_m2.toFixed(4)} m2  (frozen geometry, not recomputed)
+fence case     ${state.fence}  ${D.fence_cases[state.fence].label}
+sun            alt ${alt.toFixed(4)}  az ${az.toFixed(4)}
+casters        A top ${D.approved.building_A.top_rl}  Bplate ${D.approved.building_B_plate.top_rl}
+               Bcommunal ${D.approved.building_B_communal_roof.top_rl}  Blift ${D.approved.building_B_lift_overrun.top_rl}
+comparator RL  ${state.compRL}   footprint = frozen old_AB_placed
+vertices       parcel ${D.cadastre.parcel_913SP337678_part.length}  POS ${D.receptors[state.pos][lp].length}
+               A ${D.approved.building_A.footprint.length}  Bplate ${D.approved.building_B_plate.footprint.length}`;
+}
+
+// ---------- live recompute (same engine, QA-gated against frozen) ------------
+const LIVE_CELL = 0.05;
+let gridCache = {};
+function liveResult(alt,az){
+  const lp=state.lot, z=D.receiver_rl[lp];
+  const key=state.pos+'/'+lp;
+  if(!gridCache[key]) gridCache[key]=gridInPolygon(D.receptors[state.pos][lp], LIVE_CELL);
+  const pts=gridCache[key], cellA=LIVE_CELL*LIVE_CELL;
+  const posArea = D.receptor_meta[state.pos][lp].area_m2;
+  if(alt<=0.05) return {posArea, base:0, propSun:0, compSun:0, loss:0, pct:0, aLoss:0, bLoss:0};
+  const base = occludedMask(pts, z, alt, az, occAll(), fenceLines(lp));
+  const bp=[]; for(let i=0;i<pts.length;i++) if(!base[i]) bp.push(pts[i]);
+  const baseA = bp.length*cellA;
+  const A=D.approved;
+  const mAll = occludedMask(bp,z,alt,az,[
+    {fp:A.building_A.footprint,topRl:A.building_A.top_rl},
+    {fp:A.building_B_plate.footprint,topRl:A.building_B_plate.top_rl},
+    {fp:A.building_B_communal_roof.footprint,topRl:A.building_B_communal_roof.top_rl},
+    {fp:A.building_B_lift_overrun.footprint,topRl:A.building_B_lift_overrun.top_rl}],[]);
+  const mA = occludedMask(bp,z,alt,az,[{fp:A.building_A.footprint,topRl:A.building_A.top_rl}],[]);
+  const mB = occludedMask(bp,z,alt,az,[
+    {fp:A.building_B_plate.footprint,topRl:A.building_B_plate.top_rl},
+    {fp:A.building_B_communal_roof.footprint,topRl:A.building_B_communal_roof.top_rl},
+    {fp:A.building_B_lift_overrun.footprint,topRl:A.building_B_lift_overrun.top_rl}],[]);
+  const mC = occludedMask(bp,z,alt,az,compCasters(),[]);
+  let n=0,na=0,nb=0,nc=0;
+  for(let i=0;i<bp.length;i++){ if(mAll[i])n++; if(mA[i])na++; if(mB[i])nb++; if(mC[i])nc++; }
+  const loss=n*cellA;
+  return {posArea, base:baseA, propSun:baseA-loss, compSun:baseA-nc*cellA,
+          loss, pct: baseA>0?100*loss/baseA:0, aLoss:na*cellA, bLoss:nb*cellA};
+}
+
+function firstContactRL(alt,az){
+  const lp=state.lot, z=D.receiver_rl[lp];
+  if(alt<=0.05) return null;
+  const key=state.pos+'/'+lp;
+  if(!gridCache[key]) gridCache[key]=gridInPolygon(D.receptors[state.pos][lp], LIVE_CELL);
+  const pts=gridCache[key];
+  const a=az*Math.PI/180, dx=Math.sin(a), dy=Math.cos(a), t=Math.tan(alt*Math.PI/180);
+  let best=Infinity;
+  for(const fp of [D.comparator.A, D.comparator.B]){
+    // exact entry distance into a convex ring
+    for(const p of pts){
+      let lo=-Infinity, hi=Infinity, ok=true;
+      const cxx=fp.reduce((s,q)=>s+q[0],0)/fp.length, cyy=fp.reduce((s,q)=>s+q[1],0)/fp.length;
+      for(let i=0;i<fp.length;i++){
+        const A0=fp[i],B0=fp[(i+1)%fp.length];
+        let nx=B0[1]-A0[1], ny=-(B0[0]-A0[0]);
+        if(nx*(cxx-A0[0])+ny*(cyy-A0[1])>0){nx=-nx;ny=-ny;}
+        const den=dx*nx+dy*ny, num=(A0[0]-p[0])*nx+(A0[1]-p[1])*ny;
+        if(Math.abs(den)<1e-12){ if(num<0){ok=false;break;} }
+        else { const tt=num/den; if(den<0) lo=Math.max(lo,tt); else hi=Math.min(hi,tt); }
+      }
+      if(ok&&lo<=hi&&hi>=0){ const s=Math.max(lo,0); const need=z+s*t; if(need<best) best=need; }
+    }
+  }
+  return isFinite(best)?best:null;
+}
+
+// ---------- panels -----------------------------------------------------------
+function updatePanels(alt,az,z){
+  $('#r-time').textContent = hhmm(state.minute);
+  $('#r-az').textContent = az.toFixed(2)+'°';
+  $('#r-alt').textContent = alt.toFixed(2)+'°';
+  $('#timev').textContent = hhmm(state.minute);
+  $('#doyv').textContent = doy();
+  const rs=sunRiseSet();
+  $('#r-rise').textContent = rs.rise?hhmm(rs.rise):'—';
+  $('#r-set').textContent = rs.set?hhmm(rs.set):'—';
+
+  const r = liveResult(alt,az);
+  const f = n => n.toFixed(3)+' m²';
+  $('#v-pos').textContent=f(r.posArea); $('#v-base').textContent=f(r.base);
+  $('#v-propsun').textContent=f(r.propSun); $('#v-compsun').textContent=f(r.compSun);
+  $('#v-loss').textContent=f(r.loss); $('#v-losspct').textContent=r.pct.toFixed(1)+' %';
+  $('#v-a').textContent=f(r.aLoss); $('#v-b').textContent=f(r.bLoss);
+  $('#v-az').textContent=az.toFixed(2)+'°'; $('#v-alt').textContent=alt.toFixed(2)+'°';
+  $('#r-lot-name').textContent=D.lot_meta[state.lot].label;
+  $('#live-note').innerHTML='<span class="tag t-fr">FROZEN COMPUTATIONAL RESULT</span>'+
+    'Live figures recompute the frozen v1.1-AB geometry at '+LIVE_CELL.toFixed(2)+
+    ' m raster. The engine is QA-gated to reproduce all 24 frozen peaks to ≤0.001 m².';
+
+  const key=state.fence+'/'+state.lot;
+  const fy=D.frozen.fullyear[state.pos][key];
+  let html='';
+  if(fy){
+    html+=`<tr><td>Frozen peak</td><td>${fy.peak.toFixed(3)} m²</td></tr>`+
+          `<tr><td>at</td><td>${fy.instant.replace('T',' ')}</td></tr>`+
+          `<tr><td>% of otherwise-sunlit</td><td>${fy.pct.toFixed(1)} %</td></tr>`+
+          `<tr><td>Affected days</td><td>${fy.days}</td></tr>`+
+          `<tr><td>Daily window</td><td>${fy.first_time}–${fy.last_time}</td></tr>`+
+          `<tr><td>Loss 08:00</td><td>${fy.l0800.toFixed(3)} m²</td></tr>`+
+          `<tr><td>Loss 08:30</td><td>${fy.l0830.toFixed(3)} m²</td></tr>`+
+          `<tr><td>Loss 09:00</td><td>${fy.l0900.toFixed(3)} m²</td></tr>`;
+  }
+  const inc=D.frozen.incremental[state.pos]?.[ 'f000/'+state.lot ];
+  if(inc && state.fence==='f000'){
+    const k='RL'+(state.compRL===55.75?'55.75':'48.0');
+    const rr=inc[k]||inc['RL48.0'];
+    if(rr) html+=`<tr class="hi"><td>Proposal-only incremental</td><td>${rr.incremental.toFixed(3)} m²</td></tr>`+
+                 `<tr><td>at</td><td>${rr.instant.replace('T',' ')}</td></tr>`+
+                 `<tr><td>comparator then</td><td>${rr.comp.toFixed(3)} m²</td></tr>`+
+                 `<tr><td>incremental days</td><td>${rr.days}</td></tr>`;
+  }
+  $('#frozen-tbl').innerHTML=html||'<tr><td colspan=2>No frozen record for this combination.</td></tr>';
+
+  const fc=firstContactRL(alt,az);
+  $('#cmp-tbl').innerHTML = fc==null
+    ? '<tr><td colspan=2>Sun below horizon</td></tr>'
+    : `<tr class="hi"><td>First-contact RL</td><td>RL ${fc.toFixed(3)}</td></tr>`+
+      `<tr><td>vs RL 55.750</td><td>${(fc-55.75>=0?'+':'')}${(fc-55.75).toFixed(3)} m</td></tr>`+
+      `<tr><td>vs RL 48.0</td><td>${(fc-48>=0?'+':'')}${(fc-48).toFixed(3)} m</td></tr>`+
+      `<tr><td>Comparator reaches?</td><td>${fc<=state.compRL?'YES at RL '+state.compRL:'no at RL '+state.compRL}</td></tr>`;
+
+  $('#pos-prov').innerHTML = state.pos==='yard'
+    ? '<span class="tag t-sd">SOURCE-DERIVED</span>Drawn rear yard, depth 4.2515 m. TP53.04 B @1:50 → 4.251 m; TP51.10 C @1:200 → 4.254 m.'
+    : '<span class="tag t-sd">SOURCE-DERIVED</span>TP53.04 B schedule/label "P.O.S 35 m²" spread over the full lot width.';
+  $('#fence-prov').innerHTML = '<span class="tag '+(state.fence==='f180'?'t-pq':'t-ba')+'">'+
+    (state.fence==='f180'?'SUPERSEDED SENSITIVITY':'BOUNDED ASSUMPTION')+'</span>'+
+    D.fence_cases[state.fence].note;
+
+  const banner = state.fence==='f180'
+    ? 'LEGACY 1.8 m OPAQUE FENCE — a superseded sensitivity, NOT the approved condition.'
+    : '';
+  $('#banner').className = banner?'show':''; $('#banner').textContent=banner;
+}
+
+const doy = () => {
+  const a=Date.UTC(state.y,state.m-1,state.d), b=Date.UTC(state.y,0,1);
+  return Math.round((a-b)/86400000)+1;
+};
+function setDoy(n){
+  const t=new Date(Date.UTC(state.y,0,1)+ (n-1)*86400000);
+  state.m=t.getUTCMonth()+1; state.d=t.getUTCDate();
+  $('#date').value=`${state.y}-${String(state.m).padStart(2,'0')}-${String(state.d).padStart(2,'0')}`;
+  $('#doy').value=n;
+}
+function gotoInstant(iso){
+  const [dpart,tpart]=iso.split('T');
+  const [y,m,d]=dpart.split('-').map(Number);
+  const [hh,mm]=tpart.split(':').map(Number);
+  state.y=y;state.m=m;state.d=d;state.minute=hh*60+mm;
+  $('#date').value=dpart; $('#doy').value=doy(); $('#min').value=state.minute;
+  render();
+}
+
+// ---------- provenance -------------------------------------------------------
+function buildProvenance(){
+  const rows=[
+    ['t-ps','PRIMARY SOURCE','Cadastre — DCDB lots 60–63 SP354191 and parcel 913SP337678 (4,174.91 m² part), carried from sealed v1.0.2.'],
+    ['t-ps','PRIMARY SOURCE','Lot↔dwelling identity and FFLs — TP51.10 C (A006720399, stamped 11/04/2025), registered on the unique 9.011 m lot-60 width signature (≤0.132 m vs 1.55 m).'],
+    ['t-sd','SOURCE-DERIVED GEOMETRY','Building A plate — byte-identical to sealed v1.0.2. Building B plate / communal roof / lift overrun — DA-108, top RLs corroborated on DA-201/202/203.'],
+    ['t-sd','SOURCE-DERIVED GEOMETRY','Receptor POS — both readings built from DCDB by the frozen build_receptors.py. Neither is forced.'],
+    ['t-sd','SOURCE-DERIVED GEOMETRY','Eight-storey comparator footprint — solved from the four dimensioned setbacks against DCDB (RG-42). The failed SK00.03 sheet registration (RG-35) is NOT used.'],
+    ['t-fr','FROZEN COMPUTATIONAL RESULT','All peak, incremental, recurrence and first-contact figures read from v1.1-AB outputs. The browser engine is QA-gated to reproduce all 24 frozen peaks to ≤0.001 m².'],
+    ['t-ba','BOUNDED ASSUMPTION','Fence opacity. The approved A005904947 LCP specifies a Charcoal Metal Batten 1500H fence on a concrete retaining wall but states NO batten width, spacing, gap or opacity. Bounded open/opaque; neither is "actual".'],
+    ['t-ba','BOUNDED ASSUMPTION','POS interpretation. Two source-supported readings are carried.'],
+    ['t-pq','PLANNING QUESTION','Which POS reading is the operative countable POS; and whether an early-morning loss is material. Neither is decided by this model.'],
+    ['t-pr','PRESENTATION ONLY','Massing colour, camera and styling. Geometry controls appearance, never the reverse.']
+  ];
+  $('#prov-list').innerHTML = rows.map(r=>`<div><span class="tag ${r[0]}">${r[1]}</span>${r[2]}</div>`).join('');
+}
+
+// ---------- presets ----------------------------------------------------------
+function buildPresets(){
+  const pk=$('#presets-peak'); pk.innerHTML='';
+  ['60SP354191','61SP354191','62SP354191','63SP354191'].forEach(lp=>{
+    const b=document.createElement('button');
+    b.textContent=D.lot_meta[lp].label+' peak';
+    b.onclick=()=>{
+      state.lot=lp; $('#lot').value=lp;
+      const inc=D.frozen.incremental[state.pos]?.['f000/'+lp];
+      const rec=inc?(inc['RL55.75']||inc['RL48.0']):null;
+      if(rec){ state.fence='f000'; $('#fence').value='f000'; gotoInstant(rec.instant); }
+      else { const fy=D.frozen.fullyear[state.pos][state.fence+'/'+lp]; if(fy) gotoInstant(fy.instant); }
+    };
+    pk.appendChild(b);
+  });
+  const ck=$('#presets-clock'); ck.innerHTML='';
+  [['08:00',480],['08:15',495],['08:30',510],['09:00',540]].forEach(([lab,mm])=>{
+    const b=document.createElement('button'); b.textContent=lab;
+    b.onclick=()=>{
+      // representative material date = the frozen peak date for this lot/config
+      const fy=D.frozen.fullyear[state.pos][state.fence+'/'+state.lot];
+      if(fy){ const dpart=fy.instant.split('T')[0];
+        const [y,m,d]=dpart.split('-').map(Number);
+        state.y=y;state.m=m;state.d=d; $('#date').value=dpart; }
+      state.minute=mm; $('#min').value=mm; $('#doy').value=doy(); render();
+    };
+    ck.appendChild(b);
+  });
+}
+
+// ---------- wiring -----------------------------------------------------------
+function wire(){
+  $('#date').onchange=e=>{const[y,m,d]=e.target.value.split('-').map(Number);
+    state.y=y;state.m=m;state.d=d;$('#doy').value=doy();render();};
+  $('#doy').oninput=e=>{setDoy(+e.target.value);render();};
+  $('#min').oninput=e=>{state.minute=+e.target.value;render();};
+  document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
+    state.minute=Math.max(240,Math.min(720,state.minute+ +b.dataset.step));
+    $('#min').value=state.minute;render();});
+  $('#play').onclick=()=>{state.playing=!state.playing;$('#play').textContent=state.playing?'❚❚':'▶';
+    if(state.playing) tick();};
+  $('#pos').onchange=e=>{state.pos=e.target.value;gridCache={};render();};
+  $('#fence').onchange=e=>{state.fence=e.target.value;render();};
+  $('#lot').onchange=e=>{state.lot=e.target.value;render();};
+  $('#comprl').onchange=e=>{state.compRL=parseFloat(e.target.value);render();};
+  $('#attr').onchange=e=>{state.attr=e.target.value;render();};
+  $('#cmpmode').onchange=e=>{state.cmp=e.target.value;render();};
+  const L={'l-approved':'approved','l-comp':'comp','l-sh-app':'shApp','l-sh-comp':'shComp',
+           'l-sh-inc':'shInc','l-cad':'cad','l-pos':'posL','l-qa':'qa'};
+  Object.entries(L).forEach(([id,k])=>{
+    $('#'+id).onchange=e=>{state.layers[k]=e.target.checked?1:0;
+      if(k==='qa') $('#qa-panel').classList.toggle('hidden',!e.target.checked);
+      render();};
+  });
+  document.querySelectorAll('[data-cam]').forEach(b=>b.onclick=()=>{
+    const c=b.dataset.cam;
+    if(c==='top') Object.assign(state.cam,{az:0,el:90,zoom:state.cam.zoom});
+    if(c==='obl') Object.assign(state.cam,{az:-20,el:38});
+    if(c==='rec') Object.assign(state.cam,{az:-100,el:14});
+    if(c==='align') Object.assign(state.cam,{az:-99,el:22});
+    render();});
+  // orbit / zoom / pan
+  let drag=null;
+  cv.onmousedown=e=>drag={x:e.clientX,y:e.clientY,az:state.cam.az,el:state.cam.el,
+                          px:state.cam.panx,py:state.cam.pany,shift:e.shiftKey};
+  window.onmouseup=()=>drag=null;
+  window.onmousemove=e=>{ if(!drag)return;
+    if(drag.shift){ state.cam.panx=drag.px+(e.clientX-drag.x); state.cam.pany=drag.py+(e.clientY-drag.y); }
+    else { state.cam.az=drag.az-(e.clientX-drag.x)*0.3;
+           state.cam.el=Math.max(6,Math.min(90,drag.el+(e.clientY-drag.y)*0.3)); }
+    render();};
+  cv.onwheel=e=>{e.preventDefault();
+    state.cam.zoom=Math.max(1.2,Math.min(40,state.cam.zoom*(e.deltaY<0?1.12:0.89)));render();};
+  window.onresize=render;
+}
+function tick(){ if(!state.playing) return;
+  state.minute=state.minute>=720?240:state.minute+1;
+  $('#min').value=state.minute; render(); setTimeout(tick,60); }
+
+// ---------- boot -------------------------------------------------------------
+(function(j){
+  D=j;
+  $('#sha').textContent=D.model.sha256.slice(0,8)+'…'+D.model.sha256.slice(-4);
+  // frame the site
+  const all=[...D.cadastre.parcel_913SP337678_part,
+             ...D.approved.building_A.footprint,...D.approved.building_B_plate.footprint,
+             ...Object.values(D.cadastre.lots).flat(),
+             ...Object.values(D.receptors.yard).flat()];
+  const xs=all.map(p=>p[0]), ys=all.map(p=>p[1]);
+  const spanx=Math.max(...xs)-Math.min(...xs), spany=Math.max(...ys)-Math.min(...ys);
+  state.cam.zoom=Math.min((cv.clientWidth-600)/(spanx*1.06), cv.clientHeight/(spany*1.06));
+  const cxm=(Math.max(...xs)+Math.min(...xs))/2, cym=(Math.max(...ys)+Math.min(...ys))/2;
+  state.cam.panx=-cxm*state.cam.zoom; state.cam.pany=cym*state.cam.zoom;
+  buildProvenance(); buildPresets(); wire();
+  gotoInstant('2026-01-11T07:20:00');
+})(__MODEL__);
+
+</script>
+</body>
+</html>

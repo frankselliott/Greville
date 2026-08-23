@@ -1,0 +1,22 @@
+# Greville Shadow Visualiser v1.1-AB — Cloudflare Workers static-assets deployment
+#
+# Serves the frozen visualiser at  https://greville.nrltipping.com
+#
+# Deploy from this directory:
+#     export CLOUDFLARE_API_TOKEN='<your token>'
+#     npx wrangler@latest deploy
+#
+# The custom_domain route makes Cloudflare create the DNS record and issue the
+# TLS certificate automatically. The nrltipping.com zone must be on the same
+# Cloudflare account as the API token.
+
+name = "greville-visualiser"
+compatibility_date = "2026-08-01"
+
+[assets]
+directory = "./public"
+not_found_handling = "single-page-application"
+
+[[routes]]
+pattern = "greville.nrltipping.com"
+custom_domain = true
