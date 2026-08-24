@@ -93,10 +93,48 @@ intersection — the rings are convex, so the clip is exact with no sampling
 along the ray — and the entry distance gives the height needed to reach that
 far. The smallest such height over the receptor is the answer.
 
-## The QA gate
+## Proving it — two layers, and they prove different things
 
 ```sh
 cd model
+python3 run_tests.py          # both layers, ~2 min, no dependencies
+```
+
+### 1. `tests/` — independent checks
+
+26 tests that never look at the frozen result set. They check the engine
+against things true regardless of what this project computed:
+
+| Area | What is checked against |
+|---|---|
+| Solar geometry | the solar-noon altitude identity `90 - abs(lat - decl)`, at both solstices and both equinoxes |
+| | the noon sun is due north — Brisbane sits outside the tropics |
+| | altitude is symmetric about solar noon, within the budget noon-quantisation and declination drift allow |
+| | solstice-to-solstice spread equals twice the obliquity |
+| | solar noon does not jump an hour in October — Queensland has no DST |
+| Receptor polygons | shoelace area vs recorded metadata, within the exact first-order budget that 0.1 mm coordinate rounding permits |
+| Grid sampling | cell-counting converges on the true area as the cell refines |
+| Shadow length | the far edge lands exactly `height / tan(altitude)` along the anti-solar bearing, closed form, at 20 altitude/azimuth combinations |
+| | nothing is cast with the sun down, or by a caster whose top is below the receiver |
+| Occlusion | the reach boundary sits where the closed form puts it, to either side |
+| Invariants | a taller caster shades a superset; an added caster only ever shades more; `0 <= loss <= otherwise-sunlit <= receptor area`; an opaque fence never leaves more sunlit than an open one |
+| **Inverse vs forward** | an envelope just above `first_contact_rl` must shade at least one sample and one just below must shade none — across five receptors and instants |
+
+That last one is the strongest thing here. The inverse clips the ray into a
+convex ring by half-planes; the forward path tests the ray against polygon
+edges. They share no code, so agreement is evidence rather than tautology.
+
+**This layer would catch an engine that is self-consistent but wrong.** The
+frozen gate could not.
+
+### 2. `verify_frozen_peaks.py` — the frozen QA gate
+
+## The QA gate
+
+A different claim from the tests above: not "the physics is right" but "this is
+the same model that produced the figures on record".
+
+```sh
 python3 verify_frozen_peaks.py            # frozen 0.02 m cell, ~2 min
 python3 verify_frozen_peaks.py --sweep    # convergence as the cell refines
 ```
