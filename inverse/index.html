@@ -17,8 +17,9 @@
   --serif:"Instrument Serif",Georgia,serif;
   --sans:"Karla","Helvetica Neue",Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  /* the bounded comparator family, warm where the requirement is low */
-  --b1:#E4694D; --b2:#ED8A4A; --b3:#F5A845; --b4:#F5C36B; --b5:#D9CFA0;
+  /* the bounded comparator family — one warm ramp, brighter = lower requirement.
+     Adjacent steps validated for CVD and normal-vision separation on #080A11. */
+  --b1:#FFFFF2; --b2:#FFC061; --b3:#E97430; --b4:#B83B20; --b5:#761C12;
   --beyond:#332F55;
 }
 *{box-sizing:border-box}
@@ -54,6 +55,21 @@ header{padding:34px 0 20px}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
 .seg .btn{border:none;border-radius:0;border-right:1px solid var(--line)}
 .seg .btn:last-child{border-right:none}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--shade-deep),var(--line));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--sun);border:2px solid var(--night);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--sun);
+  border:2px solid var(--night);cursor:pointer}
+input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(245,184,67,.35)}
+.ctl.slide{flex:1 1 230px;min-width:200px}
+.ctl.slide .k{display:flex;justify-content:space-between;gap:10px}
+.ctl.slide .k b{color:var(--sun);font-weight:500;letter-spacing:.06em}
+.tip{position:absolute;display:none;pointer-events:none;z-index:5;background:rgba(16,19,32,.95);
+  border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-family:var(--mono);
+  font-size:.68rem;line-height:1.5;color:var(--dim);white-space:nowrap;
+  box-shadow:0 4px 18px rgba(0,0,0,.5)}
+.tip b{color:var(--sun);font-weight:500}
 .readout{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--dim);text-align:right}
 .readout b{color:var(--sun);font-weight:500}
 
@@ -129,6 +145,11 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
   <div class="ctl"><span class="k">Lot</span><div class="seg" id="lotSeg"></div></div>
   <div class="ctl"><span class="k">Receptor</span><div class="seg" id="posSeg">
     <button class="btn" data-v="yard">yard</button><button class="btn" data-v="sched">sched</button></div></div>
+  <div class="ctl slide"><span class="k">Day <b id="doyV"></b></span>
+    <input type="range" id="doy" min="1" max="365" step="1" value="11" aria-label="day of year"></div>
+  <div class="ctl slide"><span class="k">Time <b id="todV"></b></span>
+    <input type="range" id="tod" min="240" max="1140" step="5" value="440" aria-label="time of day"></div>
+  <div class="ctl"><span class="k">&nbsp;</span><button class="btn" id="play">Play</button></div>
   <div class="ctl"><span class="k">Instant</span><div class="seg" id="jumpSeg"></div></div>
   <div class="readout" id="readout"></div>
 </div></div></div>
@@ -139,7 +160,8 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
   <section class="panel">
     <div class="phead"><span class="t">Year map</span>
       <span class="h">First-contact RL, every day and hour of 2026</span></div>
-    <div class="scene-wrap"><canvas id="year" height="470"></canvas></div>
+    <div class="scene-wrap"><canvas id="year" height="470"></canvas>
+      <div class="tip" id="yearTip"></div></div>
     <div class="legend" id="legend"></div>
     <div class="pbody"><p class="note" id="yearNote"><span class="busy">computing…</span></p></div>
   </section>
@@ -147,15 +169,12 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
   <section class="panel">
     <div class="phead"><span class="t">This instant</span>
       <span class="h" id="planTitle">Where the requirement is lowest</span></div>
-    <div class="scene-wrap"><canvas id="plan" height="300"></canvas></div>
+    <div class="scene-wrap"><canvas id="plan" height="300"></canvas>
+      <div class="tip" id="planTip"></div></div>
     <div class="pbody">
       <p class="note" id="planNote"></p>
       <p class="tgroup" style="margin-top:16px">The bounded comparator family</p>
       <div class="tgrid" id="ladder"></div>
-      <p class="note" style="margin-top:11px;font-size:.76rem">Each figure is the margin: how
-      far that test height falls short of, or clears, what is needed here at this instant. The
-      bar is the same thing as a proportion — how much of the required height that member
-      reaches.</p>
     </div>
   </section>
 
@@ -302,10 +321,14 @@ const BANDS=[
   {hi:Infinity,  c:'var(--beyond)', k:'beyond the family'}
 ];
 const CSSVAR = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-/* the Study's meter gradient: shade at the far end, sun at the near one */
-const SHADE_RGB=[126,115,190], SUN_RGB=[245,184,67];
-const rampShadeToSun = u => { const t=Math.max(0,Math.min(1,u));
-  return `rgb(${SHADE_RGB.map((c,i)=>Math.round(c+(SUN_RGB[i]-c)*t)).join(',')})`; };
+/* Validated ordered ramp for the requirement: brighter = lower RL = easier to
+   reach. Adjacent steps pass CVD >=11.5 and normal-vision >=15.9 dE (OKLab x100)
+   against the #080A11 scene surface, family edge included. */
+const RL_STOPS=[[255,255,242],[255,192,97],[233,116,48],[184,59,32],[118,28,18]];
+function rampRL(t){ const u=Math.max(0,Math.min(1,t))*(RL_STOPS.length-1);
+  const i=Math.min(RL_STOPS.length-2,Math.floor(u)), f=u-i;
+  const a=RL_STOPS[i], b=RL_STOPS[i+1];
+  return `rgb(${a.map((c,k)=>Math.round(c+(b[k]-c)*f)).join(',')})`; }
 const BANDC = BANDS.map(b=>CSSVAR(b.c.slice(4,-1)));
 function bandOf(v){ for(let i=0;i<BANDS.length;i++) if(v<=BANDS[i].hi) return i; return BANDS.length-1; }
 
@@ -321,6 +344,12 @@ function fromDoy(doy){ const d=new Date(Date.UTC(YEAR,0,1)+(doy-1)*86400000);
   return {y:YEAR,m:d.getUTCMonth()+1,d:d.getUTCDate()}; }
 const pad=n=>String(n).padStart(2,'0');
 const hhmm=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+const dayLabel=doy=>{ const c=fromDoy(doy); return `${c.d} ${MON[c.m-1]}`; };
+function syncClockUI(){
+  const d=document.getElementById('doy'), t=document.getElementById('tod');
+  if(d){ d.value=S.doy; document.getElementById('doyV').textContent=dayLabel(S.doy); }
+  if(t){ t.value=S.min; document.getElementById('todV').textContent=hhmm(S.min); }
+}
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function solarAt(doy,min){ const c=fromDoy(doy);
   return sunPosition({...c,hh:Math.floor(min/60),mm:min%60},LAT,LON); }
@@ -397,13 +426,30 @@ function drawYear(){
   g.beginPath(); g.moveTo(L,my); g.lineTo(L+pw,my); g.moveTo(mx,TP); g.lineTo(mx,TP+ph); g.stroke();
   yc._geom={L,TP,cw,chh,pw,ph};
 }
-yc.addEventListener('click',ev=>{
-  const g=yc._geom; if(!g) return;
+function yearCellAt(ev){
+  const g=yc._geom; if(!g) return null;
   const r=yc.getBoundingClientRect();
   const ix=Math.floor((ev.clientX-r.left-g.L)/g.cw), iy=Math.round((ev.clientY-r.top-g.TP)/g.chh);
-  if(ix<0||ix>=NX||iy<0||iy>=NY) return;
-  S.doy=ix+1; S.min=T0+iy*TSTEP; paint();
+  if(ix<0||ix>=NX||iy<0||iy>=NY) return null;
+  return {ix,iy,x:ev.clientX-r.left,y:ev.clientY-r.top};
+}
+yc.addEventListener('click',ev=>{ const c=yearCellAt(ev); if(!c) return;
+  stopPlay(); S.doy=c.ix+1; S.min=T0+c.iy*TSTEP; paint(); });
+const yearTip=document.getElementById('yearTip');
+yc.addEventListener('pointermove',ev=>{
+  const c=yearCellAt(ev);
+  if(!c||!YEARDATA){ yearTip.style.display='none'; return; }
+  const v=YEARDATA.vals[c.ix*NY+c.iy], min=T0+c.iy*TSTEP;
+  yearTip.style.display='block';
+  const wrap=yc.parentElement.getBoundingClientRect(), rr=yc.getBoundingClientRect();
+  const bx=rr.left-wrap.left+c.x, by=rr.top-wrap.top+c.y;
+  yearTip.style.left=Math.min(bx+14, wrap.width-190)+'px';
+  yearTip.style.top=Math.max(6, by-40)+'px';
+  yearTip.innerHTML = `<b>${dayLabel(c.ix+1)} ${hhmm(min)}</b><br>`+
+    (isFinite(v)? `needs <b>RL ${v.toFixed(2)}</b> · ${v<=FAMILY[FAMILY.length-1]?'inside the family':'beyond the family'}`
+                : `sun below the horizon`);
 });
+yc.addEventListener('pointerleave',()=>{ yearTip.style.display='none'; });
 
 /* ---------------- plan at the instant ---------------- */
 const pc=document.getElementById('plan');
@@ -433,7 +479,7 @@ function drawPlan(field,sp){
       const X=px(pts[i][0])-cs/2, Y=py(pts[i][1])-cs/2;
       if(!isFinite(v)){ g.fillStyle='rgba(255,255,255,.04)'; g.fillRect(X,Y,cs+.6,cs+.6); continue; }
       if(marks.some(r=>Math.abs(v-r)<=span*0.012)){ g.fillStyle=CSSVAR('--bone'); }
-      else { g.fillStyle=rampShadeToSun(1-(v-lo)/span); }
+      else { g.fillStyle=rampRL((v-lo)/span); }
       g.fillRect(X,Y,cs+.6,cs+.6);
     }
     pc._ramp={lo,hi,marks};
@@ -459,6 +505,7 @@ function drawPlan(field,sp){
   g.fillStyle=CSSVAR('--dimmer'); g.font='10px '+CSSVAR('--mono');
   g.textAlign='left'; g.textBaseline='bottom';
   g.fillText(`${(x1-x0).toFixed(1)} × ${(y1-y0).toFixed(1)} m · north up`, 8, H-8);
+  pc._map={px,py,s,x0,x1,y0,y1};
   if(pc._ramp && isFinite(pc._ramp.lo)){
     g.textAlign='right';
     g.fillText(`lighter = lower requirement · RL ${pc._ramp.lo.toFixed(2)} to ${pc._ramp.hi.toFixed(2)}`,
@@ -468,6 +515,29 @@ function drawPlan(field,sp){
   }
 }
 
+
+let LASTFIELD=null;
+const planTip=document.getElementById('planTip');
+pc.addEventListener('pointermove',ev=>{
+  if(!LASTFIELD||!pc._map){ planTip.style.display='none'; return; }
+  const r=pc.getBoundingClientRect();
+  const mx=ev.clientX-r.left, my=ev.clientY-r.top;
+  // invert the plan projection, then find the nearest sample
+  const {s,x0,x1,y0,y1}=pc._map, W=r.width, H=r.height;
+  const wx=(mx-W/2)/s+(x0+x1)/2, wy=(y0+y1)/2-(my-H/2)/s;
+  const pts=grid(S.pos,S.lot,FINE);
+  let bi=-1,bd=Infinity;
+  for(let i=0;i<pts.length;i++){ const dx=pts[i][0]-wx, dy=pts[i][1]-wy, d=dx*dx+dy*dy;
+    if(d<bd){bd=d;bi=i;} }
+  if(bi<0||bd> FINE*FINE*9){ planTip.style.display='none'; return; }
+  const v=LASTFIELD.vals[bi];
+  planTip.style.display='block';
+  const wrap=pc.parentElement.getBoundingClientRect();
+  planTip.style.left=Math.min(mx+(r.left-wrap.left)+14, wrap.width-170)+'px';
+  planTip.style.top=Math.max(6, my+(r.top-wrap.top)-36)+'px';
+  planTip.innerHTML=isFinite(v)?`needs <b>RL ${v.toFixed(2)}</b> here`:`out of reach here`;
+});
+pc.addEventListener('pointerleave',()=>{ planTip.style.display='none'; });
 
 /* ---------------- the site, on the registered aerial ---------------- */
 const GROUND=new Image(); let groundReady=false;
@@ -564,7 +634,8 @@ function drawSite(field,sp){
 function paint(){
   const sp=solarAt(S.doy,S.min), z=M.receiver_rl[S.lot];
   const pts=grid(S.pos,S.lot,FINE);
-  const field=fieldFor(pts,z,sp.alt,sp.az);
+  const field=fieldFor(pts,z,sp.alt,sp.az); LASTFIELD=field;
+  syncClockUI();
   drawYear(); drawPlan(field,sp); drawSite(field,sp);
 
   const meta=M.lot_meta[S.lot], area=M.receptor_meta[S.pos][S.lot].area_m2;
@@ -654,6 +725,7 @@ const JUMPS=Object.entries(M.frozen.comp_at_peaks).slice(0,6);
 seg(document.getElementById('jumpSeg'),
     [{v:'',k:'frozen instants →'}].concat(JUMPS.map(([k,r])=>({v:k,k:k.split('/')[2].slice(0,2)+' '+k.split('/')[1]}))),
     '', v=>{ if(!v) return; const r=M.frozen.comp_at_peaks[v];
+      stopPlay();
       const [pos,,lot]=v.split('/'); const d=new Date(r.instant+'Z');
       S.pos=pos; S.lot=lot;
       S.doy=Math.round((Date.UTC(YEAR,d.getUTCMonth(),d.getUTCDate())-Date.UTC(YEAR,0,1))/86400000)+1;
@@ -662,6 +734,19 @@ seg(document.getElementById('jumpSeg'),
       [...document.getElementById('lotSeg').children].forEach(c=>c.classList.toggle('on',c.dataset.v===lot));
       rebuild(); });
 
+/* one clock drives every view — sliders + play, like the Study */
+let playTimer=null;
+function stopPlay(){ if(playTimer){ clearInterval(playTimer); playTimer=null; }
+  const b=document.getElementById('play'); if(b){ b.textContent='Play'; b.classList.remove('on'); } }
+document.getElementById('doy').addEventListener('input',ev=>{
+  stopPlay(); S.doy=+ev.target.value; paint(); });
+document.getElementById('tod').addEventListener('input',ev=>{
+  stopPlay(); S.min=+ev.target.value; paint(); });
+document.getElementById('play').addEventListener('click',()=>{
+  if(playTimer){ stopPlay(); return; }
+  const b=document.getElementById('play'); b.textContent='Pause'; b.classList.add('on');
+  playTimer=setInterval(()=>{ S.min+=TSTEP; if(S.min>T1){ S.min=T0; } paint(); },140);
+});
 document.getElementById('legend').innerHTML=
   BANDS.map(b=>`<span class="lg"><i style="background:${b.c}"></i>${b.k}</span>`).join('');
 document.getElementById('mv').textContent=M.model.version;
