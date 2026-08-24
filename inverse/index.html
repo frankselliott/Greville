@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Greville — the envelope inverse</title>
+<style>
+:root{
+  --night:#0F1220; --panel:#161A28; --panel2:#1D2231; --line:#2A3044; --line2:#222738;
+  --bone:#E9E5DB; --dim:#98A0B6; --dimmer:#6C7488; --brass:#B58E4C;
+  --sun:#F5B843; --coral:#E4694D; --ok:#5FA88B;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  /* RL bands: the bounded comparator family */
+  --b1:#8E3B2E; --b2:#B4603A; --b3:#D08B45; --b4:#E0B45C; --b5:#C9C08A; --beyond:#39415A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--night);color:var(--bone);
+  font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin-inline:auto;padding:0 20px}
+h1{font-size:1.7rem;font-weight:600;margin:0 0 .25rem;letter-spacing:-.01em}
+h2{font-size:1.05rem;font-weight:600;margin:0}
+p{margin:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--brass);margin:0 0 .6rem}
+.sub{color:var(--dim);font-size:.92rem;max-width:82ch}
+header{padding:30px 0 16px;border-bottom:1px solid var(--line)}
+
+.warn{margin:16px 0 0;padding:11px 14px;border:1px solid #4A3A2A;border-left:3px solid var(--sun);
+  border-radius:3px;background:rgba(245,184,67,.06);font-size:.86rem;color:#E8D9B8}
+.warn b{color:var(--sun)}
+
+.controls{position:sticky;top:0;z-index:20;background:rgba(15,18,32,.95);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:11px 0;margin-bottom:20px}
+.crow{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl .k{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dimmer)}
+.seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;background:transparent;
+  color:var(--dim);border:none;border-right:1px solid var(--line);padding:7px 11px;cursor:pointer}
+.seg button:last-child{border-right:none}
+.seg button:hover{color:var(--bone)}
+.seg button.on{background:rgba(245,184,67,.13);color:var(--sun)}
+.seg button:focus-visible{outline:2px solid var(--sun);outline-offset:-2px}
+.readout{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--dim);text-align:right}
+.readout b{color:var(--sun);font-weight:600}
+
+.grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:1000px){.grid{grid-template-columns:1.45fr 1fr}}
+.panel{border:1px solid var(--line);border-radius:4px;background:var(--panel);overflow:hidden}
+.phead{padding:12px 16px;border-bottom:1px solid var(--line2);display:flex;
+  align-items:baseline;gap:12px;flex-wrap:wrap}
+.phead .t{font-family:var(--mono);font-size:.62rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--dimmer)}
+.pbody{padding:14px 16px}
+canvas{display:block;width:100%;touch-action:none}
+.scrollx{overflow-x:auto}
+
+.legend{display:flex;gap:0;margin:10px 0 6px;border-radius:2px;overflow:hidden;min-width:520px}
+.legend div{flex:1;height:15px}
+.legkeys{display:flex;font-family:var(--mono);font-size:.6rem;color:var(--dimmer);min-width:520px}
+.legkeys span{flex:1;text-align:center}
+.note{color:var(--dim);font-size:.83rem;margin-top:10px}
+.note b{color:var(--bone);font-weight:600}
+
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line2)}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dimmer);font-weight:400}
+td.v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.hit td{color:var(--sun)}
+tr.miss td{color:var(--dimmer)}
+
+footer{margin:26px 0 40px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--dimmer);font-size:.8rem}
+footer p{margin:0 0 .5rem;max-width:88ch}
+footer b{color:var(--dim)}
+.busy{color:var(--sun);font-family:var(--mono);font-size:.7rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">Greville Stage 5 · Wooloowin · lots 60–63 SP354191</p>
+  <h1>How tall would it have to be?</h1>
+  <p class="sub">The frozen model asks what the approved buildings take from these
+  backyards. This page asks the question backwards: at a given moment, what is the
+  lowest an envelope could be and still reach this ground at all? That height is the
+  <b>first-contact RL</b>. Where it sits above the bounded comparator family, no
+  building in that family reaches — and the year map below shows every hour of 2026
+  at once.</p>
+  <div class="warn"><b>This page computes the inverse; it does not restate the frozen
+  results.</b> The forward figures — losses, peaks, otherwise-sunlit areas — are
+  finalised and live in the frozen visualiser. Nothing here alters them. The inverse
+  is also a known open item: it is reproduced from the frozen browser method, which
+  disagrees with the frozen offline <span class="num">first_contact_RL</span> table by
+  up to 0.32 m. See the foot of the page.</div>
+</header>
+</div>
+
+<div class="controls"><div class="wrap"><div class="crow">
+  <div class="ctl"><span class="k">Lot</span><div class="seg" id="lotSeg"></div></div>
+  <div class="ctl"><span class="k">Receptor</span><div class="seg" id="posSeg">
+    <button data-v="yard">yard</button><button data-v="sched">sched</button></div></div>
+  <div class="ctl"><span class="k">Instant</span><div class="seg" id="jumpSeg"></div></div>
+  <div class="readout" id="readout"></div>
+</div></div></div>
+
+<div class="wrap">
+<div class="grid">
+
+  <section class="panel">
+    <div class="phead"><span class="t">Year map</span>
+      <h2>First-contact RL, every day and hour of 2026</h2></div>
+    <div class="pbody">
+      <div class="scrollx">
+        <canvas id="year" height="470"></canvas>
+        <div class="legend" id="legend"></div>
+        <div class="legkeys" id="legkeys"></div>
+      </div>
+      <p class="note" id="yearNote"><span class="busy">computing…</span></p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead"><span class="t">This instant</span>
+      <h2 id="planTitle">Where the requirement is lowest</h2></div>
+    <div class="pbody">
+      <canvas id="plan" height="300"></canvas>
+      <p class="note" id="planNote"></p>
+      <table id="ladder">
+        <thead><tr><th>Comparator top RL</th><th>Reaches?</th><th>Margin</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p><b>What is drawn.</b> The comparator is a bounded family of prisms at RL 46.0,
+  48.0, 50.0, 52.0 and 55.75, tested because the 2020 approval fixed height as a
+  storey count only — no top RL appears in any source. RL 48.0 is the true
+  eight-storey plate. This is a bounded comparator, never the applicant's model, and
+  must not be described as one.</p>
+  <p><b>Method.</b> NOAA geometric solar position, UTC+10, no daylight saving, no
+  refraction — the frozen convention. Geometry in EPSG:7856 minus the local origin.
+  For each sample point in the receptor the ray toward the sun is clipped against
+  each comparator ring by half-plane intersection; the rings are convex, so the clip
+  is exact with no sampling along the ray. The entry distance gives the height a
+  prism must reach to cast that far, and the smallest such height over the receptor
+  is the first-contact RL. Ground is drawn flat; the real site slopes.</p>
+  <p><b>The open finding.</b> This reproduces the frozen <i>browser</i> method, which
+  takes a minimum over grid sample points. The frozen <i>offline</i>
+  <span class="num">first_contact_RL</span> table was produced some other way: 16 of
+  its 21 values differ by more than 10 mm, worst 0.32 m, and refining the cell does
+  not close the gap. The original method is lost and has not been reconstructed by
+  fitting to its answers. Nothing reported turns on it — every value on both sides is
+  metres clear of the 46.0–55.75 m family.</p>
+  <p><b>Status.</b> Class A internal forensic physical model. Not independent expert
+  evidence. No planning conclusion is offered here. Model
+  <span class="num" id="mv"></span>, archive SHA-256 <span class="num" id="mh"></span>.
+  This page reads that frozen data and computes only the inverse from it.</p>
+</footer>
+</div>
+
+<script>
+const M = {"model":{"version":"v1.1-AB","archive":"greville_shadow_model_v1.1-AB.tar.gz","sha256":"6df4dde6b3f11a087c8dea33d8b4e3da9609f4237f9e6c3740ffc54d2c76d4f0","classification":"A - internal forensic physical model","disclaimer":"NOT YET INDEPENDENT EXPERT EVIDENCE"},"crs":{"epsg":7856,"local_origin_E":504045,"local_origin_N":6966712,"note":"local = EPSG:7856 minus the local origin, in metres. Exact and reversible."},"solar":{"latitude":-27.422924,"longitude":153.041035,"tz_offset_h":10.0,"algorithm":"NOAA geometric solar position, no atmospheric refraction","year":2026},"cadastre":{"parcel_913SP337678_part":[[89.2635,52.2755],[122.6565,46.8835],[125.0643,45.8139],[127.3453,44.501],[129.4775,42.9562],[131.4365,41.196],[133.201,39.2428],[134.7526,37.1156],[135.8581,35.208],[125.0622,-34.0319],[119.9259,-33.2304],[119.796,-34.0655],[72.8802,-26.7494],[84.2892,46.407],[85.7536,49.7158],[89.2635,52.2755]],"lots":{"60SP354191":[[-18.1355,-5.6517],[-15.0404,14.0992],[-6.1523,12.7065],[-9.2378,-7.0469],[-18.1355,-5.6517]],"61SP354191":[[-9.2378,-7.0469],[-6.1523,12.7065],[1.2846,11.5405],[-1.7819,-8.2146],[-9.2378,-7.0469]],"62SP354191":[[-1.7819,-8.2146],[1.2846,11.5405],[8.6904,10.3802],[5.6351,-9.3774],[-1.7819,-8.2146]],"63SP354191":[[5.6351,-9.3774],[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[13.4282,-8.5242],[13.1109,-10.5485],[5.6351,-9.3774]]}},"lot_meta":{"60SP354191":{"label":"Lot 60","dwelling":"TYPE G MIR + END TYPE","ffl":23.91,"position":"westernmost"},"61SP354191":{"label":"Lot 61","dwelling":"TYPE G","ffl":23.91,"position":""},"62SP354191":{"label":"Lot 62","dwelling":"TYPE G","ffl":23.615,"position":""},"63SP354191":{"label":"Lot 63","dwelling":"TYPE G + END TYPE","ffl":23.32,"position":"easternmost"}},"approved":{"building_A":{"footprint":[[84.6052,28.8657],[86.954,43.9236],[115.9824,39.3955],[115.6196,37.0699],[116.9915,36.8559],[117.3543,39.1815],[132.0609,36.8875],[130.3149,25.6944],[127.0356,26.2059],[126.8738,25.1686],[129.8017,24.7119],[128.0714,13.6192],[113.5991,15.8767],[113.3042,13.9861],[104.5371,15.3537],[104.9912,18.2649],[101.9294,18.7425],[101.7781,17.7721],[93.446,19.0718],[93.0232,16.3614],[82.901,17.9403],[84.6052,28.8657]],"top_rl":66.6,"base_rl":0.0,"area_m2":null},"building_B_plate":{"footprint":[[95.8554,-0.3102],[95.7719,-0.8456],[99.1851,-1.378],[99.5661,1.0647],[108.1826,-0.2794],[107.9477,-1.7852],[122.8718,-4.1131],[122.5638,-6.0874],[125.7929,-6.5911],[125.0047,-11.6439],[124.7774,-12.0026],[124.5259,-12.1861],[123.8949,-12.2762],[123.6104,-14.0999],[123.9205,-14.1997],[124.2405,-14.4553],[124.4022,-14.7376],[124.4593,-15.1406],[122.3244,-28.8266],[79.6436,-22.1689],[80.6223,-15.8948],[77.7613,-15.4485],[78.3955,-11.3829],[78.6735,-10.8093],[79.1841,-10.3919],[79.6865,-10.2475],[81.4679,-10.4739],[81.6349,-9.4032],[80.8564,-9.2303],[80.4218,-8.9397],[80.0625,-8.3867],[79.9683,-7.8921],[80.9354,-1.5819],[82.8093,-1.8742],[83.3574,1.6393],[95.8554,-0.3102]],"top_rl":62.9,"base_rl":0.0,"area_m2":null},"building_B_communal_roof":{"footprint":[[94.8525,-1.5762],[98.9181,-2.2104],[98.738,-3.3649],[109.0443,-4.9725],[108.1492,-10.7113],[113.2689,-11.5099],[111.6455,-21.9166],[92.1539,-18.8761],[94.8525,-1.5762]],"top_rl":66.4,"base_rl":0.0,"area_m2":null},"building_B_lift_overrun":{"footprint":[[97.7149,-5.6389],[96.9137,-10.7753],[99.9755,-11.2529],[100.7767,-6.1165],[97.7149,-5.6389]],"top_rl":67.5,"base_rl":0.0,"area_m2":null}},"comparator":{"A":[[84.1007,21.2596],[129.0671,14.247],[132.961,39.2152],[87.9945,46.2278],[84.1007,21.2596]],"B":[[76.9917,-24.3303],[121.9187,-31.3367],[125.8326,-6.2401],[80.9056,0.7664],[76.9917,-24.3303]],"permitted_slack_along_m":2.753,"permitted_slack_across_m":0.05,"test_heights":[46.0,48.0,50.0,52.0,55.75]},"receptors":{"yard":{"60SP354191":[[-15.0404,14.0992],[-6.1523,12.7065],[-6.8074,8.5124],[-15.6986,9.899],[-15.0404,14.0992]],"61SP354191":[[-6.1523,12.7065],[1.2846,11.5405],[0.6334,7.3454],[-6.8084,8.506],[-6.1523,12.7065]],"62SP354191":[[1.2846,11.5405],[8.6904,10.3802],[8.0414,6.1839],[0.6324,7.3393],[1.2846,11.5405]],"63SP354191":[[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[15.5489,5.0077],[8.0406,6.1787],[8.6904,10.3802]]},"sched":{"60SP354191":[[-15.0404,14.0992],[-6.1523,12.7065],[-6.7507,8.8754],[-15.6417,10.262],[-15.0404,14.0992]],"61SP354191":[[-6.1523,12.7065],[1.2846,11.5405],[0.5741,6.9637],[-6.868,8.1244],[-6.1523,12.7065]],"62SP354191":[[1.2846,11.5405],[8.6904,10.3802],[7.9801,5.7869],[0.5708,6.9424],[1.2846,11.5405]],"63SP354191":[[8.6904,10.3802],[16.0682,9.2241],[16.1846,9.064],[15.4948,4.6627],[7.9873,5.8336],[8.6904,10.3802]]}},"receptor_meta":{"yard":{"60SP354191":{"depth_m":4.2515,"width_m":9.01124395877606,"area_m2":38.224359187844506},"61SP354191":{"depth_m":4.2515,"width_m":7.546786011247963,"area_m2":31.989401747494462},"62SP354191":{"depth_m":4.2515,"width_m":7.521837933960391,"area_m2":31.8552958219441},"63SP354191":{"depth_m":4.2515,"width_m":7.607530620708372,"area_m2":32.294403907520234}},"sched":{"60SP354191":{"depth_m":3.8840364504740172,"width_m":9.01124395877606,"area_m2":34.917701144211264},"61SP354191":{"depth_m":4.637735845144531,"width_m":7.546786011247963,"area_m2":34.89850434829318},"62SP354191":{"depth_m":4.653118068654243,"width_m":7.521837933960391,"area_m2":34.86689916158288},"63SP354191":{"depth_m":4.600704452602123,"width_m":7.607530620708372,"area_m2":34.94788739258749}}},"occluders":{"60SP354191":{"footprint":[[-15.6432,10.253],[-6.7521,8.8664],[-9.2378,-7.0469],[-18.1355,-5.6517],[-15.6432,10.253]],"top_rl":33.41},"61SP354191":{"footprint":[[-6.8701,8.1111],[0.5721,6.9504],[-1.7819,-8.2146],[-9.2378,-7.0469],[-6.8701,8.1111]],"top_rl":33.41},"62SP354191":{"footprint":[[0.5681,6.9249],[7.9774,5.7694],[5.6351,-9.3774],[-1.7819,-8.2146],[0.5681,6.9249]],"top_rl":33.115},"63SP354191":{"footprint":[[7.9862,5.8268],[15.4938,4.656],[13.4282,-8.5242],[13.1109,-10.5485],[5.6351,-9.3774],[7.9862,5.8268]],"top_rl":32.82}},"fences":{"60SP354191":{"lines":[[[-15.0404,14.0992],[-6.1523,12.7065]],[[-6.1523,12.7065],[-6.7521,8.8664]],[[-15.6432,10.253],[-15.0404,14.0992]]],"legacy_top_rl":25.71},"61SP354191":{"lines":[[[-6.1523,12.7065],[1.2846,11.5405]],[[1.2846,11.5405],[0.5721,6.9504]],[[-6.8701,8.1111],[-6.1523,12.7065]]],"legacy_top_rl":25.71},"62SP354191":{"lines":[[[1.2846,11.5405],[8.6904,10.3802]],[[8.6904,10.3802],[7.9774,5.7694]],[[0.5681,6.9249],[1.2846,11.5405]]],"legacy_top_rl":25.415},"63SP354191":{"lines":[[[8.6904,10.3802],[16.0682,9.2241]],[[16.0682,9.2241],[16.1846,9.064]],[[16.1846,9.064],[15.4938,4.656]],[[7.9862,5.8268],[8.6904,10.3802]]],"legacy_top_rl":25.12}},"receiver_rl":{"60SP354191":23.91,"61SP354191":23.91,"62SP354191":23.615,"63SP354191":23.32},"casting_edge":{"union_bbox":[80.40810867468826,-7.325533412396908,91.02836623799521,-0.9050511680543423],"centroid":[85.8206289410009,-4.189991435967386]},"frozen":{"fullyear":{"yard":{"f000/60SP354191":{"peak":35.0,"pct":100.0,"instant":"2026-02-02T07:02:00","days":283,"first_time":"04:54","last_time":"07:50","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":35.0},"f000/61SP354191":{"peak":31.989,"pct":100.0,"instant":"2026-10-29T05:54:00","days":303,"first_time":"04:50","last_time":"07:59","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":31.989},"f000/62SP354191":{"peak":31.855,"pct":100.0,"instant":"2026-01-21T07:17:00","days":331,"first_time":"04:50","last_time":"08:09","l0800":26.935,"l0830":0.0,"l0900":0.0,"cmp48":31.855},"f000/63SP354191":{"peak":32.294,"pct":100.0,"instant":"2026-01-11T07:20:00","days":365,"first_time":"04:50","last_time":"08:21","l0800":32.294,"l0830":0.0,"l0900":0.0,"cmp48":32.294},"f150/60SP354191":{"peak":20.114,"pct":100.0,"instant":"2026-02-01T07:04:00","days":239,"first_time":"05:36","last_time":"07:47","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":11.029},"f150/61SP354191":{"peak":17.555,"pct":100.0,"instant":"2026-01-26T07:11:00","days":250,"first_time":"05:43","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":8.472},"f150/62SP354191":{"peak":18.748,"pct":100.0,"instant":"2026-11-22T06:52:00","days":262,"first_time":"05:43","last_time":"08:05","l0800":10.312,"l0830":0.0,"l0900":0.0,"cmp48":10.694},"f150/63SP354191":{"peak":20.513,"pct":100.0,"instant":"2026-01-14T07:24:00","days":275,"first_time":"05:43","last_time":"08:17","l0800":17.46,"l0830":0.0,"l0900":0.0,"cmp48":13.359},"f180/60SP354191":{"peak":17.139,"pct":100.0,"instant":"2026-02-01T07:04:00","days":228,"first_time":"05:44","last_time":"07:46","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":6.339},"f180/61SP354191":{"peak":14.667,"pct":100.0,"instant":"2026-01-26T07:11:00","days":237,"first_time":"05:54","last_time":"07:54","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":3.807},"f180/62SP354191":{"peak":16.125,"pct":100.0,"instant":"2026-11-22T06:52:00","days":248,"first_time":"05:54","last_time":"08:05","l0800":7.893,"l0830":0.0,"l0900":0.0,"cmp48":6.46},"f180/63SP354191":{"peak":18.155,"pct":100.0,"instant":"2026-01-14T07:24:00","days":264,"first_time":"05:53","last_time":"08:17","l0800":14.984,"l0830":0.0,"l0900":0.0,"cmp48":9.576}},"sched":{"f000/60SP354191":{"peak":34.918,"pct":100.0,"instant":"2026-02-01T07:04:00","days":283,"first_time":"04:54","last_time":"07:50","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":34.918},"f000/61SP354191":{"peak":34.899,"pct":100.0,"instant":"2026-03-13T07:41:00","days":304,"first_time":"04:50","last_time":"07:59","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":34.899},"f000/62SP354191":{"peak":34.865,"pct":100.0,"instant":"2026-04-26T07:00:00","days":335,"first_time":"04:50","last_time":"08:09","l0800":29.534,"l0830":0.0,"l0900":0.0,"cmp48":34.865},"f000/63SP354191":{"peak":34.948,"pct":100.0,"instant":"2026-01-23T07:26:00","days":365,"first_time":"04:50","last_time":"08:21","l0800":34.948,"l0830":0.0,"l0900":0.0,"cmp48":34.948},"f150/60SP354191":{"peak":20.07,"pct":100.0,"instant":"2026-02-01T07:04:00","days":239,"first_time":"05:36","last_time":"07:47","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":11.029},"f150/61SP354191":{"peak":18.712,"pct":100.0,"instant":"2026-11-13T06:42:00","days":251,"first_time":"05:43","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":8.819},"f150/62SP354191":{"peak":20.053,"pct":100.0,"instant":"2026-11-15T06:51:00","days":265,"first_time":"05:43","last_time":"08:06","l0800":11.899,"l0830":0.0,"l0900":0.0,"cmp48":11.305},"f150/63SP354191":{"peak":21.961,"pct":100.0,"instant":"2026-11-23T07:03:00","days":279,"first_time":"05:43","last_time":"08:17","l0800":19.087,"l0830":0.0,"l0900":0.0,"cmp48":14.172},"f180/60SP354191":{"peak":17.139,"pct":100.0,"instant":"2026-01-30T07:04:00","days":228,"first_time":"05:44","last_time":"07:46","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":6.339},"f180/61SP354191":{"peak":15.486,"pct":100.0,"instant":"2026-11-13T06:42:00","days":239,"first_time":"05:54","last_time":"07:55","l0800":0.0,"l0830":0.0,"l0900":0.0,"cmp48":3.961},"f180/62SP354191":{"peak":17.127,"pct":100.0,"instant":"2026-01-27T07:19:00","days":253,"first_time":"05:54","last_time":"08:05","l0800":9.348,"l0830":0.0,"l0900":0.0,"cmp48":6.823},"f180/63SP354191":{"peak":19.417,"pct":100.0,"instant":"2026-11-23T07:03:00","days":270,"first_time":"05:53","last_time":"08:17","l0800":16.42,"l0830":0.0,"l0900":0.0,"cmp48":10.122}}},"incremental":{"yard":{"f000/60SP354191":{"RL48.0":{"incremental":35.0,"instant":"2026-02-02T07:02:00","prop":35.0,"comp":0.0,"days":234},"RL55.75":{"incremental":35.0,"instant":"2026-02-02T07:02:00","prop":35.0,"comp":0.0,"days":213}},"f000/61SP354191":{"RL48.0":{"incremental":31.989,"instant":"2026-11-13T06:35:00","prop":31.989,"comp":0.0,"days":243},"RL55.75":{"incremental":31.989,"instant":"2026-11-13T06:35:00","prop":31.989,"comp":0.0,"days":219}},"f000/62SP354191":{"RL48.0":{"incremental":31.855,"instant":"2026-01-21T07:17:00","prop":31.855,"comp":-0.0,"days":253},"RL55.75":{"incremental":31.855,"instant":"2026-01-21T07:17:00","prop":31.855,"comp":-0.0,"days":226}},"f000/63SP354191":{"RL48.0":{"incremental":32.294,"instant":"2026-01-11T07:20:00","prop":32.294,"comp":0.0,"days":263},"RL55.75":{"incremental":32.294,"instant":"2026-01-11T07:20:00","prop":32.294,"comp":0.0,"days":235}}},"sched":{"f000/60SP354191":{"RL48.0":{"incremental":34.918,"instant":"2026-02-01T07:04:00","prop":34.918,"comp":0.0,"days":234},"RL55.75":{"incremental":34.918,"instant":"2026-02-01T07:04:00","prop":34.918,"comp":0.0,"days":213}},"f000/61SP354191":{"RL48.0":{"incremental":34.899,"instant":"2026-03-13T07:41:00","prop":34.899,"comp":0.0,"days":245},"RL55.75":{"incremental":34.899,"instant":"2026-03-13T07:41:00","prop":34.899,"comp":0.0,"days":222}},"f000/62SP354191":{"RL48.0":{"incremental":34.865,"instant":"2026-04-09T07:42:00","prop":34.865,"comp":0.0,"days":254},"RL55.75":{"incremental":34.865,"instant":"2026-04-07T07:47:00","prop":34.865,"comp":0.0,"days":228}},"f000/63SP354191":{"RL48.0":{"incremental":34.948,"instant":"2026-01-23T07:26:00","prop":34.948,"comp":0.0,"days":267},"RL55.75":{"incremental":34.948,"instant":"2026-01-23T07:26:00","prop":34.948,"comp":0.0,"days":236}}}},"peaks":{"yard/f000/60SP354191":{"peak_loss_m2":35.00000000594237,"instant":"2026-02-03T07:00:00","otherwise_sunlit_m2":35.00000000594237,"pos_area_m2":38.22435918533449},"yard/f000/61SP354191":{"peak_loss_m2":31.989401746226402,"instant":"2026-10-19T05:30:00","otherwise_sunlit_m2":31.989401746226402,"pos_area_m2":31.989401746194982},"yard/f000/62SP354191":{"peak_loss_m2":31.855295819794534,"instant":"2026-01-22T07:15:00","otherwise_sunlit_m2":31.855295819794534,"pos_area_m2":31.855295819794538},"yard/f000/63SP354191":{"peak_loss_m2":32.294403907407826,"instant":"2026-01-11T07:20:00","otherwise_sunlit_m2":32.294403907407826,"pos_area_m2":32.294403907407826},"yard/f150/60SP354191":{"peak_loss_m2":20.021792196704222,"instant":"2026-11-12T06:35:00","otherwise_sunlit_m2":20.121644557063398,"pos_area_m2":38.22435918533449},"yard/f150/61SP354191":{"peak_loss_m2":17.555054370123376,"instant":"2026-01-26T07:11:00","otherwise_sunlit_m2":17.555054370123376,"pos_area_m2":31.989401746194982},"yard/f150/62SP354191":{"peak_loss_m2":18.747753282988434,"instant":"2026-11-22T06:52:00","otherwise_sunlit_m2":18.747753282988434,"pos_area_m2":31.855295819794538},"yard/f150/63SP354191":{"peak_loss_m2":20.51303784406661,"instant":"2026-01-14T07:24:00","otherwise_sunlit_m2":20.51303784406661,"pos_area_m2":32.294403907407826},"yard/f180/60SP354191":{"peak_loss_m2":17.127478582239462,"instant":"2026-11-13T06:35:00","otherwise_sunlit_m2":17.127478582239462,"pos_area_m2":38.22435918533449},"yard/f180/61SP354191":{"peak_loss_m2":14.667049870921655,"instant":"2026-01-26T07:11:00","otherwise_sunlit_m2":14.667049870921655,"pos_area_m2":31.989401746194982},"yard/f180/62SP354191":{"peak_loss_m2":16.125444552463563,"instant":"2026-11-22T06:52:00","otherwise_sunlit_m2":16.125444552463563,"pos_area_m2":31.855295819794538},"yard/f180/63SP354191":{"peak_loss_m2":18.155153012120234,"instant":"2026-01-14T07:24:00","otherwise_sunlit_m2":18.155153012120234,"pos_area_m2":32.294403907407826},"sched/f000/60SP354191":{"peak_loss_m2":34.917701143916645,"instant":"2026-02-03T07:00:00","otherwise_sunlit_m2":34.917701143916645,"pos_area_m2":34.91770114391664},"sched/f000/61SP354191":{"peak_loss_m2":34.898504345423845,"instant":"2026-03-14T07:40:00","otherwise_sunlit_m2":34.898504345423845,"pos_area_m2":34.898504345569826},"sched/f000/62SP354191":{"peak_loss_m2":34.86546680500596,"instant":"2026-04-26T07:00:00","otherwise_sunlit_m2":34.86546680500596,"pos_area_m2":34.866899161852515},"sched/f000/63SP354191":{"peak_loss_m2":34.94788739233498,"instant":"2026-01-24T07:25:00","otherwise_sunlit_m2":34.94788739233498,"pos_area_m2":34.94788739233498},"sched/f150/60SP354191":{"peak_loss_m2":20.021792196704222,"instant":"2026-11-12T06:35:00","otherwise_sunlit_m2":20.121644557063398,"pos_area_m2":34.91770114391664},"sched/f150/61SP354191":{"peak_loss_m2":18.655485049904858,"instant":"2026-01-30T07:11:00","otherwise_sunlit_m2":18.655485049904858,"pos_area_m2":34.898504345569826},"sched/f150/62SP354191":{"peak_loss_m2":20.04772005902806,"instant":"2026-01-27T07:19:00","otherwise_sunlit_m2":20.04772005902806,"pos_area_m2":34.866899161852515},"sched/f150/63SP354191":{"peak_loss_m2":21.96098250955684,"instant":"2026-11-23T07:03:00","otherwise_sunlit_m2":21.96098250955684,"pos_area_m2":34.94788739233498},"sched/f180/60SP354191":{"peak_loss_m2":17.12747858070381,"instant":"2026-11-13T06:35:00","otherwise_sunlit_m2":17.12747858070381,"pos_area_m2":34.91770114391664},"sched/f180/61SP354191":{"peak_loss_m2":15.459573399692793,"instant":"2026-01-29T07:11:00","otherwise_sunlit_m2":15.459573399692793,"pos_area_m2":34.898504345569826},"sched/f180/62SP354191":{"peak_loss_m2":17.12682224851318,"instant":"2026-01-27T07:19:00","otherwise_sunlit_m2":17.12682224851318,"pos_area_m2":34.866899161852515},"sched/f180/63SP354191":{"peak_loss_m2":19.417030870015573,"instant":"2026-11-23T07:03:00","otherwise_sunlit_m2":19.417030870015573,"pos_area_m2":34.94788739233498}},"attribution":{"yard/f000/60SP354191":{"full":35.00000000594237,"A_only":0.0,"B_only":35.00000000594237,"base":35.00000000594237,"instant":"2026-02-02T07:02:00"},"yard/f000/61SP354191":{"full":31.989401746231763,"A_only":0.0,"B_only":31.989401746231763,"base":31.989401746231763,"instant":"2026-10-29T05:54:00"},"yard/f000/62SP354191":{"full":31.855295819794534,"A_only":-3.552713678800501e-15,"B_only":31.855295819794534,"base":31.855295819794534,"instant":"2026-01-22T07:15:00"},"yard/f000/63SP354191":{"full":32.294403907407826,"A_only":7.105427357601002e-15,"B_only":32.294403907407826,"base":32.294403907407826,"instant":"2026-01-11T07:20:00"},"yard/f150/60SP354191":{"full":20.021792196704222,"A_only":0.0,"B_only":20.021792196704222,"base":20.121644557063398,"instant":"2026-11-12T06:35:00"},"yard/f150/61SP354191":{"full":17.555054370123376,"A_only":3.552713678800501e-15,"B_only":17.555054370123376,"base":17.555054370123376,"instant":"2026-01-26T07:11:00"},"yard/f150/62SP354191":{"full":18.747753282988434,"A_only":3.552713678800501e-15,"B_only":18.747753282988434,"base":18.747753282988434,"instant":"2026-11-22T06:52:00"},"yard/f150/63SP354191":{"full":20.51303784406661,"A_only":-3.552713678800501e-15,"B_only":20.51303784406661,"base":20.51303784406661,"instant":"2026-01-14T07:24:00"}},"comp_at_peaks":{"yard/f000/60SP354191":{"peak":35.0,"instant":"2026-02-02T07:02:00","alt":20.834005510126403,"az":98.80729455311166,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":35.0,"incr_RL5575":35.0,"first_contact_RL":57.363947996718736,"days":283},"yard/f000/61SP354191":{"peak":31.989,"instant":"2026-10-29T05:54:00","alt":10.988817935421608,"az":99.42409141838516,"comp_RL48":31.988400000000002,"comp_RL5575":31.988400000000002,"incr_RL48":0.0005999999999986017,"incr_RL5575":0.0005999999999986017,"first_contact_RL":39.50282460165719,"days":303},"yard/f000/62SP354191":{"peak":31.855,"instant":"2026-01-21T07:17:00","alt":25.84266968886361,"az":100.15107474021374,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":31.855,"incr_RL5575":31.855,"first_contact_RL":58.83840433453537,"days":331},"yard/f000/63SP354191":{"peak":32.294,"instant":"2026-01-11T07:20:00","alt":27.92456993998129,"az":101.51252911666737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":32.294,"incr_RL5575":32.294,"first_contact_RL":57.79508617646201,"days":365},"yard/f150/60SP354191":{"peak":20.114,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.114,"incr_RL5575":20.114,"first_contact_RL":58.38528461829098,"days":239},"yard/f150/61SP354191":{"peak":17.555,"instant":"2026-01-26T07:11:00","alt":23.81034845109592,"az":99.65656906932257,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.555,"incr_RL5575":17.555,"first_contact_RL":59.33209117982159,"days":250},"yard/f150/62SP354191":{"peak":18.748,"instant":"2026-11-22T06:52:00","alt":25.915359447805358,"az":100.21867497038987,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":18.748,"incr_RL5575":18.748,"first_contact_RL":58.94921532600269,"days":262},"yard/f150/63SP354191":{"peak":20.513,"instant":"2026-01-14T07:24:00","alt":28.371562625721573,"az":100.72504653080316,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.513,"incr_RL5575":20.513,"first_contact_RL":58.4765787113553,"days":275},"yard/f180/60SP354191":{"peak":17.139,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.139,"incr_RL5575":17.139,"first_contact_RL":58.38528461829098,"days":228},"yard/f180/61SP354191":{"peak":14.667,"instant":"2026-01-26T07:11:00","alt":23.81034845109592,"az":99.65656906932257,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":14.667,"incr_RL5575":14.667,"first_contact_RL":59.33209117982159,"days":237},"yard/f180/62SP354191":{"peak":16.125,"instant":"2026-11-22T06:52:00","alt":25.915359447805358,"az":100.21867497038987,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":16.125,"incr_RL5575":16.125,"first_contact_RL":58.94921532600269,"days":248},"sched/f000/60SP354191":{"peak":34.918,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.918,"incr_RL5575":34.918,"first_contact_RL":58.3994774827876,"days":283},"sched/f000/61SP354191":{"peak":34.899,"instant":"2026-03-13T07:41:00","alt":24.29963723953621,"az":80.29276379263523,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.899,"incr_RL5575":34.899,"first_contact_RL":61.84959775951705,"days":304},"sched/f000/62SP354191":{"peak":34.865,"instant":"2026-04-26T07:00:00","alt":9.676836953622143,"az":69.29629209394597,"comp_RL48":34.867200000000004,"comp_RL5575":34.867200000000004,"incr_RL48":0.0,"incr_RL5575":0.0,"first_contact_RL":37.76078337510694,"days":335},"sched/f000/63SP354191":{"peak":34.948,"instant":"2026-01-23T07:26:00","alt":27.524611218977803,"az":98.85983171147025,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":34.948,"incr_RL5575":34.948,"first_contact_RL":57.316752452620264,"days":365},"sched/f150/60SP354191":{"peak":20.07,"instant":"2026-02-01T07:04:00","alt":21.415323666163218,"az":98.86996756745737,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.07,"incr_RL5575":20.07,"first_contact_RL":58.3994774827876,"days":239},"sched/f150/61SP354191":{"peak":18.712,"instant":"2026-11-13T06:42:00","alt":23.291409014859852,"az":98.79884063990718,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":18.712,"incr_RL5575":18.712,"first_contact_RL":58.49847849688918,"days":251},"sched/f150/62SP354191":{"peak":20.053,"instant":"2026-11-15T06:51:00","alt":25.40209068729547,"az":98.46158835585558,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":20.053,"incr_RL5575":20.053,"first_contact_RL":58.224689291344276,"days":265},"sched/f150/63SP354191":{"peak":21.961,"instant":"2026-11-23T07:03:00","alt":28.339847826480323,"az":99.41638121062516,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":21.961,"incr_RL5575":21.961,"first_contact_RL":58.47374079025062,"days":279},"sched/f180/60SP354191":{"peak":17.139,"instant":"2026-01-30T07:04:00","alt":21.70240161909284,"az":99.38736534221785,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":17.139,"incr_RL5575":17.139,"first_contact_RL":58.87900143888531,"days":228},"sched/f180/61SP354191":{"peak":15.486,"instant":"2026-11-13T06:42:00","alt":23.291409014859852,"az":98.79884063990718,"comp_RL48":0.0,"comp_RL5575":0.0,"incr_RL48":15.486,"incr_RL5575":15.486,"first_contact_RL":58.49847849688918,"days":239}}},"fence_cases":{"f000":{"label":"Open-batten bound","height":null,"status":"BOUNDED ASSUMPTION","note":"Optically open. Lower shadow bound for the approved 1500H metal batten fence."},"f150":{"label":"Opaque-batten bound","height":1.5,"status":"BOUNDED ASSUMPTION","note":"1.500 m fully opaque. Upper shadow bound for the approved 1500H metal batten fence."},"f180":{"label":"Legacy 1.8 m opaque (SENSITIVITY)","height":1.8,"status":"SUPERSEDED SENSITIVITY","note":"NOT the approved condition. Retained only for continuity with v1.0.2/v0.1-AB/v0.2-AB."}}};
+/* ---------------- frozen solar convention (exact port) ---------------- */
+const TZ=10.0;
+function julianDay(y,m,d,hf){ if(m<=2){y-=1;m+=12;} const A=Math.floor(y/100),B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+hf/24.0+B-1524.5; }
+function sunPosition(dt,latDeg,lonDeg){
+  let tot=dt.hh*60+dt.mm-TZ*60, y=dt.y,m=dt.m,d=dt.d;
+  const shift=Math.floor(tot/1440), mid=tot-shift*1440;
+  const bd=new Date(Date.UTC(y,m-1,d)+shift*86400000);
+  y=bd.getUTCFullYear(); m=bd.getUTCMonth()+1; d=bd.getUTCDate();
+  const jd=julianDay(y,m,d,mid/60.0), T=(jd-2451545.0)/36525.0;
+  const L0=((280.46646+T*(36000.76983+T*0.0003032))%360+360)%360;
+  const Mo=357.52911+T*(35999.05029-0.0001537*T), Mr=Mo*Math.PI/180;
+  const C=Math.sin(Mr)*(1.914602-T*(0.004817+0.000014*T))+Math.sin(2*Mr)*(0.019993-0.000101*T)
+        +Math.sin(3*Mr)*0.000289;
+  const om=125.04-1934.136*T, appL=L0+C-0.00569-0.00478*Math.sin(om*Math.PI/180);
+  const e0=23+(26+((21.448-T*(46.815+T*(0.00059-T*0.001813))))/60)/60;
+  const e=e0+0.00256*Math.cos(om*Math.PI/180);
+  const decl=Math.asin(Math.sin(e*Math.PI/180)*Math.sin(appL*Math.PI/180))*180/Math.PI;
+  const yv=Math.pow(Math.tan(e/2*Math.PI/180),2), eo=0.016708634-T*(0.000042037+0.0000001267*T);
+  const L0r=L0*Math.PI/180;
+  const Eq=4*(180/Math.PI)*(yv*Math.sin(2*L0r)-2*eo*Math.sin(Mr)+4*eo*yv*Math.sin(Mr)*Math.cos(2*L0r)
+        -0.5*yv*yv*Math.sin(4*L0r)-1.25*eo*eo*Math.sin(2*Mr));
+  let tst=(dt.hh*60+dt.mm+Eq+4*lonDeg-60*TZ)%1440; if(tst<0)tst+=1440;
+  const ha=tst/4.0-180.0, lr=latDeg*Math.PI/180, dr=decl*Math.PI/180, hr=ha*Math.PI/180;
+  let cz=Math.sin(lr)*Math.sin(dr)+Math.cos(lr)*Math.cos(dr)*Math.cos(hr);
+  cz=Math.max(-1,Math.min(1,cz));
+  const alt=90-Math.acos(cz)*180/Math.PI, ar=alt*Math.PI/180;
+  let az=0;
+  if(Math.cos(ar)>=1e-9){
+    const sA=-Math.cos(dr)*Math.sin(hr)/Math.cos(ar);
+    const cA=(Math.sin(dr)-Math.sin(lr)*Math.sin(ar))/(Math.cos(lr)*Math.cos(ar));
+    az=Math.atan2(sA,cA)*180/Math.PI;
+  }
+  return {alt, az:((az%360)+360)%360};
+}
+/* ---------------- geometry ---------------- */
+function pointInPoly(px,py,poly){ let ins=false;
+  for(let i=0,n=poly.length;i<n;i++){ const a=poly[i],b=poly[(i+1)%n];
+    if((a[1]>py)!==(b[1]>py)){ const xi=(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0];
+      if(px<xi) ins=!ins; } } return ins; }
+function gridInPolygon(poly,cell){ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const p of poly){ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]);
+                        x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); }
+  const pts=[];
+  for(let y=y0+cell/2;y<y1;y+=cell) for(let x=x0+cell/2;x<x1;x+=cell)
+    if(pointInPoly(x,y,poly)) pts.push([x,y]);
+  return pts; }
+
+/* The inverse, per point: the lowest top RL of THIS ring that reaches (px,py).
+   Half-plane clip of the sun-ward ray into a convex ring — exact, no ray sampling. */
+function requiredRLring(px,py,z,dx,dy,t,fp,cx,cy){
+  let lo=-Infinity, hi=Infinity;
+  for(let i=0,n=fp.length;i<n;i++){
+    const A=fp[i], B=fp[(i+1)%n];
+    let nx=B[1]-A[1], ny=-(B[0]-A[0]);
+    if(nx*(cx-A[0])+ny*(cy-A[1])>0){ nx=-nx; ny=-ny; }
+    const den=dx*nx+dy*ny, num=(A[0]-px)*nx+(A[1]-py)*ny;
+    if(Math.abs(den)<1e-12){ if(num<0) return Infinity; }
+    else { const tt=num/den; if(den<0) lo=Math.max(lo,tt); else hi=Math.min(hi,tt); }
+  }
+  if(lo<=hi && hi>=0) return z+Math.max(lo,0)*t;
+  return Infinity;
+}
+const RINGS = ['A','B'].map(k=>{ const fp=M.comparator[k];
+  let cx=0,cy=0; for(const q of fp){cx+=q[0];cy+=q[1];}
+  return {fp, cx:cx/fp.length, cy:cy/fp.length}; });
+
+function requiredRLat(px,py,z,dx,dy,t){
+  let best=Infinity;
+  for(const r of RINGS){ const v=requiredRLring(px,py,z,dx,dy,t,r.fp,r.cx,r.cy);
+    if(v<best) best=v; }
+  return best;
+}
+function fieldFor(pts,z,alt,az){
+  if(alt<=0.05) return null;
+  const a=az*Math.PI/180, dx=Math.sin(a), dy=Math.cos(a), t=Math.tan(alt*Math.PI/180);
+  const out=new Float64Array(pts.length); let best=Infinity, bi=-1;
+  for(let i=0;i<pts.length;i++){ const v=requiredRLat(pts[i][0],pts[i][1],z,dx,dy,t);
+    out[i]=v; if(v<best){best=v; bi=i;} }
+  return {vals:out, min:best, argmin:bi, dx, dy, t};
+}
+
+/* ---------------- state ---------------- */
+const LOTS=Object.keys(M.receiver_rl);
+const FAMILY=M.comparator.test_heights;
+const BANDS=[
+  {hi:FAMILY[0], c:'var(--b1)', k:'≤46.0'},
+  {hi:FAMILY[1], c:'var(--b2)', k:'46–48'},
+  {hi:FAMILY[2], c:'var(--b3)', k:'48–50'},
+  {hi:FAMILY[3], c:'var(--b4)', k:'50–52'},
+  {hi:FAMILY[4], c:'var(--b5)', k:'52–55.75'},
+  {hi:Infinity,  c:'var(--beyond)', k:'beyond the family'}
+];
+const CSSVAR = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const BANDC = BANDS.map(b=>CSSVAR(b.c.slice(4,-1)));
+function bandOf(v){ for(let i=0;i<BANDS.length;i++) if(v<=BANDS[i].hi) return i; return BANDS.length-1; }
+
+const S={ lot:'63SP354191', pos:'yard', doy:11, min:440 };
+const YEAR=M.solar.year, LAT=M.solar.latitude, LON=M.solar.longitude;
+const T0=240, T1=1140, TSTEP=5;                // 04:00 → 19:00, 5-minute steps
+const COARSE=0.50, FINE=0.05;
+const gridCache={};
+function grid(pos,lot,cell){ const k=pos+'/'+lot+'/'+cell;
+  if(!gridCache[k]) gridCache[k]=gridInPolygon(M.receptors[pos][lot],cell);
+  return gridCache[k]; }
+function fromDoy(doy){ const d=new Date(Date.UTC(YEAR,0,1)+(doy-1)*86400000);
+  return {y:YEAR,m:d.getUTCMonth()+1,d:d.getUTCDate()}; }
+const pad=n=>String(n).padStart(2,'0');
+const hhmm=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function solarAt(doy,min){ const c=fromDoy(doy);
+  return sunPosition({...c,hh:Math.floor(min/60),mm:min%60},LAT,LON); }
+function stamp(doy,min){ const c=fromDoy(doy);
+  return `${c.d} ${MON[c.m-1]} ${pad(Math.floor(min/60))}:${pad(min%60)}`; }
+
+/* ---------------- year map ---------------- */
+const NX=365, NY=Math.floor((T1-T0)/TSTEP)+1;
+let YEARDATA=null;
+function buildYear(){
+  const pts=grid(S.pos,S.lot,COARSE), z=M.receiver_rl[S.lot];
+  const vals=new Float64Array(NX*NY);
+  let lowest=Infinity, lowAt=null, reach=0, lit=0;
+  let rFirst=null, rLast=null, rMaxAlt=-99;   // when contact is possible, and how high the sun gets
+  for(let ix=0;ix<NX;ix++){
+    for(let iy=0;iy<NY;iy++){
+      const min=T0+iy*TSTEP, sp=solarAt(ix+1,min);
+      let v=Infinity;
+      if(sp.alt>0.05){
+        lit++;
+        const a=sp.az*Math.PI/180, dx=Math.sin(a), dy=Math.cos(a), t=Math.tan(sp.alt*Math.PI/180);
+        for(let i=0;i<pts.length;i++){ const r=requiredRLat(pts[i][0],pts[i][1],z,dx,dy,t);
+          if(r<v) v=r; }
+        if(v<=FAMILY[FAMILY.length-1]){ reach++;
+          if(rFirst===null||min<rFirst) rFirst=min;
+          if(rLast===null||min>rLast) rLast=min;
+          if(sp.alt>rMaxAlt) rMaxAlt=sp.alt; }
+        if(v<lowest){ lowest=v; lowAt={doy:ix+1,min}; }
+      }
+      vals[ix*NY+iy]=v;
+    }
+  }
+  YEARDATA={vals,lowest,lowAt,reach,lit,rFirst,rLast,rMaxAlt};
+}
+const yc=document.getElementById('year');
+function drawYear(){
+  const W=Math.max(760,yc.clientWidth||760), H=470, dpr=devicePixelRatio||1;
+  yc.width=W*dpr; yc.height=H*dpr; yc.style.height=H+'px';
+  const g=yc.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  const L=46, R=12, TP=10, BT=26;
+  const pw=W-L-R, ph=H-TP-BT;
+  const cw=pw/NX, chh=ph/NY;
+  const {vals}=YEARDATA;
+  for(let ix=0;ix<NX;ix++) for(let iy=0;iy<NY;iy++){
+    const v=vals[ix*NY+iy];
+    if(!isFinite(v)) continue;
+    g.fillStyle=BANDC[bandOf(v)];
+    g.fillRect(L+ix*cw, TP+iy*chh, Math.ceil(cw)+.5, Math.ceil(chh)+.5);
+  }
+  // axes
+  g.font='10px '+CSSVAR('--mono'); g.fillStyle=CSSVAR('--dimmer');
+  g.textAlign='right'; g.textBaseline='middle';
+  for(let h=4;h<=19;h++){ const y=TP+((h*60-T0)/TSTEP)*chh;
+    if(y<TP-1||y>TP+ph+1) continue;
+    g.fillText(pad(h)+':00', L-7, y);
+    g.strokeStyle='rgba(255,255,255,.07)'; g.beginPath();
+    g.moveTo(L,Math.round(y)+.5); g.lineTo(L+pw,Math.round(y)+.5); g.stroke(); }
+  g.textAlign='center'; g.textBaseline='top';
+  let acc=0;
+  for(let m=0;m<12;m++){
+    const days=new Date(Date.UTC(YEAR,m+1,0)).getUTCDate();
+    const x=L+(acc+days/2)*cw;
+    g.fillText(MON[m], x, TP+ph+7);
+    if(m){ g.strokeStyle='rgba(255,255,255,.07)'; g.beginPath();
+      g.moveTo(Math.round(L+acc*cw)+.5,TP); g.lineTo(Math.round(L+acc*cw)+.5,TP+ph); g.stroke(); }
+    acc+=days;
+  }
+  // marker
+  const mx=L+(S.doy-1+.5)*cw, my=TP+((S.min-T0)/TSTEP)*chh;
+  g.strokeStyle=CSSVAR('--bone'); g.lineWidth=1;
+  g.beginPath(); g.arc(mx,my,4.5,0,7); g.stroke();
+  g.strokeStyle='rgba(233,229,219,.35)';
+  g.beginPath(); g.moveTo(L,my); g.lineTo(L+pw,my); g.moveTo(mx,TP); g.lineTo(mx,TP+ph); g.stroke();
+  yc._geom={L,TP,cw,chh,pw,ph};
+}
+yc.addEventListener('click',ev=>{
+  const g=yc._geom; if(!g) return;
+  const r=yc.getBoundingClientRect();
+  const ix=Math.floor((ev.clientX-r.left-g.L)/g.cw), iy=Math.round((ev.clientY-r.top-g.TP)/g.chh);
+  if(ix<0||ix>=NX||iy<0||iy>=NY) return;
+  S.doy=ix+1; S.min=T0+iy*TSTEP; paint();
+});
+
+/* ---------------- plan at the instant ---------------- */
+const pc=document.getElementById('plan');
+function drawPlan(field,sp){
+  const W=pc.clientWidth||520, H=300, dpr=devicePixelRatio||1;
+  pc.width=W*dpr; pc.height=H*dpr; pc.style.height=H+'px';
+  const g=pc.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  const poly=M.receptors[S.pos][S.lot];
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const p of poly){ x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);
+                        x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]); }
+  const pad2=26, s=Math.min((W-2*pad2)/(x1-x0),(H-2*pad2)/(y1-y0));
+  const px=v=>W/2+(v-(x0+x1)/2)*s, py=v=>H/2-(v-(y0+y1)/2)*s;
+  if(field){
+    const pts=grid(S.pos,S.lot,FINE), cs=Math.max(1,FINE*s);
+    // A single instant usually puts the whole receptor inside one family band, which
+    // would paint a flat block. Ramp over the instant's own range instead, and mark
+    // any family threshold that actually falls inside it as a contour.
+    let lo=Infinity, hi=-Infinity;
+    for(let i=0;i<pts.length;i++){ const v=field.vals[i];
+      if(isFinite(v)){ if(v<lo)lo=v; if(v>hi)hi=v; } }
+    const span=(hi-lo)>1e-9?(hi-lo):1;
+    const marks=FAMILY.filter(r=>r>=lo&&r<=hi);
+    for(let i=0;i<pts.length;i++){
+      const v=field.vals[i];
+      const X=px(pts[i][0])-cs/2, Y=py(pts[i][1])-cs/2;
+      if(!isFinite(v)){ g.fillStyle='rgba(255,255,255,.04)'; g.fillRect(X,Y,cs+.6,cs+.6); continue; }
+      if(marks.some(r=>Math.abs(v-r)<=span*0.012)){ g.fillStyle=CSSVAR('--bone'); }
+      else { const u=(v-lo)/span;
+        g.fillStyle=`rgb(${Math.round(60+150*(1-u))},${Math.round(52+120*(1-u))},${Math.round(88+40*(1-u))})`; }
+      g.fillRect(X,Y,cs+.6,cs+.6);
+    }
+    pc._ramp={lo,hi,marks};
+  } else { pc._ramp=null;
+    g.fillStyle='rgba(255,255,255,.03)';
+    g.beginPath(); poly.forEach((p,i)=>i?g.lineTo(px(p[0]),py(p[1])):g.moveTo(px(p[0]),py(p[1])));
+    g.closePath(); g.fill();
+  }
+  g.strokeStyle=CSSVAR('--dim'); g.lineWidth=1.2;
+  g.beginPath(); poly.forEach((p,i)=>i?g.lineTo(px(p[0]),py(p[1])):g.moveTo(px(p[0]),py(p[1])));
+  g.closePath(); g.stroke();
+  if(field && field.argmin>=0){
+    const pts=grid(S.pos,S.lot,FINE), q=pts[field.argmin];
+    const X=px(q[0]), Y=py(q[1]);
+    g.strokeStyle=CSSVAR('--bone'); g.lineWidth=1.4;
+    g.beginPath(); g.arc(X,Y,6,0,7); g.stroke();
+    const ax=Math.max(14,Math.min(W-14,X+field.dx*46)), ay=Math.max(14,Math.min(H-14,Y-field.dy*46));
+    g.beginPath(); g.moveTo(X,Y); g.lineTo(ax,ay); g.stroke();
+    g.fillStyle=CSSVAR('--bone'); g.font='10px '+CSSVAR('--mono');
+    g.textAlign=ax>W/2?'right':'left'; g.textBaseline='middle';
+    g.fillText('to the sun', ax+(ax>W/2?-6:6), ay);
+  }
+  g.fillStyle=CSSVAR('--dimmer'); g.font='10px '+CSSVAR('--mono');
+  g.textAlign='left'; g.textBaseline='bottom';
+  g.fillText(`${(x1-x0).toFixed(1)} × ${(y1-y0).toFixed(1)} m · north up`, 8, H-8);
+  if(pc._ramp && isFinite(pc._ramp.lo)){
+    g.textAlign='right';
+    g.fillText(`lighter = lower requirement · RL ${pc._ramp.lo.toFixed(2)} to ${pc._ramp.hi.toFixed(2)}`,
+               W-8, H-8);
+    if(pc._ramp.marks.length){ g.fillStyle=CSSVAR('--bone');
+      g.fillText(`white contour: RL ${pc._ramp.marks.map(r=>r.toFixed(2)).join(', ')}`, W-8, H-20); }
+  }
+}
+
+/* ---------------- paint ---------------- */
+function paint(){
+  const sp=solarAt(S.doy,S.min), z=M.receiver_rl[S.lot];
+  const pts=grid(S.pos,S.lot,FINE);
+  const field=fieldFor(pts,z,sp.alt,sp.az);
+  drawYear(); drawPlan(field,sp);
+
+  const meta=M.lot_meta[S.lot], area=M.receptor_meta[S.pos][S.lot].area_m2;
+  document.getElementById('readout').innerHTML=
+    `${stamp(S.doy,S.min)} &nbsp;·&nbsp; sun <b>${sp.alt.toFixed(1)}°</b> bearing `
+    + `<b>${pad(Math.round(sp.az))}°</b> &nbsp;·&nbsp; ${meta.label} ${S.pos} `
+    + `<b>${area.toFixed(2)} m²</b>`;
+
+  const tb=document.querySelector('#ladder tbody'); tb.innerHTML='';
+  const need=field?field.min:Infinity;
+  for(const rl of FAMILY){
+    const hit=isFinite(need)&&rl>=need;
+    tb.insertAdjacentHTML('beforeend',
+      `<tr class="${hit?'hit':'miss'}"><td class="v">RL ${rl.toFixed(2)}</td>
+       <td>${hit?'reaches':'does not reach'}</td>
+       <td class="v">${isFinite(need)?(rl-need>=0?'+':'')+(rl-need).toFixed(2)+' m':'—'}</td></tr>`);
+  }
+  document.getElementById('planTitle').textContent =
+    sp.alt<=0.05 ? 'Sun is down' : 'Where the requirement is lowest';
+  document.getElementById('planNote').innerHTML = sp.alt<=0.05
+    ? `The sun is below the horizon at this instant, so no envelope of any height casts here.`
+    : (isFinite(need)
+      ? `Shade is the top RL an envelope would need to reach that patch of ground \u2014 `
+        + `lighter is lower. The lowest anywhere in this receptor is `
+        + `<b class="num">RL ${need.toFixed(3)}</b>, `
+        + (need>FAMILY[FAMILY.length-1]
+            ? `<b>${(need-FAMILY[FAMILY.length-1]).toFixed(2)} m above the tallest member of `
+              + `the comparator family</b>, so nothing in that family reaches here now.`
+            : `inside the comparator family, so part of that family does reach here now.`)
+      : `No ray from this receptor meets either comparator ring at this instant: no envelope `
+        + `of any height reaches this ground now.`);
+
+  const Y=YEARDATA;
+  const pct=Y.lit?100*Y.reach/Y.lit:0;
+  document.getElementById('yearNote').innerHTML =
+    `Each column is a day, each row a five-minute step across the whole of daylight, 04:00\u201319:00 \u2014 ` +
+    `not just the morning. Colour is the lowest first-contact RL anywhere in the receptor at `+
+    `that moment, sampled at <b class="num">${COARSE.toFixed(2)} m</b>. Of the `+
+    `<b class="num">${Y.lit.toLocaleString()}</b> steps in 2026 with the sun up, the `+
+    `requirement falls inside the comparator family <b class="num">${Y.reach.toLocaleString()}</b> `+
+    `times (<b class="num">${pct.toFixed(1)}%</b>)`+
+    (Y.reach? ` \u2014 every one of them between <b class="num">${hhmm(Y.rFirst)}</b> and `+
+              `<b class="num">${hhmm(Y.rLast)}</b>, with the sun never higher than `+
+              `<b class="num">${Y.rMaxAlt.toFixed(1)}\u00b0</b>. Never in the afternoon.` : '.')+
+    ` The lowest of the whole year is `+
+    `<b class="num">RL ${isFinite(Y.lowest)?Y.lowest.toFixed(3):'\u2014'}</b>`+
+    `${Y.lowAt?`, at <b>${stamp(Y.lowAt.doy,Y.lowAt.min)}</b>`:''}. Click anywhere to go there.`;
+}
+
+/* ---------------- wiring ---------------- */
+function seg(el,vals,cur,fn){
+  el.innerHTML=vals.map(v=>`<button data-v="${v.v}"${v.v===cur?' class="on"':''}>${v.k}</button>`).join('');
+  el.onclick=ev=>{ const b=ev.target.closest('button'); if(!b) return;
+    [...el.children].forEach(c=>c.classList.toggle('on',c===b)); fn(b.dataset.v); };
+}
+function rebuild(){
+  document.getElementById('yearNote').innerHTML='<span class="busy">computing the year…</span>';
+  requestAnimationFrame(()=>{ buildYear(); paint(); });
+}
+seg(document.getElementById('lotSeg'),
+    LOTS.map(k=>({v:k,k:M.lot_meta[k].label.replace('Lot ','')})), S.lot,
+    v=>{ S.lot=v; rebuild(); });
+document.getElementById('posSeg').onclick=ev=>{ const b=ev.target.closest('button'); if(!b) return;
+  [...b.parentNode.children].forEach(c=>c.classList.toggle('on',c===b));
+  S.pos=b.dataset.v; rebuild(); };
+document.querySelector('#posSeg button[data-v="yard"]').classList.add('on');
+
+const JUMPS=Object.entries(M.frozen.comp_at_peaks).slice(0,6);
+seg(document.getElementById('jumpSeg'),
+    [{v:'',k:'frozen instants →'}].concat(JUMPS.map(([k,r])=>({v:k,k:k.split('/')[2].slice(0,2)+' '+k.split('/')[1]}))),
+    '', v=>{ if(!v) return; const r=M.frozen.comp_at_peaks[v];
+      const [pos,,lot]=v.split('/'); const d=new Date(r.instant+'Z');
+      S.pos=pos; S.lot=lot;
+      S.doy=Math.round((Date.UTC(YEAR,d.getUTCMonth(),d.getUTCDate())-Date.UTC(YEAR,0,1))/86400000)+1;
+      S.min=d.getUTCHours()*60+d.getUTCMinutes();
+      document.querySelectorAll('#posSeg button').forEach(c=>c.classList.toggle('on',c.dataset.v===pos));
+      [...document.getElementById('lotSeg').children].forEach(c=>c.classList.toggle('on',c.dataset.v===lot));
+      rebuild(); });
+
+document.getElementById('legend').innerHTML=BANDS.map(b=>`<div style="background:${b.c}"></div>`).join('');
+document.getElementById('legkeys').innerHTML=BANDS.map(b=>`<span>${b.k}</span>`).join('');
+document.getElementById('mv').textContent=M.model.version;
+document.getElementById('mh').textContent=M.model.sha256.slice(0,16)+'…';
+addEventListener('resize',()=>{ if(YEARDATA) paint(); });
+rebuild();
+</script>
+</body>
+</html>
