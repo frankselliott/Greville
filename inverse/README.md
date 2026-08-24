@@ -117,6 +117,29 @@ Three limits ride with it, and the page says all three on its face:
 
 The frozen `../index.html` is unaffected and still carries no base map.
 
+## Typography and fonts
+
+The page uses the same design language as the Greville Shadow Study — Instrument
+Serif for display, Karla for text, IBM Plex Mono for labels and figures, on the
+Study's night palette.
+
+Those three faces are **embedded in the page as base64 WOFF2**, latin subsets
+only, rather than linked from Google Fonts. That is deliberate: the page has to
+keep opening from `file://` with no network, exactly like the frozen one, and a
+linked stylesheet would break that. Karla is a variable font and is embedded
+once for the whole 300–700 range rather than three times.
+
+All three are licensed under the SIL Open Font License 1.1, which permits
+embedding and redistribution:
+
+| Face | Weights embedded | Licence |
+|---|---|---|
+| Instrument Serif | 400 | OFL-1.1 |
+| Karla (variable) | 300–700 | OFL-1.1 |
+| IBM Plex Mono | 400, 500 | OFL-1.1 |
+
+The embedded fonts are about 110 KB of the page's total.
+
 ## Method
 
 NOAA geometric solar position, UTC+10, no daylight saving, no refraction — the
