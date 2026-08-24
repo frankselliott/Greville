@@ -32,15 +32,37 @@ Two further differences from the frozen page:
 * Its live areas recompute at a coarser cell than the frozen gate, so live
   readouts differ in the third decimal.
 
+## Shade in 3D
+
+The Study drew shade where it *lands* — the ground print. The **Shade in 3D**
+toggle adds the body of shade in the air on the way down: for each silhouette
+edge of a caster, the ruled surface running from the roof edge to the matching
+edge of the ground shadow.
+
+This draws the model, it does not add to it. The ground edge is the footprint
+translated by `(top_rl - ground) / tan(altitude)` along the anti-solar bearing —
+the same sweep the frozen engine uses, and the same one the ground shadow
+already came from. No new geometry, no new assumption, and no figure anywhere
+on the page changes when the toggle is on.
+
+Everything is filled in one path with nonzero winding, so overlapping curtains
+never double-darken and no depth sort is needed.
+
 ## Provenance
 
-Extracted verbatim from the published artifact. Only three things changed, none
-of them content:
+Extracted from the published artifact. Four things changed. The first three are
+not content:
 
 1. the artifact host's frame runtime and its `<base href>` were removed;
 2. the Google Fonts `<link>` was replaced with the same faces embedded as
    base64 WOFF2, so the page keeps working from `file://` with no network;
 3. `<title>` was lifted into `<head>` and a `noindex` meta added.
+
+The fourth is an addition, so this page is **no longer byte-identical to the
+artifact**: the Shade in 3D toggle described above. It is drawn from the sweep
+the page already computes and changes no figure. The frozen visualiser at
+`../index.html` is untouched and still hashes to
+`cd551cef6a414987b1153b08dd765fe92393e2170760f0d4d6d8a8481b128f9f`.
 
 Fonts are Instrument Serif, Karla and IBM Plex Mono, all OFL-1.1, which permits
 embedding. See `../inverse/README.md` for the weights.

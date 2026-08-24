@@ -151,6 +151,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       <input type="range" id="tod" min="240" max="720" step="1" value="423" aria-label="Time of day">
     </div>
     <button class="btn" id="play">Play</button>
+    <button class="btn on" id="volBtn" title="Show the body of shade in the air, not only where it lands">Shade in 3D</button>
     <div class="seg" id="scheme">
       <button class="btn on" data-s="approved">As approved</button>
       <button class="btn" data-s="comparator">8-storey comparator</button>
@@ -432,7 +433,7 @@ function gridInPolygon(poly, cell) {
 }
 
 /* ============ shared state — one clock drives every view ============ */
-const S = { doy: 327, min: 423, rot: -0.62, tilt: 0.55, vs: 0.86, zoom: 0.86,
+const S = { doy: 327, min: 423, rot: -0.62, tilt: 0.55, vs: 0.86, zoom: 0.86, vol: true,
             playing: false, scheme: 'approved', compRL: 48.0 };
 /* The 2020 approval fixed height as a STOREY COUNT only — no top RL exists in any
    source. R1-079 therefore tests a bounded family; RL 48.0 is the true eight-storey
@@ -668,6 +669,53 @@ function shadowRings(sp){
   return out;
 }
 
+/* The shade as a solid.
+   shadowRings() gives where shade LANDS. This gives the volume it occupies on the
+   way down: for each silhouette edge of a caster, the ruled surface from the roof
+   edge to the matching edge of the ground shadow. Same geometry as the frozen
+   sweep — the ground edge is the footprint translated by (top-GZ)/tan(alt) along
+   the anti-solar bearing — so this draws the model, it does not add to it.
+   Everything is filled in ONE path with nonzero winding, so overlapping curtains
+   never double-darken and no depth sort is needed. */
+function shadowVolumeQuads(sp){
+  if (sp.alt <= 0.05) return [];
+  const t = Math.tan(sp.alt * Math.PI / 180);
+  const d = sunDir(sp.az);
+  const out = [];
+  const add = (ring, top) => {
+    const L = (top - GZ) / t;
+    if (!(L > 0)) return;
+    const ox = d[0] * L, oy = d[1] * L;
+    const fp = open(ring), n = fp.length;
+    for (let i = 0; i < n; i++){
+      const a = fp[i], b = fp[(i + 1) % n];
+      out.push([[a[0], a[1], top], [b[0], b[1], top],
+                [b[0] + ox, b[1] + oy, GZ], [a[0] + ox, a[1] + oy, GZ]]);
+    }
+  };
+  for (const c of casters()) add(c.fp, c.top);
+  for (const s2 of SELF)     add(s2.fp, s2.top);
+  return out;
+}
+
+function drawShadowVolumes(ctx, V, sp){
+  const quads = shadowVolumeQuads(sp);
+  if (!quads.length) return;
+  ctx.beginPath();
+  for (const q of quads){
+    for (let i = 0; i < 4; i++){
+      const p = V.p(q[i][0], q[i][1], q[i][2]);
+      i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]);
+    }
+    ctx.closePath();
+  }
+  ctx.fillStyle = 'rgba(126,115,190,0.10)';
+  ctx.fill('nonzero');
+  ctx.strokeStyle = 'rgba(126,115,190,0.18)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
 function drawScene(){
   const sp = solarAt(S.doy, S.min), up = sp.alt > 0.05;
   const V = VIEW = makeView(cv, S.rot, S.tilt, S.vs, S.zoom);
@@ -739,6 +787,7 @@ function drawScene(){
     }
     g.fillStyle = 'rgba(16,15,34,0.80)'; g.fill('nonzero');
     g.fillStyle = 'rgba(126,115,190,0.17)'; g.fill('nonzero');
+    if (S.vol) drawShadowVolumes(g, V, sp);
   }
 
   /* fences */
@@ -1120,6 +1169,12 @@ function schemeNote(){
       `move is recurrence — Lot 63 runs 259 affected days at RL 46.0 against 226 at RL 55.75.`;
   }
 }
+document.getElementById('volBtn').addEventListener('click', () => {
+  S.vol = !S.vol;
+  document.getElementById('volBtn').classList.toggle('on', S.vol);
+  drawScene();
+});
+
 function setScheme(s){
   S.scheme = s;
   document.querySelectorAll('#scheme .btn').forEach(b=>b.classList.toggle('on', b.dataset.s===s));
