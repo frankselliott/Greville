@@ -116,6 +116,7 @@ canvas{display:block;width:100%;height:auto;touch-action:none}
 .dc-fill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--shade),var(--sun));border-radius:2px}
 .dc-now{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--coral);box-shadow:0 0 8px var(--coral)}
 .dc-stat{position:absolute;top:0;bottom:0;width:1px;background:rgba(181,142,76,.65)}
+.ctl .k i{font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--dimmer);margin-left:7px;letter-spacing:.02em}
 .dc-axis{position:relative;height:17px;margin-left:115px;margin-top:5px}
 .dc-axis span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:.6rem;color:var(--dimmer)}
 .schemeNote{font-size:.82rem;line-height:1.55;margin-top:11px;padding:11px 13px;border-radius:3px;
@@ -147,8 +148,8 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       <input type="range" id="doy" min="1" max="365" value="327" aria-label="Day of year">
     </div>
     <div class="ctl">
-      <label class="k" for="tod">Time<b id="tLabel">07:03</b></label>
-      <input type="range" id="tod" min="240" max="720" step="1" value="423" aria-label="Time of day">
+      <label class="k" for="tod">Time<b id="tLabel">07:03</b><i id="sunLabel"></i></label>
+      <input type="range" id="tod" min="0" max="1439" step="1" value="423" aria-label="Time of day">
     </div>
     <button class="btn" id="play">Play</button>
     <button class="btn on" id="volBtn" title="Show the body of shade in the air, not only where it lands">Shade in 3D</button>
@@ -445,6 +446,7 @@ D.lot_meta2 = {};
 for (const k in D.cluster4) D.lot_meta2[k] = { label:'Lot '+k.slice(0,2), dwelling:'TYPE F' };
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const pad = n => String(n).padStart(2,'0');
+const fmtMin = m => `${pad(Math.floor(m/60))}:${pad(Math.round(m%60))}`;
 
 function fromDoy(doy){
   const t = new Date(Date.UTC(YEAR,0,1) + (doy-1)*86400000);
@@ -454,6 +456,35 @@ const dayLabel = doy => { const c = fromDoy(doy); return `${c.d} ${MON[c.m-1]}`;
 function solarAt(doy, min){
   const c = fromDoy(doy);
   return sunPosition({ ...c, hh:Math.floor(min/60), mm:Math.round(min%60) }, LAT, LON);
+}
+
+/* Sunrise and sunset for a day, in local clock minutes, solved from the model's
+   OWN solar routine so the window and the shadows share one convention: NOAA
+   geometric position, UTC+10, no DST, no atmospheric refraction. The horizon is
+   altitude 0 exactly, so these are GEOMETRIC times; published almanac sunrise
+   and sunset include refraction and a sun-radius allowance and so run a few
+   minutes wider at each end. solarAt quantises to the minute, which is also the
+   slider's step, so the answer is resolved to that same whole minute. */
+const DAYLIGHT = {};
+function daylight(doy){
+  const hit = DAYLIGHT[doy]; if (hit) return hit;
+  const alt = m => solarAt(doy, m).alt;
+  let noon = 720, peak = -Infinity;
+  for (let m = 540; m <= 900; m += 2){ const a = alt(m); if (a > peak){ peak = a; noon = m; } }
+  const edge = (a, b) => {                      // a and b straddle the horizon
+    const sa = alt(a) > 0;
+    for (let i = 0; i < 24; i++){ const mid = (a + b) / 2;
+      if ((alt(mid) > 0) === sa) a = mid; else b = mid; }
+    return (a + b) / 2;
+  };
+  let rise = Math.round(edge(noon - 600, noon));
+  let set  = Math.round(edge(noon, noon + 600));
+  while (rise > 0     && alt(rise - 1) > 0) rise--;   // first lit minute
+  while (rise < noon  && alt(rise)    <= 0) rise++;
+  while (set  < 1439  && alt(set  + 1) > 0) set++;    // last lit minute
+  while (set  > noon  && alt(set)     <= 0) set--;
+  const out = { rise, set, noon: Math.round(noon) };
+  DAYLIGHT[doy] = out; return out;
 }
 
 /* ============ geometry prep ============ */
@@ -1050,11 +1081,14 @@ let DAYDATA=null;
 function rebuildDay(){
   const rows={};
   for (const k in ALLPOS) rows[k]=[];
-  for (let m=240; m<=720; m+=8){
+  const dl = daylight(S.doy), t0 = dl.rise, t1 = dl.set;
+  /* hold the sample count near the old 61 so a day drag stays responsive */
+  const step = Math.max(4, Math.round((t1-t0)/105));
+  for (let m=t0; m<=t1; m+=step){
     const sp = solarAt(S.doy, m);
     for (const k in ALLPOS) rows[k].push(lossLot(k, sp, COARSE[k], CC));
   }
-  DAYDATA={rows, t0:240, t1:720, step:8};
+  DAYDATA={rows, t0, t1, step};
   renderDayChart();
 }
 function renderDayChart(){
@@ -1074,18 +1108,22 @@ function renderDayChart(){
       else if (run){ segs+=`<div class="dc-fill" style="left:${pc(run.a)}%;width:${Math.max(pc(run.b+step)-pc(run.a),0.6)}%"></div>`; run=null; } });
     if (run) segs+=`<div class="dc-fill" style="left:${pc(run.a)}%;width:${Math.max(pc(run.b+step)-pc(run.a),0.6)}%"></div>`;
     html+=`<div class="dc-row"><div class="l">${ALLMETA[k].label}</div><div class="dc-track">${segs}
-      ${[540,720].map(m=>`<div class="dc-stat" style="left:${pc(m)}%"></div>`).join('')}
+      ${[540,720,900].filter(m=>m>=t0&&m<=t1).map(m=>`<div class="dc-stat" style="left:${pc(m)}%"></div>`).join('')}
       <div class="dc-now" id="now_${k}" style="left:${pc(S.min)}%"></div></div></div>`;
   }
   document.getElementById('dcRows').innerHTML=html;
-  document.getElementById('dcAxis').innerHTML=[4,6,8,10,12].map(h=>
+  const h0=Math.ceil(t0/60), h1=Math.floor(t1/60), hrs=[];
+  for (let h=h0; h<=h1; h++) if (h1-h0<=8 || h%2===h0%2) hrs.push(h);
+  document.getElementById('dcAxis').innerHTML=hrs.map(h=>
     `<span style="left:${pc(h*60)}%">${pad(h)}:00</span>`).join('');
   document.getElementById('dcDay').textContent=dayLabel(S.doy);
-  const fmt=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
+  const fmt=fmtMin;
+  const win=`The bar runs the whole lit day, geometric sunrise <b class="num">${fmt(t0)}</b> to
+       sunset <b class="num">${fmt(t1)}</b>.`;
   document.getElementById('dcNote').innerHTML = any
-    ? `On this day the approved buildings touch a backyard between <b class="num">${fmt(first)}</b> and
+    ? `${win} On this day the approved buildings touch a backyard between <b class="num">${fmt(first)}</b> and
        <b class="num">${fmt(last)}</b>. The standard test samples at 09:00, 12:00 and 15:00 — the marks to the right.`
-    : `On this day the approved buildings never reach any of the four backyards.`;
+    : `${win} On this day the approved buildings never reach any of the four backyards.`;
 }
 function moveNow(){
   if(!DAYDATA) return;
@@ -1203,12 +1241,21 @@ function paintDay(){                  // day moved: the chart has to be rebuilt 
   document.getElementById('dLabel').textContent=dayLabel(S.doy);
   drawScene(); drawPlan(); renderTiles(); rebuildDay();
 }
-doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value; paintDay(); });
+function applyDaylight(){                 // the slider only offers lit minutes
+  const dl=daylight(S.doy);
+  todEl.min=dl.rise; todEl.max=dl.set;
+  S.min=Math.max(dl.rise, Math.min(dl.set, S.min));
+  todEl.value=S.min;
+  document.getElementById('sunLabel').textContent=`${fmtMin(dl.rise)}–${fmtMin(dl.set)}`;
+  document.getElementById('tLabel').textContent=fmtMin(S.min);
+  return dl;
+}
+doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value; applyDaylight(); paintDay(); });
 todEl.addEventListener('input',()=>{ S.min=+todEl.value; stop(); paintFast(); });
 document.getElementById('presets').addEventListener('click',e=>{
   const b=e.target.closest('[data-p]'); if(!b) return;
   const p=PRESETS[+b.dataset.p]; S.doy=p.doy; S.min=p.min; stop();
-  doyEl.value=S.doy; todEl.value=S.min;
+  doyEl.value=S.doy; applyDaylight();
   document.querySelectorAll('#presets .btn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   document.getElementById('tLabel').textContent=`${pad(Math.floor(S.min/60))}:${pad(S.min%60)}`;
@@ -1223,7 +1270,9 @@ playEl.addEventListener('click',()=>{
 let lastT=0;
 function loop(ts){
   if (S.playing && ts-lastT>60){ lastT=ts;
-    S.min+=1.5; if(S.min>720) S.min=240;
+    const dl=daylight(S.doy);
+    S.min+=Math.max(1, (dl.set-dl.rise)/320);     // ~the old 320-frame sweep
+    if(S.min>dl.set) S.min=dl.rise;
     todEl.value=S.min; paintFast(); }
   requestAnimationFrame(loop);
 }
@@ -1245,7 +1294,7 @@ function loop(ts){
 })();
 
 /* ============ go ============ */
-doyEl.value=S.doy; todEl.value=S.min;
+doyEl.value=S.doy; applyDaylight();
 document.getElementById('dLabel').textContent=dayLabel(S.doy);
 document.getElementById('tLabel').textContent=`${pad(Math.floor(S.min/60))}:${pad(S.min%60)}`;
 schemeNote();
