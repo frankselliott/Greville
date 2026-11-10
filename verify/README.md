@@ -54,9 +54,22 @@ Put the site at **latitude −27.422924, longitude 153.041035**, time zone
 **UTC+10 with no daylight saving**, and compare against your own solar tool.
 
 Expect your tool to read a few minutes wider at sunrise and sunset than this
-model does. That is correct and expected: almanac times include atmospheric
-refraction and a sun-radius allowance, this model is geometric centre-of-sun.
-21 June solves here to 06:42–16:57 against an almanac 06:36–17:02.
+model does. That is correct and expected: published sunrise and sunset include
+atmospheric refraction and a sun-radius allowance, while this model is
+geometric centre-of-sun.
+
+On 21 June 2026 this model puts the sun above the horizon from **06:42**, with
+**16:57** the last lit minute and the centre crossing during 16:58. Solving the
+same routine for the conventional definition instead — upper limb on the
+horizon, centre at −0°50′, being 34′ of refraction plus 16′ of semi-diameter —
+gives **06:38 to 17:02**.
+
+Both of those are computed here, by the routine in `../model/greville_model/
+solar.py`. Neither is quoted from a published almanac, and checking them
+against one is a reasonable thing to do. The four-minute spread at each end is
+the whole of the difference, and it is why a diagram timed at 17:00 on 21 June
+is not drawing an impossible shadow even though this model's clock stops at
+16:57.
 
 ## 4. Load the geometry
 

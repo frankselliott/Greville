@@ -69,8 +69,23 @@ def main():
     try:
         r = subprocess.run(['node', js, os.path.abspath(PAGE), json.dumps(INSTANTS)],
                            capture_output=True, text=True, cwd=HERE, timeout=300)
+    except FileNotFoundError:
+        print('This gate drives the Study page in a real browser, so it needs node with')
+        print('playwright installed. Nothing else in this pack does:')
+        print()
+        print('    cd ../model && python3 run_tests.py            # 29 independent tests')
+        print('    cd ../model && python3 verify_frozen_peaks.py  # the frozen QA gate')
+        print('    cd ../verify && python3 mga.py                 # the projection self-test')
+        print('    cd ../verify && python3 export.py              # regenerate out/')
+        print()
+        print('all run on a bare Python 3.8+ with no third-party packages. To run this one:')
+        print('    npm install playwright && npx playwright install chromium')
+        return 2
+    except subprocess.TimeoutExpired:
+        print('the browser did not finish within 300 s; nothing was concluded'); return 2
     finally:
-        os.unlink(js)
+        try: os.unlink(js)
+        except OSError: pass
     if r.returncode != 0:
         print('could not drive the Study page:\n' + r.stderr[-2000:]); return 1
     data = json.loads(r.stdout.strip().split('\n')[-1])
