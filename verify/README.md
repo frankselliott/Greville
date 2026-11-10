@@ -76,9 +76,38 @@ finished shadow** — the shadow is their union. Areas are not derived from them
 
 ```
 cd ../model
-python3 run_tests.py           # 26 tests against physics and geometry, not against stored output
+python3 run_tests.py           # 29 tests against physics and geometry, not against stored output
 python3 verify_frozen_peaks.py # every frozen figure, recomputed
 ```
+
+Three of those 29 are worth naming, because they are the ones that do not
+depend on the lost original source at all. `tests/test_sweep_vs_ray.py`
+compares the two shadow paths against each other over tens of thousands of
+samples. They are independent derivations: the sweep translates a footprint
+along the anti-solar bearing and bridges each edge, the ray test asks whether
+a segment toward the sun meets the footprint. `PROVENANCE.md` asserted they
+agree; nothing checked it. They do, and the test is strict about *how*: every
+disagreement must sit on the shadow boundary, where a finite grid cannot
+resolve which side a point falls. A single disagreement away from the edge
+fails the test, because that would be a model split rather than quantisation.
+
+### The Study page has its own gate now
+
+```
+cd ../verify
+python3 gate_study.py          # needs node with playwright
+```
+
+`PROVENANCE.md` says of the Study page: *"If its figures are ever to be relied
+on, it needs its own gate."* This is it. The Study is not the frozen model — it
+credits casters the frozen model did not and samples at a coarser cell — so it
+cannot be checked by equality. What it can be checked against is the claim its
+own README makes: adding a caster can only reduce a loss, never raise it. The
+gate drives the live page in a browser, reads the figures it actually renders,
+and fails if any exceeds the frozen loss by more than the sampling allowance.
+
+It gates a direction, not a value. It does not make the Study figures the
+frozen figures; those remain the ones in `model/`.
 
 `out/frozen_peaks_recomputed.csv` puts each frozen peak beside the value this
 engine computes for it now. Worst difference across all 24: **0.0012 m²**.
