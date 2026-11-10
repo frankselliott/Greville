@@ -133,10 +133,12 @@ It takes either form, and says which it got:
 * **The sealed release.** If the input hashes to `6df4dde6…c76d4f0` it is
   identified as the sealed v1.1-AB archive and its own 47-file manifest is
   verified end to end.
-* **The model data alone** — a directory or tarball holding
-  `geometry/`, `outputs/` and `MANIFEST.txt`. Every file supplied is checked
-  against its SHA-256 in that manifest, so the data is still provably the
-  sealed values; files not supplied are reported as not supplied, and any
+* **The model data alone** — a directory or tarball holding `geometry/`
+  and `outputs/`. Every file supplied is checked against a SHA-256 pinned in
+  this script's own source (`SEALED_FILE_HASHES`), not against anything
+  shipped with the data, so a manifest sent alongside it is a convenience
+  rather than the root of trust: regenerating one to match an altered file
+  does not help. Files not supplied are reported as not supplied, and any
   check whose inputs are absent is skipped rather than failed.
 
 A file that is present but does not match its sealed hash fails, in either

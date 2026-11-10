@@ -48,6 +48,34 @@ ARCHIVE_SHA256 = "6df4dde6b3f11a087c8dea33d8b4e3da9609f4237f9e6c3740ffc54d2c76d4
 ARCHIVE_BYTES = 56012
 ROOT = "greville_shadow_model_v1.1-AB"
 
+#: SHA-256 of each model data file, as sealed in the v1.1-AB release's own
+#: MANIFEST.txt.  They are pinned here so that the data can be verified
+#: against this published script, rather than against a manifest that
+#: happens to travel with it.  A manifest shipped alongside the data is then
+#: a convenience; these values are the root of trust.
+SEALED_FILE_HASHES = {
+    "geometry/approved_AB_model.json":
+        "079d56b22292b93096fb736cc3c7f495540241dadd6908814bf94b80d2cd54bb",
+    "geometry/receptors.json":
+        "53d0d1e7833fc8ce1125d63800f91ccf4161162fccee0f4caa8d9aa3c019fe5d",
+    "geometry/casting_edge.json":
+        "a1a9bb2a8790baebf40602df6bb76172a4a7c6781facf7340b42993c93dfa141",
+    "outputs/peaks.json":
+        "a530f2f9dd7cb03d5877e9b98fe9a7ef365cdd766292eea74e8232c5a4a46ea5",
+    "outputs/comp_at_peaks.json":
+        "feaefe0773cb156d4e139f6151bba75fd087f3470f932d1aafeb85dc31845ce5",
+    "outputs/attribution.json":
+        "0fc7f759dd59666774bf58e6f9cc16ed96a914db3f791f8535db44a7a9a369ef",
+    "outputs/fy_yard.log":
+        "7bedcf6408ab5dd1502bb6d192203e055d5f3872fa07ccb75d654e9a4d4c2e58",
+    "outputs/fy_sched.log":
+        "75087361c1b1e4957d1fa19dc14d0e8f94d0b2a6c501787ac9f8e308b128037e",
+    "outputs/inc2_yard_f000.log":
+        "c2bbc6c86b8f12a506779f9486f0cdfaa816cbc33f2cb7ad60c0a022dc98248a",
+    "outputs/inc2_sched_f000.log":
+        "e0a8391c030fa36880ba4998b5d132e1c3dc5db554e045021143e83851679557",
+}
+
 #: Coordinates in the reconstruction's data file are stored to 4 decimals, so
 #: a vertex can sit half a unit in the last place away from the original.
 #: 0.00005 m is that floor; anything larger is a real difference.
@@ -195,8 +223,8 @@ def main(argv):
         if sealed:
             print(f"identified as the sealed v1.1-AB archive ({ARCHIVE_BYTES} bytes)")
         else:
-            print("not the sealed archive; treating as a data set to verify"
-                  " file-by-file against MANIFEST.txt")
+            print("not the sealed archive; treating as a model data set and"
+                  " checking it against the hashes pinned in this script")
     else:
         print(f"input   : {archive} (directory)")
     print()
@@ -234,21 +262,34 @@ def main(argv):
                 base = dirs[0] if len(dirs) == 1 and not any(
                     os.path.isfile(e) for e in entries) else tmp
 
-        # ---- the manifest -------------------------------------------------
-        manifest = os.path.join(base, "MANIFEST.txt")
-        if not os.path.isfile(manifest):
-            print("no MANIFEST.txt alongside the data; cannot establish that these")
-            print("files are the sealed model's. Include it.")
-            return 2
-        ok_count = bad_count = absent = 0
-        bad_names = []
-        with open(manifest, encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                want, _, rel = line.partition("  ")
-                rel = rel.strip().lstrip("./")
+        # ---- identify the data against the pinned sealed hashes ----------
+        if sealed:
+            # Verify the release end to end against its own manifest.
+            manifest = os.path.join(base, "MANIFEST.txt")
+            ok_count = bad_count = absent = 0
+            with open(manifest, encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    want, _, rel = line.partition("  ")
+                    rel = rel.strip().lstrip("./")
+                    target = os.path.join(base, rel)
+                    if not os.path.isfile(target):
+                        absent += 1
+                    elif sha256_file(target) == want:
+                        ok_count += 1
+                    else:
+                        bad_count += 1
+            chk.add("archive self-manifest", bad_count == 0 and absent == 0,
+                    f"{ok_count} files verified, {bad_count} mismatched")
+        else:
+            # Check whatever was supplied against the hashes pinned in this
+            # script.  Nothing shipped with the data is trusted to do this:
+            # a manifest alongside it could say anything.
+            ok_count = bad_count = absent = 0
+            bad_names = []
+            for rel, want in sorted(SEALED_FILE_HASHES.items()):
                 target = os.path.join(base, rel)
                 if not os.path.isfile(target):
                     absent += 1
@@ -257,17 +298,12 @@ def main(argv):
                 else:
                     bad_count += 1
                     bad_names.append(rel)
-        if sealed:
-            chk.add("archive self-manifest", bad_count == 0 and absent == 0,
-                    f"{ok_count} files verified, {bad_count} mismatched")
-        else:
-            # A subset is legitimate; a file that is present but does not
-            # match its sealed hash is not.
-            chk.add("manifest: files present match their sealed hashes",
-                    bad_count == 0,
-                    f"{ok_count} verified, {bad_count} mismatched"
-                    + (f" {bad_names[:3]}" if bad_names else "")
-                    + f", {absent} of the sealed set not supplied")
+            chk.add("data files match the sealed v1.1-AB hashes",
+                    bad_count == 0 and ok_count > 0,
+                    f"{ok_count} of {len(SEALED_FILE_HASHES)} model data files "
+                    f"verified against hashes pinned in this script"
+                    + (f", {bad_count} MISMATCHED {bad_names[:3]}" if bad_names else "")
+                    + (f", {absent} not supplied" if absent else ""))
 
         G = os.path.join(base, "geometry")
         O = os.path.join(base, "outputs")
