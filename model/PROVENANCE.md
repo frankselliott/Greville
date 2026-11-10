@@ -128,8 +128,9 @@ artifact. It shares the solar and sweep code but it is **not** the frozen
 model, and its figures are not the frozen figures. It adds casters the frozen
 model did not credit — the heritage laundry, the Cluster 1–3 terrace, the
 Cluster 4 dwellings — and adding a caster can only reduce a loss figure,
-never raise it. It also carries a registered aerial base that the frozen
-version deliberately withholds.
+never raise it. It also draws on a registered base drawing — cadastre,
+building outlines, roads and rail from the State of Queensland (CC BY 4.0) —
+where the frozen version carries no base map.
 
 Nothing from that study has been merged into this reconstruction. If its
 figures are ever to be relied on, it needs its own gate.
