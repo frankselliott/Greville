@@ -1351,9 +1351,12 @@ function setEllivo(i){
   S.min = p.min; applyDaylight();              // clamps to the lit day
   const dl = daylight(S.doy);
   note.innerHTML = (p.min > dl.set)
-    ? `<b>${p.s} ${p.t}</b> — the sun is below the horizon at that time on this day
-       (geometric sunset ${fmtMin(dl.set)}), so the clock is held at sunset. The panel
-       is still drawn, as lodged.`
+    ? `<b>${p.s} ${p.t}</b> — past this model's geometric sunset (${fmtMin(dl.set)}), so the
+       clock is held there. That does <i>not</i> make the panel wrong: geometric sunset is the
+       centre of the sun crossing the horizon, while the conventional sunset an almanac prints
+       allows for refraction and the sun's own radius and falls about four minutes later, at
+       17:02 on 21 June. At 17:00 the sun's upper limb is still above the horizon. The shadow
+       it casts is near-grazing and effectively unbounded in length.`
     : `<b>${p.s} ${p.t}</b> — applicant's diagram, as lodged, on the same ground frame.`;
   const img = new Image();
   img.onload = () => { if (ELLIVO_I===i){ ELLIVO_IMG=img; ELLIVO_READY=true; drawScene(); } };

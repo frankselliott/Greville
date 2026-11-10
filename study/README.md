@@ -4,8 +4,16 @@
 registered aerial, the plan, the hour-by-hour day chart and the per-lot tiles,
 all driven off one clock.
 
-Open it directly. Like the frozen visualiser it is fully self-contained: no
-server, no network, no external fonts.
+Open it directly. The page itself carries its fonts, its data and its base
+raster inline and needs no server and no network — but it is no longer a single
+self-contained file. Two features load sibling files by relative path:
+
+* the applicant-diagram overlay reads `ellivo/*.png`;
+* the method panel links `download/greville-verification-pack.tar.gz`.
+
+Both work from `file://` so long as the whole `study/` directory travels
+together. `index.html` on its own still opens and still computes; the overlay
+dropdown simply finds nothing to load.
 
 ## What this is not
 

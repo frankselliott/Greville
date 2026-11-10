@@ -180,14 +180,21 @@ print('frozen_peaks_recomputed.csv   worst difference %.4f m2' % worst)
 LOTS=['60SP354191','61SP354191','62SP354191','63SP354191']
 with open(os.path.join(OUT,'cluster5_at_applicant_instants.csv'),'w',newline='') as fh:
     w=csv.writer(fh)
-    w.writerow(['label','instant','sun_alt_deg']+['loss_m2_'+l[:2] for l in LOTS]+['total_m2'])
+    # All three fence cases. f000 is the open end of the bracket and gives the
+    # LARGEST attributable loss; f150 is the fully opaque end and the smallest.
+    # The approved 1500 mm metal batten fence has no established solar opacity,
+    # so the answer lies between and must be quoted as a bracket, never as f000
+    # alone. f180 is a superseded sensitivity, not the approved condition.
+    w.writerow(['label','instant','sun_alt_deg','fence_case']
+               +['loss_m2_'+l[:2] for l in LOTS]+['total_m2'])
     for name,when in UNIQ:
         if not name.startswith('Ellivo'): continue
         alt,az=M.sun(parse_instant(when))
-        if alt<=0.05:
-            w.writerow([name,when,'%.4f'%alt]+['']*4+['SUN BELOW HORIZON']); continue
-        v=[M.evaluate_at('yard',l,'f000',parse_instant(when))['loss'] for l in LOTS]
-        w.writerow([name,when,'%.4f'%alt]+['%.4f'%x for x in v]+['%.4f'%sum(v)])
+        for f in ('f000','f150','f180'):
+            if alt<=0.05:
+                w.writerow([name,when,'%.4f'%alt,f]+['']*4+['SUN BELOW GEOMETRIC HORIZON']); continue
+            v=[M.evaluate_at('yard',l,f,parse_instant(when))['loss'] for l in LOTS]
+            w.writerow([name,when,'%.4f'%alt,f]+['%.4f'%x for x in v]+['%.4f'%sum(v)])
 print('cluster5_at_applicant_instants.csv')
 
 # ---- receptor grids: spec + checksum, so they can be regenerated ----------
