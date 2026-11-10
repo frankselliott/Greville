@@ -1244,9 +1244,9 @@ function renderTiles(){
   const c5=Object.keys(ALLPOS).filter(k=>ALLMETA[k].cluster===5);
   const c4=Object.keys(ALLPOS).filter(k=>ALLMETA[k].cluster===4);
   document.getElementById('tiles').innerHTML =
-    `<div class="tgroup">Cluster 5 · Type G · frozen model</div>
+    `<div class="tgroup">Cluster 5 · Type G · scheduled POS · open-fence end · live figure, not the frozen peak</div>
      <div class="tgrid">${c5.map(one).join('')}</div>
-     <div class="tgroup">Cluster 4 · Type F · derived geometry, self-shading subtracted</div>
+     <div class="tgroup">Cluster 4 · Type F · derived geometry, self-shading subtracted · scheduled POS · open-fence end</div>
      <div class="tgrid four">${c4.map(one).join('')}</div>`;
 }
 
