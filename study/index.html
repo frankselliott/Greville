@@ -241,13 +241,23 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       verification pack.</div>
     <div><b>Checking this yourself</b>A verification pack is downloadable at
       <a href="download/greville-verification-pack.tar.gz">download/greville-verification-pack.tar.gz</a>
-      (198 KB). It holds the model data and engine, the 26 independent tests, the geometry as
+      (211 KB). It holds the model data and engine, the 29 independent tests, the geometry as
       DXF and GeoJSON in GDA2020 / MGA zone 56 (EPSG:7856), the computed shadow sweeps, the sun
       position at every instant used here, the frozen figures recomputed beside their stored
       values, and the registration record for the applicant's sheets. It carries its own
       coordinate conversion, self-testing against the Flinders Peak point published in the
       GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its export
       script reproduces every file byte for byte. Start at <code>verify/README.md</code>.</div>
+    <div><b>Checked against the sealed release</b>The pack's
+      <code>verify/diff_original.py</code> checks this model against the sealed v1.1-AB
+      release. It accepts the whole release, identified by its SHA-256, or the model's data
+      files alone, each identified against a SHA-256 pinned in the script's own source — so
+      altered data does not pass, even with a manifest regenerated to match. All twelve of its
+      checks pass: the approved footprints and the receptor polygons agree to under a tenth of a
+      millimetre, the receptor areas and depths are exact to full floating-point precision, and
+      every row of all five frozen result tables matches, including all 24 governing instants.
+      What this does <i>not</i> check is the engine's code, which is not compared with the
+      original source; the 29 tests above check the physics directly instead.</div>
     <div><b>The applicant's shadow diagrams</b>Ellivo Architects, DA-600 and DA-601,
       revision 8, dated 14/05/2026, lodged with the development application for 12 Chalk
       Street and obtained from Council's development application record. Reproduced here for
@@ -264,13 +274,13 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       diagrams shade <i>every</i> building on the plan, while the shade drawn here is cast by the
       approved buildings alone, so the two extents are not like for like.</div>
     <div><b>The eight-storey comparator</b>The 2020 approval fixed height as a storey count only —
-      no top RL appears in any source. R1-079 therefore tests a bounded family at RL 46.0, 48.0, 50.0,
+      no top RL appears in any source. The model therefore tests a bounded family at RL 46.0, 48.0, 50.0,
       52.0 and 55.75; RL 48.0 is the true eight-storey plate. Across that whole family the peak
       incremental loss to Cluster 5 is identical to 0.001 m², because no comparator in the range
       reaches those backyards at the governing instants. This is a bounded comparator, not the
       applicant's model, and must never be described as one.</div>
     <div><b>Cluster 4 status</b>The eight Type F dwellings and their gardens are derived, not traced:
-      POS bands from R1-072 Rev C, footprints reconstructed from the stamped unit-sheet ground extent
+      POS bands from the receptor source-lock, footprints reconstructed from the stamped unit-sheet ground extent
       (4199 × 7650 mm) clipped to the DCDB lot — they reproduce the sheet area to ±0.4 m². Their
       floor-to-floor is not source-locked, so the level lines are indicative. Their gardens sit south
       of their own houses, so figures here subtract shading by the dwellings themselves; without that
@@ -488,7 +498,7 @@ function gridInPolygon(poly, cell) {
 const S = { doy: 327, min: 423, rot: -0.62, tilt: 0.55, vs: 0.86, zoom: 1.15, vol: true,
             playing: false, scheme: 'approved', compRL: 48.0 };
 /* The 2020 approval fixed height as a STOREY COUNT only — no top RL exists in any
-   source. R1-079 therefore tests a bounded family; RL 48.0 is the true eight-storey
+   source. The model therefore tests a bounded family; RL 48.0 is the true eight-storey
    plate (ground 21.600, L01 25.300, then 3.1 m, Level 08 at 48.000). */
 const COMP_RLS = [46.0, 48.0, 50.0, 52.0, 55.75];
 const LAT = D.solar.latitude, LON = D.solar.longitude, YEAR = D.solar.year;
@@ -620,7 +630,7 @@ function buildMassing(){
   }
 
   /* Cluster 4 — eight Type F dwellings, 11.5 m above their own floor level.
-     Floor-to-floor is not source-locked (R1-072 Rev B), so the level lines are
+     Floor-to-floor is not source-locked, so the level lines are
      indicative; the footprint, FFL and overall height are source-derived. */
   for (const k in D.cluster4){
     const c = D.cluster4[k];

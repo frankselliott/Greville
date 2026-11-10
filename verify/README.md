@@ -11,6 +11,15 @@ The exception is `out/ellivo_registration.json`, which is a *record* of how the
 applicant's scanned sheets were registered to this frame. It is an input to the
 comparison, not an output of the model, and `export.py` does not regenerate it.
 
+The pack itself is built deterministically, so two builds from the same tree
+are byte-identical and the download can be hashed meaningfully:
+
+```sh
+tar --sort=name --owner=0 --group=0 --numeric-owner \
+    --mtime='2026-11-10 00:00:00' -cf - <the 29 files listed in this pack> \
+  | gzip -n -9 > greville-verification-pack.tar.gz
+```
+
 ---
 
 ## 1. What the model is, in one paragraph
@@ -94,7 +103,9 @@ python3 verify_frozen_peaks.py # every frozen figure, recomputed
 ```
 
 Three of those 29 are worth naming, because they are the ones that do not
-depend on the lost original source at all. `tests/test_sweep_vs_ray.py`
+depend on the original source at all — which matters, because the engine is
+the one part of the model that §5a does not check against the sealed release
+(see `model/PROVENANCE.md`). `tests/test_sweep_vs_ray.py`
 compares the two shadow paths against each other over tens of thousands of
 samples. They are independent derivations: the sweep translates a footprint
 along the anti-solar bearing and bridges each edge, the ray test asks whether
@@ -103,6 +114,57 @@ agree; nothing checked it. They do, and the test is strict about *how*: every
 disagreement must sit on the shadow boundary, where a finite grid cannot
 resolve which side a point falls. A single disagreement away from the edge
 fails the test, because that would be a model split rather than quantisation.
+
+## 5a. Check against the sealed release
+
+The reconstruction can be checked against the sealed v1.1-AB release itself,
+not only against the frozen page that embedded it.
+
+```
+cd ../verify
+python3 diff_original.py /path/to/sealed-archive.tar.gz   # whole release
+python3 diff_original.py /path/to/model-data/             # or just the data
+```
+
+It takes either form, and says which it got:
+
+* **The sealed release.** If the input hashes to `6df4dde6…c76d4f0` it is
+  identified as the sealed v1.1-AB archive and its own 47-file manifest is
+  verified end to end.
+* **The model data alone** — a directory or tarball holding `geometry/`
+  and `outputs/`. Every file supplied is checked against a SHA-256 pinned in
+  this script's own source (`SEALED_FILE_HASHES`), not against anything
+  shipped with the data, so a manifest sent alongside it is a convenience
+  rather than the root of trust: regenerating one to match an altered file
+  does not help. Files not supplied are reported as not supplied, and any
+  check whose inputs are absent is skipped rather than failed.
+
+A file that is present but does not match its sealed hash fails, in either
+mode. That is the property worth having: the numbers can be proved to be the
+model's own, by anyone, without trusting whoever sent them.
+
+The release is not distributed with this repository.
+
+It checks twelve things and prints each: the archive's own 47-file manifest;
+the four approved footprints vertex by vertex and their `top_rl`; their areas;
+the eight receptor polygons; the 24 receptor metadata values; the casting edge;
+the 24 frozen peak figures embedded in the page; the 24 governing instants; the
+8-entry attribution split; the 24-row full-year table; the 16-row incremental
+table; and the 21-row offline `first_contact_RL` table recomputed by the
+original's own hull method.
+
+That covers all five frozen tables the page carries, not a sample, and the
+full-year and incremental checks assert their own row coverage so a parser that
+matched nothing would fail rather than pass. Current result: all twelve pass —
+geometry identical to 0.067 mm, receptor metadata exact to full float
+precision, the embedded peak figures bit-identical to the release's, and every
+field of every results table matching.
+
+What it does **not** establish is the engine implementation: the
+reconstruction's solar and shadow code is not compared with the original
+source, and the independent tests in §5 are what stands behind the physics
+there. Nor does it check the receiver levels, which v1.1-AB carries forward
+from v1.0.2. The script says both when it finishes.
 
 ### The Study page has its own gate now
 

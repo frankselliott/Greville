@@ -202,13 +202,16 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     such height over the receptor is the first-contact RL. Ground is drawn flat; the real site
     slopes.</div>
 
-    <div><b>The open finding</b>This reproduces the frozen <i>browser</i> method, which takes a
-    minimum over grid sample points. The frozen <i>offline</i>
-    <span class="num">first_contact_RL</span> table was produced some other way: 16 of its 21
+    <div><b>The two methods, and why they differ</b>This reproduces the frozen <i>browser</i>
+    method, which takes a minimum over grid sample points. The frozen <i>offline</i>
+    <span class="num">first_contact_RL</span> table was produced another way: 16 of its 21
     values differ by more than 10 mm, worst 0.32 m, and refining the cell does not close the
-    gap. The original method is lost and has not been reconstructed by fitting to its answers.
-    Nothing reported turns on it — every value on both sides is metres clear of the
-    46.0–55.75 m family.</div>
+    gap. The offline method is also a
+    20 mm grid, but it takes ray entry against the <i>convex hulls</i> of building A and the
+    building B plate rather than their true footprints. A hull is larger, so the ray meets it
+    sooner and the required RL comes out lower — the observed pattern. Reimplementing it
+    reproduces all 21 values to 0.028 mm. Nothing reported turns on it — every value on both
+    sides is metres clear of the 46.0–55.75 m family.</div>
 
     <div><b>The aerial</b>Photography, not drawn geometry — a Mapbox satellite frame registered
     to a Queensland Government GeoTIFF by FFT cross-correlation and reprojected to MGA2020,
