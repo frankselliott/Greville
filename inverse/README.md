@@ -41,81 +41,19 @@ the sun.
 **The ladder.** Each member of the comparator family, whether it reaches, and
 by what margin.
 
-**The site panel**, underneath, on the registered aerial. The dashed line runs
+**The site panel**, underneath, drawn from the model's geometry. The dashed line runs
 from the point of lowest requirement in the receptor, toward the sun, to where
 it first enters a comparator envelope — the distance that sets the number.
 
-## The aerial base — a change of posture, stated
+## No base imagery
 
-The root `README.md` lists the aerial base map as a **deliberately withheld
-layer**, on the grounds that the imagery was supplied inline in chat with no
-pixels to georeference. That withholding was correct for the frozen page and
-still holds there: `../index.html` has no base map and is untouched.
+The site panel is drawn geometry only — the cadastre, the approved buildings,
+the comparator envelopes and the receptors — from the model's own MGA2020
+coordinates, north up. Like the frozen `../index.html`, this page carries no
+aerial or satellite base map. Every number on it comes from the vector model.
 
-This page carries one, and the reason it can is that a registration was
-actually performed rather than eyeballed. The frame is a Mapbox satellite
-screenshot, registered north-up in Web Mercator to a georeferenced Queensland
-Government GeoTIFF by FFT cross-correlation, then reprojected to MGA2020, at
-0.3764 m native ground sample distance. It is drawn at 0.4 m in the local
-frame.
-
-The registration was checked before use, not assumed: with the model geometry
-overlaid, the four Type G footprints land on the four townhouses, the Cluster
-1–3 terrace on the long row to the west, the heritage laundry on the
-red-roofed range, and both approved buildings on their cleared construction
-sites.
-
-Three things about it are load-bearing and are stated on the page itself:
-
-1. **It is photography, not drawn geometry.** Nothing is measured off it. Every
-   number on the page comes from the vector model; the aerial is a base map.
-2. **It predates construction.** The approved buildings are drawn over ground
-   that was still bare when the frame was taken.
-3. **Attribution and licensing.** © Mapbox © OpenStreetMap. The root README
-   flags a licensing question over a Mapbox screenshot; that question is not
-   resolved by this page, only carried forward with the attribution shown.
-
-The second withheld layer — fence opacity as a rendered transmission — remains
-withheld. It is still bracketed as `f000` / `f150` / `f180`, never
-interpolated.
-
-## The aerial base — a change of posture, stated rather than slipped in
-
-The root `README.md` lists the aerial base map as a **deliberately withheld
-layer**, on the grounds that the imagery arrived inline in chat with no pixels
-to georeference, and that *"registering a screenshot by eye would be
-fabrication."* That reasoning was right, and it still is.
-
-This page carries an aerial anyway, because the objection was met. The frame
-was subsequently registered by **FFT cross-correlation against a georeferenced
-Queensland Government GeoTIFF**, then reprojected Web Mercator → MGA2020 — a
-measured registration, not an eyeball fit. Its native ground sample distance is
-0.3764 m, resampled to 0.4 m in the local frame.
-
-The registration was re-checked before the imagery went in here, by drawing the
-independent DCDB and sheet-derived geometry over it: the four Type G footprints
-land on the four townhouses, the Cluster 1–3 terrace on the long terrace row,
-the heritage laundry on the red-roofed range, and both approved buildings on
-their cleared sites. It holds.
-
-Three limits ride with it, and the page says all three on its face:
-
-1. **It is photography, not drawn geometry.** Roads, trees, the park, the
-   church, the rail corridor and neighbouring houses are pixels. Nothing is
-   measured off the image; every number on the page comes from the vector
-   geometry and the frozen model.
-2. **It predates construction.** The approved buildings are drawn over ground
-   that was still bare when the frame was taken, so their outlines are the
-   approved footprints, not something visible in the photograph.
-3. **The licensing question is still open.** The frame is a Mapbox satellite
-   screenshot. `© Mapbox © OpenStreetMap` is displayed on the panel, as the root
-   README's own note requires, but attribution is not a licence. If this
-   material is ever put in front of the court or published, the imagery should
-   be re-sourced from a tile with an unambiguous licence and its own world file
-   — a QImagery or Brisbane City Council orthophoto — rather than relied on as
-   it stands.
-
-The frozen `../index.html` is unaffected and still carries no base map.
+Fence opacity as a rendered transmission also remains withheld. It is
+bracketed as `f000` / `f150` / `f180`, never interpolated.
 
 ## Typography and fonts
 

@@ -1,7 +1,7 @@
 # Greville Shadow Study
 
 `index.html` here is the interactive study — the isometric scene on the
-registered aerial, the plan, the hour-by-hour day chart and the per-lot tiles,
+registered block drawing, the plan, the hour-by-hour day chart and the per-lot tiles,
 all driven off one clock.
 
 Open it directly. The page itself carries its fonts, its data and its base
@@ -34,9 +34,9 @@ figures are unaffected.
 
 Two further differences from the frozen page:
 
-* It carries the registered aerial base. `../README.md` lists that as a
-  withheld layer; the reasoning for carrying one here is set out in
-  `../inverse/README.md`.
+* It carries a registered base drawing: cadastre, building outlines, roads
+  and rail, © State of Queensland (CC BY 4.0). It is a drawing, not
+  photography; the frozen page carries no base map at all.
 * Its live areas recompute at a coarser cell than the frozen gate, so live
   readouts differ in the third decimal.
 
