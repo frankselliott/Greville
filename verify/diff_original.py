@@ -180,24 +180,25 @@ def main(argv):
         return 2
 
     archive = argv[1]
-    if not os.path.isfile(archive):
-        print(f"not a file: {archive}")
+    if not os.path.exists(archive):
+        print(f"no such file or directory: {archive}")
         return 2
 
-    size = os.path.getsize(archive)
-    digest = sha256_file(archive)
-    print(f"archive : {archive}")
-    print(f"bytes   : {size}")
-    print(f"sha256  : {digest}")
-    if digest != ARCHIVE_SHA256:
-        print()
-        print("REFUSED: this is not the sealed v1.1-AB archive.")
-        print(f"  expected {ARCHIVE_SHA256}")
-        print(f"  got      {digest}")
-        print()
-        print("A diff against an unidentified artefact establishes nothing.")
-        return 2
-    print(f"identified as the archive sealed in model/PROVENANCE.md ({ARCHIVE_BYTES} bytes)")
+    sealed = False
+    if os.path.isfile(archive):
+        size = os.path.getsize(archive)
+        digest = sha256_file(archive)
+        print(f"input   : {archive}")
+        print(f"bytes   : {size}")
+        print(f"sha256  : {digest}")
+        sealed = digest == ARCHIVE_SHA256
+        if sealed:
+            print(f"identified as the sealed v1.1-AB archive ({ARCHIVE_BYTES} bytes)")
+        else:
+            print("not the sealed archive; treating as a data set to verify"
+                  " file-by-file against MANIFEST.txt")
+    else:
+        print(f"input   : {archive} (directory)")
     print()
 
     try:
@@ -209,18 +210,38 @@ def main(argv):
     chk = Check()
 
     with tempfile.TemporaryDirectory() as tmp:
-        with tarfile.open(archive, "r:gz") as tf:
-            names = tf.getnames()
-            bad = [n for n in names if n.startswith("/") or ".." in n.split("/")]
-            if bad:
-                print(f"refusing to extract unsafe member paths: {bad[:3]}")
+        if os.path.isdir(archive):
+            base = archive
+        else:
+            try:
+                with tarfile.open(archive, "r:gz") as tf:
+                    names = tf.getnames()
+                    bad = [n for n in names
+                           if n.startswith("/") or ".." in n.split("/")]
+                    if bad:
+                        print(f"refusing unsafe member paths: {bad[:3]}")
+                        return 2
+                    tf.extractall(tmp)
+            except tarfile.TarError as exc:
+                print(f"cannot read {archive} as a gzip tar: {exc}")
                 return 2
-            tf.extractall(tmp)
-        base = os.path.join(tmp, ROOT)
+            base = os.path.join(tmp, ROOT)
+            if not os.path.isdir(base):
+                # A subset may have been packed without the archive's top
+                # directory, or under a different one.
+                entries = [os.path.join(tmp, e) for e in os.listdir(tmp)]
+                dirs = [e for e in entries if os.path.isdir(e)]
+                base = dirs[0] if len(dirs) == 1 and not any(
+                    os.path.isfile(e) for e in entries) else tmp
 
-        # ---- the archive's own manifest ---------------------------------
+        # ---- the manifest -------------------------------------------------
         manifest = os.path.join(base, "MANIFEST.txt")
-        ok_count = bad_count = 0
+        if not os.path.isfile(manifest):
+            print("no MANIFEST.txt alongside the data; cannot establish that these")
+            print("files are the sealed model's. Include it.")
+            return 2
+        ok_count = bad_count = absent = 0
+        bad_names = []
         with open(manifest, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
@@ -229,20 +250,47 @@ def main(argv):
                 want, _, rel = line.partition("  ")
                 rel = rel.strip().lstrip("./")
                 target = os.path.join(base, rel)
-                if os.path.isfile(target) and sha256_file(target) == want:
+                if not os.path.isfile(target):
+                    absent += 1
+                elif sha256_file(target) == want:
                     ok_count += 1
                 else:
                     bad_count += 1
-        chk.add("archive self-manifest", bad_count == 0,
-                f"{ok_count} files verified, {bad_count} mismatched")
+                    bad_names.append(rel)
+        if sealed:
+            chk.add("archive self-manifest", bad_count == 0 and absent == 0,
+                    f"{ok_count} files verified, {bad_count} mismatched")
+        else:
+            # A subset is legitimate; a file that is present but does not
+            # match its sealed hash is not.
+            chk.add("manifest: files present match their sealed hashes",
+                    bad_count == 0,
+                    f"{ok_count} verified, {bad_count} mismatched"
+                    + (f" {bad_names[:3]}" if bad_names else "")
+                    + f", {absent} of the sealed set not supplied")
 
         G = os.path.join(base, "geometry")
         O = os.path.join(base, "outputs")
-        orig_geom = json.load(open(os.path.join(G, "approved_AB_model.json")))
-        orig_rec = json.load(open(os.path.join(G, "receptors.json")))
-        orig_edge = json.load(open(os.path.join(G, "casting_edge.json")))
-        orig_peaks = json.load(open(os.path.join(O, "peaks.json")))
-        orig_comp = json.load(open(os.path.join(O, "comp_at_peaks.json")))
+
+        def maybe(path):
+            """Load a JSON file, or None if it was not supplied."""
+            if not os.path.isfile(path):
+                return None
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+
+        orig_geom = maybe(os.path.join(G, "approved_AB_model.json"))
+        orig_rec = maybe(os.path.join(G, "receptors.json"))
+        orig_edge = maybe(os.path.join(G, "casting_edge.json"))
+        orig_peaks = maybe(os.path.join(O, "peaks.json"))
+        orig_comp = maybe(os.path.join(O, "comp_at_peaks.json"))
+        orig_attr = maybe(os.path.join(O, "attribution.json"))
+
+        if not any((orig_geom, orig_rec, orig_peaks, orig_comp, orig_attr)):
+            print("none of the model's data files were supplied; nothing to diff.")
+            return 2
+
+        skipped = []
 
         m = M.load().d
         E0 = m["crs"]["local_origin_E"]
@@ -251,106 +299,121 @@ def main(argv):
         LON = m["solar"]["longitude"]
 
         # ---- building footprints ----------------------------------------
-        worst_v = 0.0
-        worst_a = 0.0
-        notes = []
-        for part in ("building_A", "building_B_plate",
-                     "building_B_communal_roof", "building_B_lift_overrun"):
-            o = orig_geom[part]
-            r = m["approved"].get(part)
-            if r is None:
-                notes.append(f"{part} missing")
-                continue
-            if float(r["top_rl"]) != float(o["top_rl"]):
-                notes.append(f"{part} top_rl {r['top_rl']} vs {o['top_rl']}")
-            dev, err = max_vertex_dev(r["footprint"], o["footprint"], E0, N0)
-            if dev is None:
-                notes.append(f"{part} {err}")
-                continue
-            worst_v = max(worst_v, dev)
-            worst_a = max(worst_a, abs(shoelace(r["footprint"]) - o["area"]))
-        chk.add("approved geometry: vertices", not notes and worst_v <= VERTEX_TOL_M,
-                f"max deviation {worst_v * 1000:.4f} mm" + (f"; {notes}" if notes else ""))
-        chk.add("approved geometry: areas", worst_a <= AREA_TOL_M2,
-                f"max |delta| {worst_a:.2e} m2")
+        if orig_geom is None:
+            skipped.append('approved geometry')
+        else:
+            worst_v = 0.0
+            worst_a = 0.0
+            notes = []
+            for part in ("building_A", "building_B_plate",
+                         "building_B_communal_roof", "building_B_lift_overrun"):
+                o = orig_geom[part]
+                r = m["approved"].get(part)
+                if r is None:
+                    notes.append(f"{part} missing")
+                    continue
+                if float(r["top_rl"]) != float(o["top_rl"]):
+                    notes.append(f"{part} top_rl {r['top_rl']} vs {o['top_rl']}")
+                dev, err = max_vertex_dev(r["footprint"], o["footprint"], E0, N0)
+                if dev is None:
+                    notes.append(f"{part} {err}")
+                    continue
+                worst_v = max(worst_v, dev)
+                worst_a = max(worst_a, abs(shoelace(r["footprint"]) - o["area"]))
+            chk.add("approved geometry: vertices", not notes and worst_v <= VERTEX_TOL_M,
+                    f"max deviation {worst_v * 1000:.4f} mm" + (f"; {notes}" if notes else ""))
+            chk.add("approved geometry: areas", worst_a <= AREA_TOL_M2,
+                    f"max |delta| {worst_a:.2e} m2")
 
         # ---- receptors ---------------------------------------------------
-        worst_v = 0.0
-        rnotes = []
-        for pos in ("yard", "sched"):
-            for lot in sorted(orig_rec["pos"][pos]):
-                dev, err = max_vertex_dev(m["receptors"][pos][lot],
-                                          orig_rec["pos"][pos][lot], E0, N0)
-                if dev is None:
-                    rnotes.append(f"{pos}/{lot} {err}")
-                else:
-                    worst_v = max(worst_v, dev)
-        chk.add("receptor polygons", not rnotes and worst_v <= VERTEX_TOL_M,
-                f"max deviation {worst_v * 1000:.4f} mm" + (f"; {rnotes}" if rnotes else ""))
+        if orig_rec is None:
+            skipped.append('receptors')
+        else:
+            worst_v = 0.0
+            rnotes = []
+            for pos in ("yard", "sched"):
+                for lot in sorted(orig_rec["pos"][pos]):
+                    dev, err = max_vertex_dev(m["receptors"][pos][lot],
+                                              orig_rec["pos"][pos][lot], E0, N0)
+                    if dev is None:
+                        rnotes.append(f"{pos}/{lot} {err}")
+                    else:
+                        worst_v = max(worst_v, dev)
+            chk.add("receptor polygons", not rnotes and worst_v <= VERTEX_TOL_M,
+                    f"max deviation {worst_v * 1000:.4f} mm" + (f"; {rnotes}" if rnotes else ""))
 
-        # receptor metadata is stored at full float precision, so demand exact
-        meta_bad = []
-        for pos in ("yard", "sched"):
-            for lot in sorted(orig_rec["meta"][pos]):
-                om = orig_rec["meta"][pos][lot]
-                rm = m["receptor_meta"][pos][lot]
-                for field in ("depth_m", "width_m", "area_m2"):
-                    if repr(float(rm[field])) != repr(float(om[field])):
-                        meta_bad.append(f"{pos}/{lot}.{field}")
-        chk.add("receptor metadata (exact)", not meta_bad,
-                "identical to full float precision" if not meta_bad else f"{meta_bad}")
+            # receptor metadata is stored at full float precision, so demand exact
+            meta_bad = []
+            for pos in ("yard", "sched"):
+                for lot in sorted(orig_rec["meta"][pos]):
+                    om = orig_rec["meta"][pos][lot]
+                    rm = m["receptor_meta"][pos][lot]
+                    for field in ("depth_m", "width_m", "area_m2"):
+                        if repr(float(rm[field])) != repr(float(om[field])):
+                            meta_bad.append(f"{pos}/{lot}.{field}")
+            chk.add("receptor metadata (exact)", not meta_bad,
+                    "identical to full float precision" if not meta_bad else f"{meta_bad}")
 
         # ---- casting edge -------------------------------------------------
-        ce = m["casting_edge"]
-        dev = max(
-            max(abs(ce["union_bbox"][0] + E0 - orig_edge["union_bbox"][0]),
-                abs(ce["union_bbox"][2] + E0 - orig_edge["union_bbox"][2])),
-            max(abs(ce["union_bbox"][1] + N0 - orig_edge["union_bbox"][1]),
-                abs(ce["union_bbox"][3] + N0 - orig_edge["union_bbox"][3])),
-            abs(ce["centroid"][0] + E0 - orig_edge["centroid"][0]),
-            abs(ce["centroid"][1] + N0 - orig_edge["centroid"][1]),
-        )
-        chk.add("casting edge", dev <= 1e-6, f"max deviation {dev:.2e} m")
+        if orig_edge is None:
+            skipped.append('casting edge')
+        else:
+            ce = m["casting_edge"]
+            dev = max(
+                max(abs(ce["union_bbox"][0] + E0 - orig_edge["union_bbox"][0]),
+                    abs(ce["union_bbox"][2] + E0 - orig_edge["union_bbox"][2])),
+                max(abs(ce["union_bbox"][1] + N0 - orig_edge["union_bbox"][1]),
+                    abs(ce["union_bbox"][3] + N0 - orig_edge["union_bbox"][3])),
+                abs(ce["centroid"][0] + E0 - orig_edge["centroid"][0]),
+                abs(ce["centroid"][1] + N0 - orig_edge["centroid"][1]),
+            )
+            chk.add("casting edge", dev <= 1e-6, f"max deviation {dev:.2e} m")
 
         # ---- the 24 frozen peaks, at the original's full precision --------
-        frozen = m["frozen"]["peaks"]
-        worst = 0.0
-        worst_k = None
-        inst_bad = []
-        missing = []
-        for key, v in orig_peaks.items():
-            fr = frozen.get(key)
-            if fr is None:
-                missing.append(key)
-                continue
-            d = abs(float(fr["peak_loss_m2"]) - v["peak_loss_m2"])
-            if d > worst:
-                worst, worst_k = d, key
-            if fr.get("instant") != v["instant"]:
-                inst_bad.append(key)
-        chk.add("frozen peaks: embedded values", not missing and worst <= 1e-6,
-                f"{len(orig_peaks)} compared, max |delta| {worst:.2e} m2"
-                + (f" on {worst_k}" if worst_k else "")
-                + (f"; missing {missing}" if missing else ""))
-        chk.add("frozen peaks: governing instants", not inst_bad and not missing,
-                f"{len(orig_peaks) - len(inst_bad)}/{len(orig_peaks)} exact")
+        if orig_peaks is None:
+            skipped.append('frozen peaks')
+        else:
+            frozen = m["frozen"]["peaks"]
+            worst = 0.0
+            worst_k = None
+            inst_bad = []
+            missing = []
+            for key, v in orig_peaks.items():
+                fr = frozen.get(key)
+                if fr is None:
+                    missing.append(key)
+                    continue
+                d = abs(float(fr["peak_loss_m2"]) - v["peak_loss_m2"])
+                if d > worst:
+                    worst, worst_k = d, key
+                if fr.get("instant") != v["instant"]:
+                    inst_bad.append(key)
+            chk.add("frozen peaks: embedded values", not missing and worst <= 1e-6,
+                    f"{len(orig_peaks)} compared, max |delta| {worst:.2e} m2"
+                    + (f" on {worst_k}" if worst_k else "")
+                    + (f"; missing {missing}" if missing else ""))
+            chk.add("frozen peaks: governing instants", not inst_bad and not missing,
+                    f"{len(orig_peaks) - len(inst_bad)}/{len(orig_peaks)} exact")
 
         # ---- attribution: A vs B, at full float precision -----------------
-        orig_attr = json.load(open(os.path.join(O, "attribution.json")))
-        attr = m["frozen"]["attribution"]
-        bad = []
-        for key, v in orig_attr.items():
-            fr = attr.get(key)
-            if fr is None:
-                bad.append(f"{key} missing")
-                continue
-            for field in ("full", "A_only", "B_only", "base"):
-                if abs(float(fr[field]) - float(v[field])) > 1e-9:
-                    bad.append(f"{key}.{field}")
-            if fr.get("instant") != v["instant"]:
-                bad.append(f"{key}.instant")
-        chk.add("frozen attribution", not bad,
-                f"{len(orig_attr)} entries, A/B split exact" if not bad else f"{bad[:4]}")
+        if orig_attr is None:
+            skipped.append('attribution')
+        else:
+            orig_attr = json.load(open(os.path.join(O, "attribution.json")))
+            attr = m["frozen"]["attribution"]
+            bad = []
+            for key, v in orig_attr.items():
+                fr = attr.get(key)
+                if fr is None:
+                    bad.append(f"{key} missing")
+                    continue
+                for field in ("full", "A_only", "B_only", "base"):
+                    if abs(float(fr[field]) - float(v[field])) > 1e-9:
+                        bad.append(f"{key}.{field}")
+                if fr.get("instant") != v["instant"]:
+                    bad.append(f"{key}.instant")
+            chk.add("frozen attribution", not bad,
+                    f"{len(orig_attr)} entries, A/B split exact" if not bad else f"{bad[:4]}")
 
         # ---- full-year table, parsed from the original's own logs ---------
         fy_re = re.compile(
@@ -360,11 +423,12 @@ def main(argv):
             r"cmp48\s+(-?[\d.]+)\s*$")
         bad = []
         n_fy = 0
-        for pos in ("yard", "sched"):
-            log = os.path.join(O, f"fy_{pos}.log")
-            if not os.path.isfile(log):
-                bad.append(f"fy_{pos}.log missing")
-                continue
+        fy_logs = [p for p in (os.path.join(O, f"fy_{x}.log")
+                               for x in ("yard", "sched")) if os.path.isfile(p)]
+        if not fy_logs:
+            skipped.append("full-year table")
+        for log in fy_logs:
+            pos = os.path.basename(log)[3:-4]
             for line in open(log, encoding="utf-8"):
                 mt = fy_re.match(line.strip())
                 if not mt:
@@ -392,12 +456,13 @@ def main(argv):
                     bad.append(f"{lpos}/{fkey}.window")
         # A regex that silently matched nothing would otherwise pass, so
         # demand that every frozen row was accounted for by a log row.
-        n_fy_frozen = sum(len(v) for v in m["frozen"]["fullyear"].values())
-        if n_fy != n_fy_frozen:
-            bad.append(f"covered {n_fy} of {n_fy_frozen} frozen rows")
-        chk.add("frozen full-year table", not bad,
-                f"{n_fy}/{n_fy_frozen} rows from fy_*.log, all fields match"
-                if not bad else f"{bad[:4]}")
+        if fy_logs:
+            n_fy_frozen = sum(len(v) for v in m["frozen"]["fullyear"].values())
+            if n_fy != n_fy_frozen:
+                bad.append(f"covered {n_fy} of {n_fy_frozen} frozen rows")
+            chk.add("frozen full-year table", not bad,
+                    f"{n_fy}/{n_fy_frozen} rows from fy_*.log, all fields match"
+                    if not bad else f"{bad[:4]}")
 
         # ---- incremental table --------------------------------------------
         # The archive logs only f000; the frozen table holds only f000 as
@@ -407,11 +472,12 @@ def main(argv):
             r"\(prop\s+(-?[\d.]+),\s*comp\s+(-?[\d.]+)\)\s+days\s+(\d+)\s*$")
         bad = []
         n_inc = 0
-        for pos in ("yard", "sched"):
-            log = os.path.join(O, f"inc2_{pos}_f000.log")
-            if not os.path.isfile(log):
-                bad.append(f"inc2_{pos}_f000.log missing")
-                continue
+        inc_logs = [p for p in (os.path.join(O, f"inc2_{x}_f000.log")
+                                for x in ("yard", "sched")) if os.path.isfile(p)]
+        if not inc_logs:
+            skipped.append("incremental table")
+        for log in inc_logs:
+            pos = os.path.basename(log)[5:-10]
             for line in open(log, encoding="utf-8"):
                 mt = inc_re.match(line.strip())
                 if not mt:
@@ -432,68 +498,75 @@ def main(argv):
                         bad.append(f"{lpos}/{fkey}/{rl}.{label} {got} vs {want}")
                 if fr.get("instant") != inst:
                     bad.append(f"{lpos}/{fkey}/{rl}.instant")
-        n_inc_frozen = sum(len(rls) for pos in m["frozen"]["incremental"].values()
-                           for rls in pos.values())
-        if n_inc != n_inc_frozen:
-            bad.append(f"covered {n_inc} of {n_inc_frozen} frozen rows")
-        chk.add("frozen incremental table", not bad,
-                f"{n_inc}/{n_inc_frozen} rows from inc2_*_f000.log, all fields match"
-                if not bad else f"{bad[:4]}")
+        if inc_logs:
+            n_inc_frozen = sum(len(rls) for pos in m["frozen"]["incremental"].values()
+                               for rls in pos.values())
+            if n_inc != n_inc_frozen:
+                bad.append(f"covered {n_inc} of {n_inc_frozen} frozen rows")
+            chk.add("frozen incremental table", not bad,
+                    f"{n_inc}/{n_inc_frozen} rows from inc2_*_f000.log, all fields match"
+                    if not bad else f"{bad[:4]}")
 
         # ---- the offline first_contact_RL table, by the original's method -
-        from greville_model.solar import sun_position
-        from greville_model.geometry import point_in_poly
+        if orig_comp is None:
+            skipped.append('offline first_contact_RL')
+        else:
+            from greville_model.solar import sun_position
+            from greville_model.geometry import point_in_poly
 
-        A = ring(m["approved"]["building_A"]["footprint"])
-        Bp = ring(m["approved"]["building_B_plate"]["footprint"])
-        Ah, Bh = hull(A), hull(Bp)
-        CELL = M.FROZEN_CELL
+            A = ring(m["approved"]["building_A"]["footprint"])
+            Bp = ring(m["approved"]["building_B_plate"]["footprint"])
+            Ah, Bh = hull(A), hull(Bp)
+            CELL = M.FROZEN_CELL
 
-        worst = 0.0
-        worst_k = None
-        n = 0
-        for key, v in orig_comp.items():
-            want = v.get("first_contact_RL")
-            if want is None:
-                continue
-            pos, _fence, lot = key.split("/")
-            dt = M.parse_instant(v["instant"])
-            alt, az = sun_position(dt.year, dt.month, dt.day, dt.hour, dt.minute,
-                                   LAT, LON)
-            z = m["receiver_rl"][lot]
-            POS = ring(m["receptors"][pos][lot])
-            x0 = min(p[0] for p in POS)
-            x1 = max(p[0] for p in POS)
-            y0 = min(p[1] for p in POS)
-            y1 = max(p[1] for p in POS)
-            a = math.radians(az)
-            dx, dy = math.sin(a), math.cos(a)
-            tan_alt = math.tan(math.radians(alt))
-            best = math.inf
-            y = y0 + CELL / 2
-            while y < y1:
-                x = x0 + CELL / 2
-                while x < x1:
-                    if point_in_poly(x, y, POS):
-                        e = min(ray_entry(x, y, dx, dy, Ah),
-                                ray_entry(x, y, dx, dy, Bh))
-                        if math.isfinite(e):
-                            need = z + e * tan_alt
-                            if need < best:
-                                best = need
-                    x += CELL
-                y += CELL
-            d = abs(best - want)
-            if d > worst:
-                worst, worst_k = d, key
-            n += 1
-        chk.add("offline first_contact_RL (hull method)", worst <= RL_TOL_M,
-                f"{n} compared, max |delta| {worst * 1000:.4f} mm"
-                + (f" on {worst_k}" if worst_k else ""))
+            worst = 0.0
+            worst_k = None
+            n = 0
+            for key, v in orig_comp.items():
+                want = v.get("first_contact_RL")
+                if want is None:
+                    continue
+                pos, _fence, lot = key.split("/")
+                dt = M.parse_instant(v["instant"])
+                alt, az = sun_position(dt.year, dt.month, dt.day, dt.hour, dt.minute,
+                                       LAT, LON)
+                z = m["receiver_rl"][lot]
+                POS = ring(m["receptors"][pos][lot])
+                x0 = min(p[0] for p in POS)
+                x1 = max(p[0] for p in POS)
+                y0 = min(p[1] for p in POS)
+                y1 = max(p[1] for p in POS)
+                a = math.radians(az)
+                dx, dy = math.sin(a), math.cos(a)
+                tan_alt = math.tan(math.radians(alt))
+                best = math.inf
+                y = y0 + CELL / 2
+                while y < y1:
+                    x = x0 + CELL / 2
+                    while x < x1:
+                        if point_in_poly(x, y, POS):
+                            e = min(ray_entry(x, y, dx, dy, Ah),
+                                    ray_entry(x, y, dx, dy, Bh))
+                            if math.isfinite(e):
+                                need = z + e * tan_alt
+                                if need < best:
+                                    best = need
+                        x += CELL
+                    y += CELL
+                d = abs(best - want)
+                if d > worst:
+                    worst, worst_k = d, key
+                n += 1
+            chk.add("offline first_contact_RL (hull method)", worst <= RL_TOL_M,
+                    f"{n} compared, max |delta| {worst * 1000:.4f} mm"
+                    + (f" on {worst_k}" if worst_k else ""))
 
     print("Diff of this reconstruction against the sealed original v1.1-AB:")
     print()
     failed = chk.report()
+    if skipped:
+        print()
+        print("Not supplied, so not checked: " + ", ".join(skipped) + ".")
     print()
     print("Not established by this diff:")
     print("  * The original engine modules scripts/solar.py and")

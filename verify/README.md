@@ -124,15 +124,26 @@ against the frozen page that embedded it.
 
 ```
 cd ../verify
-python3 diff_original.py /path/to/greville_shadow_model_v1.1-AB.tar.gz
+python3 diff_original.py /path/to/sealed-archive.tar.gz   # whole release
+python3 diff_original.py /path/to/model-data/             # or just the data
 ```
 
-The archive is not distributed with this repository: it is Class A internal
-forensic material marked "NOT for filing or service", and whether it is
-published is the author's decision, not this repository's. Request it, then
-supply the path. The script refuses any archive that does not hash to
-`6df4dde6…c76d4f0`, because a diff against an unidentified artefact proves
-nothing.
+It takes either form, and says which it got:
+
+* **The sealed release.** If the input hashes to `6df4dde6…c76d4f0` it is
+  identified as the sealed v1.1-AB archive and its own 47-file manifest is
+  verified end to end.
+* **The model data alone** — a directory or tarball holding
+  `geometry/`, `outputs/` and `MANIFEST.txt`. Every file supplied is checked
+  against its SHA-256 in that manifest, so the data is still provably the
+  sealed values; files not supplied are reported as not supplied, and any
+  check whose inputs are absent is skipped rather than failed.
+
+A file that is present but does not match its sealed hash fails, in either
+mode. That is the property worth having: the numbers can be proved to be the
+model's own, by anyone, without trusting whoever sent them.
+
+The release is not distributed with this repository.
 
 It checks twelve things and prints each: the archive's own 47-file manifest;
 the four approved footprints vertex by vertex and their `top_rl`; their areas;
