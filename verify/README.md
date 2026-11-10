@@ -103,10 +103,9 @@ python3 verify_frozen_peaks.py # every frozen figure, recomputed
 ```
 
 Three of those 29 are worth naming, because they are the ones that do not
-depend on the original source at all — which still matters, because the
-original *engine* is the one link that cannot be diffed even now that the
-sealed archive has been recovered (see §5a and `model/PROVENANCE.md`).
-`tests/test_sweep_vs_ray.py`
+depend on the original source at all — which matters, because the engine is
+the one part of the model that §5a does not check against the sealed release
+(see `model/PROVENANCE.md`). `tests/test_sweep_vs_ray.py`
 compares the two shadow paths against each other over tens of thousands of
 samples. They are independent derivations: the sweep translates a footprint
 along the anti-solar bearing and bridges each edge, the ray test asks whether
@@ -116,11 +115,10 @@ disagreement must sit on the shadow boundary, where a finite grid cannot
 resolve which side a point falls. A single disagreement away from the edge
 fails the test, because that would be a model split rather than quantisation.
 
-## 5a. Diff against the sealed original
+## 5a. Check against the sealed release
 
-The sealed v1.1-AB archive was recovered on 10 Nov 2026 and hash-identified, so
-the reconstruction can be diffed against the original artefact and not only
-against the frozen page that embedded it.
+The reconstruction can be checked against the sealed v1.1-AB release itself,
+not only against the frozen page that embedded it.
 
 ```
 cd ../verify
@@ -159,13 +157,14 @@ That covers all five frozen tables the page carries, not a sample, and the
 full-year and incremental checks assert their own row coverage so a parser that
 matched nothing would fail rather than pass. Current result: all twelve pass —
 geometry identical to 0.067 mm, receptor metadata exact to full float
-precision, and the embedded peak figures bit-identical to the original's.
+precision, the embedded peak figures bit-identical to the release's, and every
+field of every results table matching.
 
-What it does **not** establish is the engine implementation. The original
-`scripts/solar.py` and `scripts/shadow_model.py` are in the v1.0.2 archive,
-which is not held — so roughly 8 KB of the original still cannot be compared
-against anything, and the independent tests in §5 are what stands behind the
-physics there. The script says so when it finishes.
+What it does **not** establish is the engine implementation: the
+reconstruction's solar and shadow code is not compared with the original
+source, and the independent tests in §5 are what stands behind the physics
+there. Nor does it check the receiver levels, which v1.1-AB carries forward
+from v1.0.2. The script says both when it finishes.
 
 ### The Study page has its own gate now
 

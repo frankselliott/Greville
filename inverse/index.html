@@ -206,7 +206,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     method, which takes a minimum over grid sample points. The frozen <i>offline</i>
     <span class="num">first_contact_RL</span> table was produced another way: 16 of its 21
     values differ by more than 10 mm, worst 0.32 m, and refining the cell does not close the
-    gap. That method is now identified, from the recovered sealed v1.1-AB source: it is also a
+    gap. The offline method is also a
     20 mm grid, but it takes ray entry against the <i>convex hulls</i> of building A and the
     building B plate rather than their true footprints. A hull is larger, so the ray meets it
     sooner and the required RL comes out lower — the observed pattern. Reimplementing it

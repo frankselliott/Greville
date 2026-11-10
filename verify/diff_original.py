@@ -1,34 +1,33 @@
 #!/usr/bin/env python3
-"""Diff this reconstruction against the sealed original v1.1-AB archive.
+"""Verify this model against the sealed v1.1-AB release.
 
-Until 10 November 2026 the reconstruction in ``model/`` could only be gated
-against the frozen visualiser's own outputs -- see ``model/PROVENANCE.md``.
-The sealed archive it was reconstructed *from* has since been recovered and
-hash-identified, so the reconstruction can now be diffed against the original
-artefact instead of only against the page that embedded it.
+The model in ``model/`` is a Python reconstruction of the v1.1-AB shadow model.
+This script checks it against the sealed release, so that the geometry it
+computes over and the results it reproduces can be shown to be the release's
+own rather than taken on trust.
 
-This script does that diff.  It ships no part of the archive: the archive is
-Class A internal forensic material marked "NOT for filing or service", and
-whether it is published is not this script's decision.  Supply it yourself:
+It accepts either form of the release:
 
     python3 diff_original.py /path/to/greville_shadow_model_v1.1-AB.tar.gz
+    python3 diff_original.py /path/to/model-data-directory-or-tarball
 
-The archive is accepted only if it hashes to the value sealed in
-``model/PROVENANCE.md``.  A different archive is refused rather than diffed,
-because a diff against an unidentified artefact proves nothing -- the same
-reason the v1.0.2 manifest carries its own custody warning.
+The complete release is identified by its SHA-256, 6df4dde6...c76d4f0.  A model
+data set -- geometry/ and outputs/ alone -- is identified file by file against
+SHA-256 values pinned below in SEALED_FILE_HASHES, not against anything shipped
+with it, so a manifest regenerated to match altered data does not pass.
 
 Exit status: 0 all checks pass, 1 a check failed, 2 could not run.
 
 What this does and does not establish
 -------------------------------------
-It establishes that the geometry, receptors, receiver RLs and every frozen
-output in this reconstruction are the original's, to the precision each is
-stored at.  It does NOT establish that the *engine* here matches the original
-engine: ``scripts/solar.py`` and ``scripts/shadow_model.py`` live in the
-v1.0.2 archive, which is still not held.  Those two files remain the one
-genuinely unverified link, and the independent tests in ``model/tests/`` --
-not this diff -- are what stands behind them.
+It establishes that the approved geometry, the receptors and every row of every
+results table in this model are the sealed release's, to the precision each is
+stored at.
+
+It does not establish the engine.  The reconstruction's solar and shadow code is
+checked by the independent physics tests in ``model/tests/``, not against the
+original source.  Nor does it check the receiver levels, which the release
+carries forward from v1.0.2 rather than restating.
 """
 
 import hashlib
@@ -593,9 +592,30 @@ def main(argv):
                 if d > worst:
                     worst, worst_k = d, key
                 n += 1
-            chk.add("offline first_contact_RL (hull method)", worst <= RL_TOL_M,
-                    f"{n} compared, max |delta| {worst * 1000:.4f} mm"
-                    + (f" on {worst_k}" if worst_k else ""))
+            # Every field of every row, as embedded in the model.
+            emb = m["frozen"]["comp_at_peaks"]
+            row_bad = []
+            for key, v in orig_comp.items():
+                e = emb.get(key)
+                if e is None:
+                    row_bad.append(f"{key} missing")
+                    continue
+                for field, want in v.items():
+                    got = e.get(field)
+                    if isinstance(want, float) and isinstance(got, (int, float)):
+                        if abs(float(got) - want) > 1e-9:
+                            row_bad.append(f"{key}.{field}")
+                    elif got != want:
+                        row_bad.append(f"{key}.{field}")
+            if len(emb) != len(orig_comp):
+                row_bad.append(f"{len(emb)} rows vs {len(orig_comp)}")
+            chk.add("comparator-at-peaks table",
+                    not row_bad and worst <= RL_TOL_M,
+                    (f"{len(orig_comp)} rows, every field exact"
+                     if not row_bad else
+                     f"{len(row_bad)} field(s) differ {row_bad[:4]}")
+                    + f"; first_contact_RL recomputed by the hull method to "
+                      f"{worst * 1000:.4f} mm")
 
     print("Diff of this reconstruction against the sealed original v1.1-AB:")
     print()
@@ -604,12 +624,12 @@ def main(argv):
         print()
         print("Not supplied, so not checked: " + ", ".join(skipped) + ".")
     print()
-    print("Not established by this diff:")
-    print("  * The original engine modules scripts/solar.py and")
-    print("    scripts/shadow_model.py live in the v1.0.2 archive, which is")
-    print("    still not held.  See model/PROVENANCE.md.")
-    print("  * The receiver RLs are v1.0.2 values carried forward; the v1.1-AB")
-    print("    archive does not restate them, so they are not diffed here.")
+    print("Not established by this check:")
+    print("  * The engine.  The reconstruction's solar and shadow code is")
+    print("    checked by the physics tests in model/tests/, not against the")
+    print("    original source.")
+    print("  * The receiver levels, which v1.1-AB carries forward from v1.0.2")
+    print("    rather than restating.")
     print("    This reconstruction holds:",
           ", ".join(f"{k}={v}" for k, v in sorted(m["receiver_rl"].items())))
     return 1 if failed else 0

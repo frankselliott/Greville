@@ -160,14 +160,12 @@ way: 16 of its 21 values differ by more than 10 mm, worst 0.32 m, and refining
 the cell does not close the gap, so it is a difference in method rather than in
 sampling.
 
-That method is no longer unidentified. The sealed v1.1-AB archive was recovered
-on 10 Nov 2026, and its `scripts/comp_at_peaks.py` shows the offline table is
-*also* a 20 mm cell-centre grid — but one that takes ray entry against the
-**convex hulls** of building A and the building B plate rather than their true
-footprints. A hull is larger, so the ray meets it sooner and the required RL
-comes out lower, which is the observed pattern. Reimplementing it reproduces
-all 21 values to 0.028 mm; `../verify/diff_original.py` runs the check. The
-explanation came from the source, not from fitting to the answers.
+The offline table is *also* a 20 mm cell-centre grid, but it takes ray entry
+against the **convex hulls** of building A and the building B plate rather
+than their true footprints. A hull is larger, so the ray meets it sooner and
+the required RL comes out lower, which is the observed pattern. Reimplementing
+it reproduces all 21 values to 0.028 mm; `../verify/diff_original.py` runs the
+check.
 
 Nothing reported turns on it. Every value on both sides is metres clear of the
 46.0–55.75 m family. See `../model/README.md` for the numbers.
