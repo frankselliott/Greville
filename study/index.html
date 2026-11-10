@@ -116,6 +116,8 @@ canvas{display:block;width:100%;height:auto;touch-action:none}
 .dc-fill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--shade),var(--sun));border-radius:2px}
 .dc-now{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--coral);box-shadow:0 0 8px var(--coral)}
 .dc-stat{position:absolute;top:0;bottom:0;width:1px;background:rgba(181,142,76,.65)}
+ .ellivo-note{font-size:.72rem;color:var(--dim);margin-top:6px;line-height:1.5}
+ .ellivo-note b{color:var(--ink);font-weight:600}
 .ctl .k i{font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--dimmer);margin-left:7px;letter-spacing:.02em}
 .dc-axis{position:relative;height:17px;margin-left:115px;margin-top:5px}
 .dc-axis span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:.6rem;color:var(--dimmer)}
@@ -153,6 +155,14 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     </div>
     <button class="btn" id="play">Play</button>
     <button class="btn on" id="volBtn" title="Show the body of shade in the air, not only where it lands">Shade in 3D</button>
+    <label class="rlpick" id="ellivoPick">
+      <span>Ellivo DA-600/601</span>
+      <select id="ellivo">
+        <option value="-1">off</option>
+        <optgroup label="DA-600 · 21 December"></optgroup>
+        <optgroup label="DA-601 · 21 June"></optgroup>
+      </select>
+    </label>
     <div class="seg" id="scheme">
       <button class="btn on" data-s="approved">As approved</button>
       <button class="btn" data-s="comparator">8-storey comparator</button>
@@ -163,6 +173,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     </label>
     <div class="presets" id="presets"></div>
   </div>
+  <div class="wrap"><div class="ellivo-note" id="ellivoNote"></div></div>
 </div>
 
 <div class="wrap">
@@ -216,6 +227,19 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       registration step is involved. Checked against the model's own cadastre: Cluster 5 lots 60–63 agree
       to a mean 0.014 m, and Buildings A and B — which were not used to fit — to 0.014 m and 0.015 m,
       which is the drawing's own coordinate rounding. Block drawing only, not survey.</div>
+    <div><b>The applicant's shadow diagrams</b>Ellivo Architects, DA-600 and DA-601,
+      revision 8, dated 14/05/2026, lodged with the development application for 12 Chalk
+      Street. Reproduced here for comparison in the appeal. Both sheets are raster scans
+      with no vector geometry, so each of the eleven panels was registered to this model's
+      frame by image correlation against the approved footprints, which are known exactly.
+      The fit resolved to grid north — rotation 0.00° — and 0.1700 m per pixel, against the
+      0.1693 m implied by the sheets' own “1:1000 @ A1” printed on A3: two independent
+      routes agreeing to 0.4%. Each panel is warped into the same frame as the ground base
+      and drapes with the identical transform. Their shadow fill is recoloured teal so it
+      can be told apart from the shade this model casts; nothing else about the panels is
+      altered. Note that their diagrams shade <i>every</i> building on the plan, while the
+      shade drawn here is cast by the approved buildings alone, so the two extents are not
+      like for like.</div>
     <div><b>The eight-storey comparator</b>The 2020 approval fixed height as a storey count only —
       no top RL appears in any source. R1-079 therefore tests a bounded family at RL 46.0, 48.0, 50.0,
       52.0 and 55.75; RL 48.0 is the true eight-storey plate. Across that whole family the peak
@@ -665,11 +689,46 @@ function faceTone(mat, nrm, sp, up){
 /* ============ the 3D scene ============ */
 const cv = document.getElementById('scene'), g = cv.getContext('2d');
 
+/* The applicant's own shadow diagrams, Ellivo DA-600 and DA-601 revision 8,
+   14/05/2026, lodged with the development application. Each sheet is a raster
+   scan with no vector geometry, so every panel was registered to this model's
+   frame by image correlation against the approved footprints, which are known
+   exactly. The fit came out at grid north (rotation 0.00 deg) and 0.1700 m per
+   pixel, against the 0.1693 m implied by the sheet's own "1:1000 @ A1" on A3 —
+   a 0.4% agreement from two independent routes. Each panel is warped into
+   GB.frame_local_m so it drapes with the identical transform as the ground. */
+const ELLIVO = [
+  {s:'DA-600', t:'21 Dec · 9AM',  doy:355, min:540,  f:'dec-21-9am.png'},
+  {s:'DA-600', t:'21 Dec · 12PM', doy:355, min:720,  f:'dec-21-12pm.png'},
+  {s:'DA-600', t:'21 Dec · 3PM',  doy:355, min:900,  f:'dec-21-3pm.png'},
+  {s:'DA-600', t:'21 Dec · 4PM',  doy:355, min:960,  f:'dec-21-4pm.png'},
+  {s:'DA-600', t:'21 Dec · 5PM',  doy:355, min:1020, f:'dec-21-5pm.png'},
+  {s:'DA-601', t:'21 Jun · 9AM',  doy:172, min:540,  f:'jun-21-9am.png'},
+  {s:'DA-601', t:'21 Jun · 12PM', doy:172, min:720,  f:'jun-21-12pm.png'},
+  {s:'DA-601', t:'21 Jun · 2PM',  doy:172, min:840,  f:'jun-21-2pm.png'},
+  {s:'DA-601', t:'21 Jun · 3PM',  doy:172, min:900,  f:'jun-21-3pm.png'},
+  {s:'DA-601', t:'21 Jun · 4PM',  doy:172, min:960,  f:'jun-21-4pm.png'},
+  {s:'DA-601', t:'21 Jun · 5PM',  doy:172, min:1020, f:'jun-21-5pm.png'},
+];
+let ELLIVO_I = -1, ELLIVO_IMG = null, ELLIVO_READY = false;
+
 /* drawn block plan, draped on the ground plane by coordinates alone */
 const GROUND = new Image(); let groundReady = false;
 GROUND.onload = () => { groundReady = true; drawScene(); drawPlan(); };
 GROUND.src = 'data:image/png;base64,' + GROUND_B64;
 
+function drapeImage(ctx, V, img, alpha){     // same frame as the ground raster
+  const W0 = img.naturalWidth || img.width, H0 = img.naturalHeight || img.height;
+  if (!W0 || !H0) return;
+  const [fx0,fy0,fx1,fy1] = GB.frame_local_m;
+  const p00 = V.p(fx0, fy1, GZ), p10 = V.p(fx1, fy1, GZ), p01 = V.p(fx0, fy0, GZ);
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.setTransform((p10[0]-p00[0])/W0, (p10[1]-p00[1])/W0,
+                   (p01[0]-p00[0])/H0, (p01[1]-p00[1])/H0, p00[0], p00[1]);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}
 function drapeGround(ctx, V, alpha){
   if (!groundReady) return;
   const [fx0,fy0,fx1,fy1] = GB.frame_local_m;
@@ -793,6 +852,9 @@ function drawScene(){
            atm.addColorStop(1,'rgba(74,50,26,0.06)'); }
   else   { atm.addColorStop(0,'rgba(12,14,26,0.70)'); atm.addColorStop(1,'rgba(12,14,26,0.16)'); }
   g.fillStyle = atm; g.fillRect(0,0,W,H);
+
+  /* the applicant's diagram, laid on the ground under our own shade */
+  if (ELLIVO_READY && ELLIVO_IMG) drapeImage(g, V, ELLIVO_IMG, 0.95);
 
   /* the development parcel */
   for (const r of D.site_rings){
@@ -1180,6 +1242,7 @@ document.getElementById('legend').innerHTML = [
   ['linear-gradient(180deg,#BA544A,#8E6A50)','Existing heritage laundry','outline from imagery · ridge assumed, result height-independent'],
   ['#3A3A40','Charcoal concrete retaining wall','park boundary · 570–1545 mm, carries the fence'],
   ['linear-gradient(180deg,#EFEFE9,#D9D9D9)','Ground base','drawn block plan — cadastre, buildings, roads, rail'],
+  ['linear-gradient(180deg,#14AAA0,#0E7C74)',"Applicant's diagram",'Ellivo DA-600/601 Rev 8 · shown only when a panel is selected'],
 ].map(([sw,t,s])=>`<div class="lg"><i style="background:${sw}"></i><span>${t}
   <span style="color:var(--dimmer)"> · ${s}</span></span></div>`).join('');
 document.getElementById('fHash').textContent = D.model.sha256;
@@ -1262,7 +1325,37 @@ function applyDaylight(){                 // the slider only offers lit minutes
   document.getElementById('tLabel').textContent=fmtMin(S.min);
   return dl;
 }
-doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value; applyDaylight(); paintDay(); });
+const ellivoEl = document.getElementById('ellivo');
+(function(){                                   // fill the two optgroups
+  const gs = ellivoEl.querySelectorAll('optgroup');
+  ELLIVO.forEach((p,i)=>{
+    const o=document.createElement('option'); o.value=i; o.textContent=p.t;
+    gs[p.s==='DA-600'?0:1].appendChild(o);
+  });
+})();
+function setEllivo(i){
+  ELLIVO_I = i; ELLIVO_READY = false; ELLIVO_IMG = null;
+  const note = document.getElementById('ellivoNote');
+  if (i < 0){ note.textContent=''; drawScene(); return; }
+  const p = ELLIVO[i];
+  S.doy = p.doy; doyEl.value = S.doy;
+  S.min = p.min; applyDaylight();              // clamps to the lit day
+  const dl = daylight(S.doy);
+  note.innerHTML = (p.min > dl.set)
+    ? `<b>${p.s} ${p.t}</b> — the sun is below the horizon at that time on this day
+       (geometric sunset ${fmtMin(dl.set)}), so the clock is held at sunset. The panel
+       is still drawn, as lodged.`
+    : `<b>${p.s} ${p.t}</b> — applicant's diagram, as lodged, on the same ground frame.`;
+  const img = new Image();
+  img.onload = () => { if (ELLIVO_I===i){ ELLIVO_IMG=img; ELLIVO_READY=true; drawScene(); } };
+  img.onerror = () => { note.textContent = 'Could not load that panel.'; };
+  img.src = 'ellivo/' + p.f;
+  paintDay();
+}
+ellivoEl.addEventListener('change',()=>{ setEllivo(+ellivoEl.value); });
+doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value;
+  if (ELLIVO_I>=0 && ELLIVO[ELLIVO_I].doy!==S.doy){ ellivoEl.value='-1'; setEllivo(-1); }
+  applyDaylight(); paintDay(); });
 todEl.addEventListener('input',()=>{ S.min=+todEl.value; stop(); paintFast(); });
 document.getElementById('presets').addEventListener('click',e=>{
   const b=e.target.closest('[data-p]'); if(!b) return;
