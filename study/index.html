@@ -241,13 +241,25 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       verification pack.</div>
     <div><b>Checking this yourself</b>A verification pack is downloadable at
       <a href="download/greville-verification-pack.tar.gz">download/greville-verification-pack.tar.gz</a>
-      (198 KB). It holds the model data and engine, the 26 independent tests, the geometry as
+      (211 KB). It holds the model data and engine, the 29 independent tests, the geometry as
       DXF and GeoJSON in GDA2020 / MGA zone 56 (EPSG:7856), the computed shadow sweeps, the sun
       position at every instant used here, the frozen figures recomputed beside their stored
       values, and the registration record for the applicant's sheets. It carries its own
       coordinate conversion, self-testing against the Flinders Peak point published in the
       GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its export
       script reproduces every file byte for byte. Start at <code>verify/README.md</code>.</div>
+    <div><b>Diffed against the sealed original</b>The sealed v1.1-AB model archive was
+      recovered on 10 November 2026 and identified by SHA-256, so this model's inputs and
+      outputs are no longer checked only against the frozen page that embedded them. The pack's
+      <code>verify/diff_original.py</code> compares them against that archive directly, and
+      refuses any archive that does not match the sealed hash. All twelve of its checks pass:
+      the approved footprints and the receptor polygons agree to under a tenth of a millimetre,
+      the receptor areas and depths are exact to full floating-point precision, and all five
+      frozen result tables — including every one of the 24 governing instants — are identical.
+      The archive is internal working material and is not published here; the script takes it
+      as an argument. What this does <i>not</i> establish is the original engine's code: two
+      modules of it sit in an earlier archive that is still not held, which is why the 29 tests
+      above check the physics directly rather than against stored output.</div>
     <div><b>The applicant's shadow diagrams</b>Ellivo Architects, DA-600 and DA-601,
       revision 8, dated 14/05/2026, lodged with the development application for 12 Chalk
       Street and obtained from Council's development application record. Reproduced here for

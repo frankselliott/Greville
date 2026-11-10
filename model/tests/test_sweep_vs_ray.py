@@ -8,9 +8,12 @@ were exercised, neither was compared against the other.
 They are independent derivations of the same physics. The sweep translates a
 footprint along the anti-solar bearing and bridges each edge; the ray test
 asks, for one point, whether the segment toward the sun meets the footprint.
-Agreement between them does not depend on the lost original source, on the
-frozen result tables, or on any stored output — which is exactly why it is
-worth having.
+Agreement between them does not depend on the original source, on the frozen
+result tables, or on any stored output — which is exactly why it is worth
+having. That independence is load-bearing: the sealed v1.1-AB archive has been
+recovered, so the geometry and outputs can now be diffed against the original,
+but the original *engine* modules are in the v1.0.2 archive and are still not
+held. This test is one of the few things standing behind the physics itself.
 """
 import math
 import unittest

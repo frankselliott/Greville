@@ -11,6 +11,15 @@ The exception is `out/ellivo_registration.json`, which is a *record* of how the
 applicant's scanned sheets were registered to this frame. It is an input to the
 comparison, not an output of the model, and `export.py` does not regenerate it.
 
+The pack itself is built deterministically, so two builds from the same tree
+are byte-identical and the download can be hashed meaningfully:
+
+```sh
+tar --sort=name --owner=0 --group=0 --numeric-owner \
+    --mtime='2026-11-10 00:00:00' -cf - <the 29 files listed in this pack> \
+  | gzip -n -9 > greville-verification-pack.tar.gz
+```
+
 ---
 
 ## 1. What the model is, in one paragraph
@@ -94,7 +103,10 @@ python3 verify_frozen_peaks.py # every frozen figure, recomputed
 ```
 
 Three of those 29 are worth naming, because they are the ones that do not
-depend on the lost original source at all. `tests/test_sweep_vs_ray.py`
+depend on the original source at all — which still matters, because the
+original *engine* is the one link that cannot be diffed even now that the
+sealed archive has been recovered (see §5a and `model/PROVENANCE.md`).
+`tests/test_sweep_vs_ray.py`
 compares the two shadow paths against each other over tens of thousands of
 samples. They are independent derivations: the sweep translates a footprint
 along the anti-solar bearing and bridges each edge, the ray test asks whether
@@ -103,6 +115,44 @@ agree; nothing checked it. They do, and the test is strict about *how*: every
 disagreement must sit on the shadow boundary, where a finite grid cannot
 resolve which side a point falls. A single disagreement away from the edge
 fails the test, because that would be a model split rather than quantisation.
+
+## 5a. Diff against the sealed original
+
+The sealed v1.1-AB archive was recovered on 10 Nov 2026 and hash-identified, so
+the reconstruction can be diffed against the original artefact and not only
+against the frozen page that embedded it.
+
+```
+cd ../verify
+python3 diff_original.py /path/to/greville_shadow_model_v1.1-AB.tar.gz
+```
+
+The archive is not distributed with this repository: it is Class A internal
+forensic material marked "NOT for filing or service", and whether it is
+published is the author's decision, not this repository's. Request it, then
+supply the path. The script refuses any archive that does not hash to
+`6df4dde6…c76d4f0`, because a diff against an unidentified artefact proves
+nothing.
+
+It checks twelve things and prints each: the archive's own 47-file manifest;
+the four approved footprints vertex by vertex and their `top_rl`; their areas;
+the eight receptor polygons; the 24 receptor metadata values; the casting edge;
+the 24 frozen peak figures embedded in the page; the 24 governing instants; the
+8-entry attribution split; the 24-row full-year table; the 16-row incremental
+table; and the 21-row offline `first_contact_RL` table recomputed by the
+original's own hull method.
+
+That covers all five frozen tables the page carries, not a sample, and the
+full-year and incremental checks assert their own row coverage so a parser that
+matched nothing would fail rather than pass. Current result: all twelve pass —
+geometry identical to 0.067 mm, receptor metadata exact to full float
+precision, and the embedded peak figures bit-identical to the original's.
+
+What it does **not** establish is the engine implementation. The original
+`scripts/solar.py` and `scripts/shadow_model.py` are in the v1.0.2 archive,
+which is not held — so roughly 8 KB of the original still cannot be compared
+against anything, and the independent tests in §5 are what stands behind the
+physics there. The script says so when it finishes.
 
 ### The Study page has its own gate now
 

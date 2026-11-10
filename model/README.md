@@ -3,9 +3,14 @@
 A dependency-free reconstruction of the frozen **v1.1-AB** overshadowing model
 for Greville Stage 5, Wooloowin — lots 60–63 SP354191.
 
-Read [`PROVENANCE.md`](PROVENANCE.md) first. It says where this came from,
-and it is the part that matters: the original model source is lost, and this
-is a port back from the JavaScript inside the frozen visualiser.
+Read [`PROVENANCE.md`](PROVENANCE.md) first. It says where this came from, and
+it is the part that matters: this is a port back from the JavaScript inside the
+frozen visualiser. The sealed v1.1-AB archive was recovered on 10 Nov 2026, so
+the geometry and every frozen output here have since been diffed against the
+original rather than only against that page — run
+[`../verify/diff_original.py`](../verify/diff_original.py). The original
+*engine* modules are still unheld; `PROVENANCE.md` is precise about which link
+is which.
 
 ## Why it exists
 
@@ -170,7 +175,7 @@ reports every row rather than a single number.
 A deviation that stops shrinking **for its own case** is a model difference,
 and a finding. **Do not widen the tolerance to make a figure pass.**
 
-## An open finding
+## A finding that was open, and is now closed
 
 The inverse does **not** reproduce the frozen offline `first_contact_RL`
 table. 16 of 21 recorded values disagree by more than 10 mm, worst 0.32 m, and
@@ -179,20 +184,34 @@ method, not sampling.
 
 The Python here is a faithful port of the frozen *browser* implementation
 (`firstContactRL()` in `index.html`), which samples the receptor on a grid and
-takes the minimum over sample points. The frozen *offline* table appears to
-have been produced some other way — its values are mostly lower, which is what
-an exact continuous minimum over the receptor polygon would give, rather than a
-minimum over cell centres. That is a hypothesis, and it has not been adopted:
-the original method is lost and reconstructing it by fitting to the answer
-would be fabrication.
+takes the minimum over sample points. The frozen *offline* table was produced
+another way, and until 10 Nov 2026 that way could not be identified. This
+README offered a hypothesis — an exact continuous minimum over the receptor
+polygon, rather than a minimum over cell centres — and declined to adopt it.
 
-**Nothing reported turns on this.** Every first-contact RL on both sides sits
-around 57–62 m, well clear of the comparator test family's 46.0–55.75 m — so
-the frozen conclusion that no comparator in the range reaches those backyards
-at the governing instants holds either way, with metres of margin. The two
-values that fall below the family (37.76 and 39.50) are below it on both sides.
-The disagreement is between two frozen artifacts, and it is recorded here so
-that it is not discovered later and mistaken for drift.
+**The hypothesis was wrong.** The sealed v1.1-AB archive has since been
+recovered, and its `scripts/comp_at_peaks.py` settles the question. The offline
+method is *also* a 20 mm cell-centre grid. The difference is that it takes ray
+entry against the **convex hulls** of building A and the building B plate
+instead of their true footprints. A hull is larger than the footprint it wraps,
+so the ray meets it sooner and `need = z + t·tan(alt)` comes out smaller —
+which is precisely the "mostly lower" pattern recorded above and not explained.
+The original's own docstring says why it is drawn that way: the hull
+"OVER-states comparator reach, so a 0.000 result is conservative against us."
+
+Reimplementing that method reproduces all 21 values to **0.028 mm**.
+`../verify/diff_original.py` runs this check. So the gap is now explained from
+the source rather than fitted to the answer — which is the distinction this
+section originally refused to blur, and it held up.
+
+**Nothing reported ever turned on this.** Every first-contact RL on both sides
+sits around 57–62 m, well clear of the comparator test family's 46.0–55.75 m —
+so the frozen conclusion that no comparator in the range reaches those
+backyards at the governing instants holds either way, with metres of margin.
+The two values that fall below the family (37.76 and 39.50) are below it on
+both sides. The browser-versus-offline disagreement between the two frozen
+artifacts is real and remains recorded, so that it is not discovered later and
+mistaken for drift; what is no longer true is that its cause is unknown.
 
 ## Status
 
