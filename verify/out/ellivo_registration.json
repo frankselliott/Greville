@@ -1,0 +1,202 @@
+{
+ "source": {
+  "sheets": [
+   "Ellivo DA-600 rev 8",
+   "Ellivo DA-601 rev 8"
+  ],
+  "title": "SHADOW DIAGRAMS \u2014 SORELLA, 12 Chalk Street, Wooloowin QLD 4030",
+  "project_number": "240061",
+  "dated": "2026-05-14",
+  "pdf_producer": "Microsoft: Print To PDF",
+  "content": "raster only \u2014 JPEG tiles at 601 ppi; pdftotext returns 2 characters",
+  "sheet_scale_printed": "1:1000 @ A1, reproduced on A3 (so 1:2000)"
+ },
+ "method": "Each panel registered to the model's local frame by FFT phase correlation of the panel's edge map against the approved footprints, which are known exactly from the approved plans. A full-circle rotation and scale search against the drawn base did NOT lock (candidates scattered across 279, 3, 324 and 243 degrees, SNR 9-11, no dominant peak). Correlating against the approved footprints did lock. Each panel was then cross-checked by chain registration to the 12PM panel of its own sheet, where the base linework is identical and only the shadow differs; chain and direct agree within 1-3 px at SNR 240-510.",
+ "solution": {
+  "rotation_deg": 0.0,
+  "rotation_note": "grid north; the panels are drawn on GDA2020 / MGA zone 56 grid north",
+  "metres_per_panel_pixel": 0.17,
+  "scale_cross_check": "0.1693 m/px implied by the sheet's own printed scale at 300 dpi; 0.1700 m/px from the correlation. Two independent routes, 0.4% apart.",
+  "panel_render_dpi": 300,
+  "target_frame_local_m": [
+   -245.0,
+   -245.0,
+   345.0,
+   245.0
+  ],
+  "target_px_per_m_for_offsets": 3.0
+ },
+ "panels": [
+  {
+   "sheet": "DA-600",
+   "label": "DEC 21 9AM",
+   "instant": "2026-12-21T09:00:00",
+   "crop_box_px_on_300dpi_page": [
+    74,
+    70,
+    1761,
+    1543
+   ],
+   "dx": 143,
+   "dy": 115,
+   "registration_snr": 24.23,
+   "overlay_file": "study/ellivo/dec-21-9am.png"
+  },
+  {
+   "sheet": "DA-600",
+   "label": "DEC 21 12PM",
+   "instant": "2026-12-21T12:00:00",
+   "crop_box_px_on_300dpi_page": [
+    1661,
+    70,
+    3348,
+    1543
+   ],
+   "dx": 149,
+   "dy": 113,
+   "registration_snr": 21.72,
+   "overlay_file": "study/ellivo/dec-21-12pm.png"
+  },
+  {
+   "sheet": "DA-600",
+   "label": "DEC 21 3PM",
+   "instant": "2026-12-21T15:00:00",
+   "crop_box_px_on_300dpi_page": [
+    3249,
+    70,
+    4936,
+    1543
+   ],
+   "dx": 160,
+   "dy": 106,
+   "registration_snr": 25.38,
+   "overlay_file": "study/ellivo/dec-21-3pm.png"
+  },
+  {
+   "sheet": "DA-600",
+   "label": "DEC 21 4PM",
+   "instant": "2026-12-21T16:00:00",
+   "crop_box_px_on_300dpi_page": [
+    74,
+    1614,
+    1761,
+    3087
+   ],
+   "dx": 140,
+   "dy": 145,
+   "registration_snr": 15.94,
+   "overlay_file": "study/ellivo/dec-21-4pm.png"
+  },
+  {
+   "sheet": "DA-600",
+   "label": "DEC 21 5PM",
+   "instant": "2026-12-21T17:00:00",
+   "crop_box_px_on_300dpi_page": [
+    1661,
+    1614,
+    3348,
+    3087
+   ],
+   "dx": 175,
+   "dy": 82,
+   "registration_snr": 19.71,
+   "overlay_file": "study/ellivo/dec-21-5pm.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 9AM",
+   "instant": "2026-06-21T09:00:00",
+   "crop_box_px_on_300dpi_page": [
+    74,
+    70,
+    1761,
+    1543
+   ],
+   "dx": 143,
+   "dy": 79,
+   "registration_snr": 23.4,
+   "overlay_file": "study/ellivo/jun-21-9am.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 12PM",
+   "instant": "2026-06-21T12:00:00",
+   "crop_box_px_on_300dpi_page": [
+    1661,
+    70,
+    3348,
+    1543
+   ],
+   "dx": 146,
+   "dy": 74,
+   "registration_snr": 27.53,
+   "overlay_file": "study/ellivo/jun-21-12pm.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 2PM",
+   "instant": "2026-06-21T14:00:00",
+   "crop_box_px_on_300dpi_page": [
+    3249,
+    70,
+    4936,
+    1543
+   ],
+   "dx": 150,
+   "dy": 74,
+   "registration_snr": 19.69,
+   "overlay_file": "study/ellivo/jun-21-2pm.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 3PM",
+   "instant": "2026-06-21T15:00:00",
+   "crop_box_px_on_300dpi_page": [
+    74,
+    1614,
+    1761,
+    3087
+   ],
+   "dx": 143,
+   "dy": 135,
+   "registration_snr": 21.66,
+   "overlay_file": "study/ellivo/jun-21-3pm.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 4PM",
+   "instant": "2026-06-21T16:00:00",
+   "crop_box_px_on_300dpi_page": [
+    1661,
+    1614,
+    3348,
+    3087
+   ],
+   "dx": 238,
+   "dy": 135,
+   "registration_snr": 18.0,
+   "overlay_file": "study/ellivo/jun-21-4pm.png"
+  },
+  {
+   "sheet": "DA-601",
+   "label": "JUN 21 5PM",
+   "instant": "2026-06-21T17:00:00",
+   "crop_box_px_on_300dpi_page": [
+    3249,
+    1614,
+    4936,
+    3087
+   ],
+   "dx": 151,
+   "dy": 135,
+   "registration_snr": 16.61,
+   "overlay_file": "study/ellivo/jun-21-5pm.png"
+  }
+ ],
+ "like_for_like_check": "Their blue dashed 'EQUIVALENT 8 STOREY BUILT FORM' outline is their own comparator shadow, and this model computes the same envelope. Median distance from their blue pixels to this model's computed comparator shadow boundary, per panel, ranged 0.4 to 2.7 m across all ten daylight panels (90th percentile 1.6 to 16.1 m), at a registration uncertainty of about 1 m plus the drawn line's own width. Best-fitting envelope was RL 48.00 in five of ten panels, and in three of the four low-sun panels where envelope height actually discriminates.",
+ "caveats": [
+  "Their diagrams shade every building on the plan; this model's shade is cast by the approved buildings alone. Gross shadow extents are NOT like for like.",
+  "DA-601 panel 6, '21 JUN 5PM', depicts a time at which the sun is below the horizon (geometric altitude -0.47 deg; sunset 16:57). Its geometry is not a valid shadow.",
+  "Registration is image-based and carries roughly +/- 1 m. It is adequate for comparing shadow extent and direction; it is not a substitute for the applicant's source CAD."
+ ]
+}

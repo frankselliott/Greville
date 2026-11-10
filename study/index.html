@@ -227,6 +227,15 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       registration step is involved. Checked against the model's own cadastre: Cluster 5 lots 60–63 agree
       to a mean 0.014 m, and Buildings A and B — which were not used to fit — to 0.014 m and 0.015 m,
       which is the drawing's own coordinate rounding. Block drawing only, not survey.</div>
+    <div><b>Checking this yourself</b>A verification pack is downloadable at
+      <a href="download/greville-verification-pack.tar.gz">download/greville-verification-pack.tar.gz</a>
+      (198 KB). It holds the model data and engine, the 26 independent tests, the geometry as
+      DXF and GeoJSON in GDA2020 / MGA zone 56 (EPSG:7856), the computed shadow sweeps, the sun
+      position at every instant used here, the frozen figures recomputed beside their stored
+      values, and the registration record for the applicant's sheets. It carries its own
+      coordinate conversion, self-testing against the Flinders Peak point published in the
+      GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its export
+      script reproduces every file byte for byte. Start at <code>verify/README.md</code>.</div>
     <div><b>The applicant's shadow diagrams</b>Ellivo Architects, DA-600 and DA-601,
       revision 8, dated 14/05/2026, lodged with the development application for 12 Chalk
       Street. Reproduced here for comparison in the appeal. Both sheets are raster scans
