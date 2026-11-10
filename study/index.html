@@ -438,7 +438,7 @@ function gridInPolygon(poly, cell) {
 }
 
 /* ============ shared state — one clock drives every view ============ */
-const S = { doy: 327, min: 423, rot: -0.62, tilt: 0.55, vs: 0.86, zoom: 0.86, vol: true,
+const S = { doy: 327, min: 423, rot: -0.62, tilt: 0.55, vs: 0.86, zoom: 1.15, vol: true,
             playing: false, scheme: 'approved', compRL: 48.0 };
 /* The 2020 approval fixed height as a STOREY COUNT only — no top RL exists in any
    source. R1-079 therefore tests a bounded family; RL 48.0 is the true eight-storey
@@ -619,11 +619,19 @@ for (const r of D.earlier_rows.rows)
 
 /* ============ projection ============ */
 let VIEW = null;
+/* east edge carries the Hudson Road frontage (local E +174..+260); west and
+   south are trimmed back from the raster, which runs to E -245 / N -245. */
+const VIEW_FRAME = [-120.0, -200.0, 285.0, 200.0];
 function makeView(cv, rot, tilt, vs, zoom){
-  let bb = null;
+  /* Frame the GROUND, not just the modelled buildings. Fitting to BUILD alone
+     left the drawn base overflowing the canvas, so the land the evening shadow
+     actually reaches — across the rail corridor to the Hudson Road properties —
+     sat off-screen. VIEW_FRAME is the ground frame inset to the part that
+     carries the subject and the shadows; the far south-west is all residential
+     backdrop the shadow never touches, so it is not paid for in scale. */
+  let bb = VIEW_FRAME.slice();
   for (const b of BUILD) for (const p of b.ring)
-    bb = bb ? [Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])]
-            : [p[0],p[1],p[0],p[1]];
+    bb = [Math.min(bb[0],p[0]),Math.min(bb[1],p[1]),Math.max(bb[2],p[0]),Math.max(bb[3],p[1])];
   const cx0 = (bb[0]+bb[2])/2, cy0 = (bb[1]+bb[3])/2;
   const ca = Math.cos(rot), sa = Math.sin(rot);
   const uw = (x,y) => [ (x-cx0)*ca - (y-cy0)*sa, (x-cx0)*sa + (y-cy0)*ca ];
