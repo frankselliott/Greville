@@ -116,6 +116,9 @@ canvas{display:block;width:100%;height:auto;touch-action:none}
 .dc-fill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--shade),var(--sun));border-radius:2px}
 .dc-now{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--coral);box-shadow:0 0 8px var(--coral)}
 .dc-stat{position:absolute;top:0;bottom:0;width:1px;background:rgba(181,142,76,.65)}
+ .aslodged{display:inline-flex;align-items:center;gap:5px;margin-left:10px;
+   font-family:var(--mono);font-size:.6rem;color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+ .aslodged input{accent-color:var(--amber);width:12px;height:12px}
  .ellivo-note{font-size:.72rem;color:var(--dim);margin-top:6px;line-height:1.5}
  .ellivo-note b{color:var(--ink);font-weight:600}
 .ctl .k i{font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--dimmer);margin-left:7px;letter-spacing:.02em}
@@ -162,6 +165,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
         <optgroup label="DA-600 · 21 December"></optgroup>
         <optgroup label="DA-601 · 21 June"></optgroup>
       </select>
+      <label class="aslodged"><input type="checkbox" id="asLodged"> as lodged</label>
     </label>
     <div class="seg" id="scheme">
       <button class="btn on" data-s="approved">As approved</button>
@@ -246,9 +250,10 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       routes agreeing to 0.4%. Each panel is warped into the same frame as the ground base
       and drapes with the identical transform. Their shadow fill is recoloured teal so it
       can be told apart from the shade this model casts; nothing else about the panels is
-      altered. Note that their diagrams shade <i>every</i> building on the plan, while the
-      shade drawn here is cast by the approved buildings alone, so the two extents are not
-      like for like.</div>
+      altered. Tick <b>as lodged</b> beside the panel chooser to drape the sheet with its own
+      greys untouched instead, so nothing here is only ever shown recoloured. Note that their
+      diagrams shade <i>every</i> building on the plan, while the shade drawn here is cast by the
+      approved buildings alone, so the two extents are not like for like.</div>
     <div><b>The eight-storey comparator</b>The 2020 approval fixed height as a storey count only —
       no top RL appears in any source. R1-079 therefore tests a bounded family at RL 46.0, 48.0, 50.0,
       52.0 and 55.75; RL 48.0 is the true eight-storey plate. Across that whole family the peak
@@ -1361,10 +1366,13 @@ function setEllivo(i){
   const img = new Image();
   img.onload = () => { if (ELLIVO_I===i){ ELLIVO_IMG=img; ELLIVO_READY=true; drawScene(); } };
   img.onerror = () => { note.textContent = 'Could not load that panel.'; };
-  img.src = 'ellivo/' + p.f;
+  img.src = 'ellivo/' + (document.getElementById('asLodged').checked ? 'aslodged/' : '') + p.f;
   paintDay();
 }
 ellivoEl.addEventListener('change',()=>{ setEllivo(+ellivoEl.value); });
+document.getElementById('asLodged').addEventListener('change',()=>{
+  if (ELLIVO_I>=0) setEllivo(ELLIVO_I);     // reload the same panel, other rendering
+});
 doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value;
   if (ELLIVO_I>=0 && ELLIVO[ELLIVO_I].doy!==S.doy){ ellivoEl.value='-1'; setEllivo(-1); }
   applyDaylight(); paintDay(); });
