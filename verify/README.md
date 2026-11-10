@@ -143,7 +143,10 @@ A file that is present but does not match its sealed hash fails, in either
 mode. That is the property worth having: the numbers can be proved to be the
 model's own, by anyone, without trusting whoever sent them.
 
-The release is not distributed with this repository.
+The model's data files are downloadable from the study page as
+`greville_model_data_v1.1-AB.tar.gz` (8 KB), together with a manifest of their
+SHA-256 values; run the script on that. The complete release is not
+distributed.
 
 It checks twelve things and prints each: the archive's own 47-file manifest;
 the four approved footprints vertex by vertex and their `top_rl`; their areas;

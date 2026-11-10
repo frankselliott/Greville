@@ -6,10 +6,11 @@ all driven off one clock.
 
 Open it directly. The page itself carries its fonts, its data and its base
 raster inline and needs no server and no network — but it is no longer a single
-self-contained file. Two features load sibling files by relative path:
+self-contained file. Two features load or link sibling files by relative path:
 
 * the applicant-diagram overlay reads `ellivo/*.png`;
-* the method panel links `download/greville-verification-pack.tar.gz`.
+* the method panel links `download/greville-verification-pack.tar.gz` and
+  `download/greville_model_data_v1.1-AB.tar.gz`.
 
 Both work from `file://` so long as the whole `study/` directory travels
 together. `index.html` on its own still opens and still computes; the overlay
