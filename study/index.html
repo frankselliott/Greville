@@ -248,11 +248,13 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       coordinate conversion, self-testing against the Flinders Peak point published in the
       GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its export
       script reproduces every file byte for byte. Start at <code>verify/README.md</code>.</div>
-    <div><b>Checked against the sealed release</b>The pack's
-      <code>verify/diff_original.py</code> checks this model against the sealed v1.1-AB
-      release. It accepts the whole release, identified by its SHA-256, or the model's data
-      files alone, each identified against a SHA-256 pinned in the script's own source — so
-      altered data does not pass, even with a manifest regenerated to match. All twelve of its
+    <div><b>Checked against the sealed release</b>The model's data — the approved geometry,
+      the receptors and every results table, as sealed in the v1.1-AB release — is downloadable
+      at <a href="download/greville_model_data_v1.1-AB.tar.gz">download/greville_model_data_v1.1-AB.tar.gz</a>
+      (8 KB), with a manifest of their SHA-256 values. The pack's
+      <code>verify/diff_original.py</code> takes that download as its argument and checks this
+      model against it, identifying each file against a SHA-256 pinned in the script's own
+      source — so altered data does not pass, even with a manifest regenerated to match. All twelve of its
       checks pass: the approved footprints and the receptor polygons agree to under a tenth of a
       millimetre, the receptor areas and depths are exact to full floating-point precision, and
       every row of all five frozen result tables matches, including all 24 governing instants.
