@@ -43,10 +43,13 @@ Two further differences from the frozen page:
 * With **Terrain** on (the default), the *drawn* shadows land on the real ground:
   each 1 m of ground is tested at its own level with the same ray test the
   figures use. Levels come from a 2 m grid interpolated between the Queensland
-  1 m LiDAR contours in `../context/2026-11-11/` (CC BY 4.0), checked against
-  257 LiDAR ground spot heights to a median of 0.16 m. Every figure on the page
-  is still measured at each backyard's surveyed level, so `../verify/gate_study.py`
-  is unaffected; Terrain off restores the flat-ground drawing.
+  1 m LiDAR contours in `../context/2026-11-11/` (CC BY 4.0). Against the 233
+  LiDAR ground heights inside the grid it is off by a median of 0.16 m, 90% within
+  0.50 m, and by up to about 2 m on steep banks such as the rail cutting. Beyond
+  the grid, at the outer edges of the view, shadows are drawn on flat ground as
+  before. Every figure on the page is still measured at each backyard's receiver
+  level (the dwelling's floor level), so `../verify/gate_study.py` is unaffected;
+  Terrain off restores the flat-ground drawing.
 
 ## Shade in 3D
 
