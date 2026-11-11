@@ -21,7 +21,11 @@ against the frozen Python engine:
      the sampling allowance, which is the Study's coarser cell.
 
 Requires node with playwright, which the model itself does not.
-Run:  python3 gate_study.py
+Run:  python3 gate_study.py [path/to/study/index.html]
+
+The page is not part of the verification pack. In the repository it is found
+at ../study/index.html; otherwise save the Study page from the site (it is one
+self-contained HTML file) and pass its path.
 """
 import json, math, os, subprocess, sys, tempfile
 
@@ -64,10 +68,19 @@ const { chromium } = require('playwright');
 '''
 
 def main():
+    page = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else PAGE)
+    if not os.path.isfile(page):
+        print('This gate checks the Study page itself, which is not in this pack.')
+        print('Save the Study page from the site as a single HTML file, then run:')
+        print()
+        print('    python3 gate_study.py path/to/index.html')
+        print()
+        print('(looked for %s)' % page)
+        return 2
     with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False) as fh:
         fh.write(JS); js = fh.name
     try:
-        r = subprocess.run(['node', js, os.path.abspath(PAGE), json.dumps(INSTANTS)],
+        r = subprocess.run(['node', js, page, json.dumps(INSTANTS)],
                            capture_output=True, text=True, cwd=HERE, timeout=300)
     except FileNotFoundError:
         print('This gate drives the Study page in a real browser, so it needs node with')
@@ -87,7 +100,7 @@ def main():
         try: os.unlink(js)
         except OSError: pass
     if r.returncode != 0:
-        print('could not drive the Study page:\n' + r.stderr[-2000:]); return 1
+        print('could not drive the Study page, so nothing was concluded:\n' + r.stderr[-2000:]); return 2
     data = json.loads(r.stdout.strip().split('\n')[-1])
     if data['errors']:
         print('the Study page raised errors: %r' % data['errors']); return 1
