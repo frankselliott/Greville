@@ -40,6 +40,13 @@ Two further differences from the frozen page:
   photography; the frozen page carries no base map at all.
 * Its live areas recompute at a coarser cell than the frozen gate, so live
   readouts differ in the third decimal.
+* With **Terrain** on (the default), the *drawn* shadows land on the real ground:
+  each 1 m of ground is tested at its own level with the same ray test the
+  figures use. Levels come from a 2 m grid interpolated between the Queensland
+  1 m LiDAR contours in `../context/2026-11-11/` (CC BY 4.0), checked against
+  257 LiDAR ground spot heights to a median of 0.16 m. Every figure on the page
+  is still measured at each backyard's surveyed level, so `../verify/gate_study.py`
+  is unaffected; Terrain off restores the flat-ground drawing.
 
 ## Shade in 3D
 

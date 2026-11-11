@@ -24,7 +24,11 @@ each run for the layers used and the changes made.
 
 **This is context only. It is not an input to the sealed v1.1-AB results.**
 Nothing under `../model/`, the frozen `../index.html`, or the verification pack
-reads from this folder, and no frozen figure depends on it. The v1.1-AB release
+reads from this folder, and no frozen figure depends on it.
+
+One display use: the Shadow Study page (`../study/`) draws its shadows on a 2 m
+ground grid interpolated from these contours. That changes where shade is
+*drawn* on the map, not any figure the page reports. The v1.1-AB release
 (SHA-256 `6df4dde6…c76d4f0`) and the frozen page (`cd551cef…b128f9f`) are
 unchanged by it.
 
