@@ -43,10 +43,23 @@ Two further differences from the frozen page:
 * With **Terrain** on (the default), the *drawn* shadows land on the real ground:
   each 1 m of ground is tested at its own level with the same ray test the
   figures use. Levels come from a 2 m grid interpolated between the Queensland
-  1 m LiDAR contours in `../context/2026-11-11/` (CC BY 4.0), checked against
-  257 LiDAR ground spot heights to a median of 0.16 m. Every figure on the page
-  is still measured at each backyard's surveyed level, so `../verify/gate_study.py`
-  is unaffected; Terrain off restores the flat-ground drawing.
+  1 m LiDAR contours in `../context/2026-11-11/` (CC BY 4.0). Against the 233
+  LiDAR ground heights inside the grid it is off by a median of 0.16 m, 90% within
+  0.50 m, and by up to about 2 m on steep banks such as the rail cutting. Beyond
+  the grid, at the outer edges of the view, shadows are drawn on flat ground as
+  before. Every figure on the page is still measured at each backyard's receiver
+  level (the dwelling's floor level), so `../verify/gate_study.py` is unaffected;
+  Terrain off restores the flat-ground drawing.
+* **Fence shade** is drawn hatched wherever each Cluster 5 lot's own 1500 mm
+  fence would shade its own backyard if it were solid: the fence top at the
+  lot's receiver level + 1.5 m, exactly the frozen model's opaque-fence bound.
+  It matches the model's ray test on every yard to the 0.1 m cell. The live
+  figures are the open-fence end and count that ground as lost.
+* Choosing a **Lot 60–63 preset** shows that lot's sealed v1.1-AB figures at
+  both ends of the fence bracket: days with loss, earliest and latest loss,
+  largest loss and when, and (open fence only, as sealed) days with loss beyond
+  the eight-storey comparator at RL 48.0 and RL 55.75. The 1.8 m case is not the
+  approved condition and is not shown.
 
 ## Shade in 3D
 

@@ -173,8 +173,12 @@ from v1.0.2. The script says both when it finishes.
 
 ```
 cd ../verify
-python3 gate_study.py          # needs node with playwright
+python3 gate_study.py                       # in the repository: checks ../study/index.html
+python3 gate_study.py path/to/index.html    # from this pack: the Study page saved from the site
 ```
+
+It needs node with playwright. The Study page is not part of this pack; save it
+from the site (it is one self-contained HTML file) and pass its path.
 
 `PROVENANCE.md` says of the Study page: *"If its figures are ever to be relied
 on, it needs its own gate."* This is it. The Study is not the frozen model — it
