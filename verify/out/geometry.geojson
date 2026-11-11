@@ -665,9 +665,9 @@
      52.0,
      55.75
     ],
-    "note": "the 2020 approval fixed storey count only; no top RL exists in any source",
-    "layer": "COMPARATOR",
-    "name": "comparator_A",
+    "note": "rectangular envelope the frozen browser page uses for its live comparator. The sealed incremental table used Buildings A and B on their approved footprints (layer APPROVED, building_A and building_B_plate) cut to the comparator RL; see model/PROVENANCE.md, The two comparators. The 2020 approval fixed storey count only; no top RL exists in any source",
+    "layer": "COMPARATOR_ENVELOPE",
+    "name": "envelope_A",
     "mga2020_zone56": [
      [
       504129.1007,
@@ -729,9 +729,9 @@
      52.0,
      55.75
     ],
-    "note": "the 2020 approval fixed storey count only; no top RL exists in any source",
-    "layer": "COMPARATOR",
-    "name": "comparator_B",
+    "note": "rectangular envelope the frozen browser page uses for its live comparator. The sealed incremental table used Buildings A and B on their approved footprints (layer APPROVED, building_A and building_B_plate) cut to the comparator RL; see model/PROVENANCE.md, The two comparators. The 2020 approval fixed storey count only; no top RL exists in any source",
+    "layer": "COMPARATOR_ENVELOPE",
+    "name": "envelope_B",
     "mga2020_zone56": [
      [
       504121.9917,

@@ -270,8 +270,8 @@ class InverseAgreesWithForward(unittest.TestCase):
             pts = M.grid(pos, lot, cell)
             z = M.d["receiver_rl"][lot]
 
-            below = occluded_mask(pts, z, alt, az, M.comparator_casters(need - 0.05), [])
-            above = occluded_mask(pts, z, alt, az, M.comparator_casters(need + 0.05), [])
+            below = occluded_mask(pts, z, alt, az, M.envelope_casters(need - 0.05), [])
+            above = occluded_mask(pts, z, alt, az, M.envelope_casters(need + 0.05), [])
             self.assertEqual(
                 sum(below), 0,
                 f"{pos}/{lot}: an envelope BELOW the first-contact RL "

@@ -59,9 +59,13 @@ for k, b in D['approved'].items():
         {'top_rl': b['top_rl'], 'base_rl': b['base_rl'],
          'source': 'approved plans A006835434 via model v1.1-AB'})
 for k in ('A','B'):
-    add('COMPARATOR', 'comparator_'+k, D['comparator'][k],
+    add('COMPARATOR_ENVELOPE', 'envelope_'+k, D['comparator'][k],
         {'test_heights_rl': D['comparator']['test_heights'],
-         'note': 'the 2020 approval fixed storey count only; no top RL exists in any source'})
+         'note': 'rectangular envelope the frozen browser page uses for its live comparator. '
+                 'The sealed incremental table used Buildings A and B on their approved '
+                 'footprints (layer APPROVED, building_A and building_B_plate) cut to the '
+                 'comparator RL; see model/PROVENANCE.md, The two comparators. '
+                 'The 2020 approval fixed storey count only; no top RL exists in any source'})
 for k, ring in D['cadastre']['lots'].items():
     add('CADASTRE_LOT', k, ring, {'label': D['lot_meta'][k]['label'],
                                   'dwelling': D['lot_meta'][k]['dwelling'],
@@ -137,8 +141,10 @@ for name, when in UNIQ:
             sh_items.append(dict(layer='SHADOW_APPROVED_'+tag, name='%s_part%d'%(k,i),
                                  ring=pr, props={'instant':when,'caster':k,
                                  'alt_deg':round(alt,4),'az_deg':round(az,4)}))
-    for k in ('A','B'):
-        parts = prism_shadow_parts(D['comparator'][k], 48.0, 0.0, GZ, alt, az)
+    # the comparator the sealed incremental table used: A and B on their
+    # approved footprints, cut to RL 48.0 (Model.comparator_casters)
+    for k, (fp, top) in zip(('A','B'), M.comparator_casters(48.0)):
+        parts = prism_shadow_parts(fp, top, 0.0, GZ, alt, az)
         for i, pr in enumerate(parts or []):
             sh_items.append(dict(layer='SHADOW_COMPARATOR_RL48_'+tag, name='comp%s_part%d'%(k,i),
                                  ring=pr, props={'instant':when,'caster':'comparator_'+k,

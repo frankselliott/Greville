@@ -82,10 +82,14 @@ r['a_loss'], r['b_loss']  # the attribution split
 ```
 
 Pass `comparator_rl=` to get `comparator_loss` and `incremental` against the
-bounded eight-storey family. The 2020 approval fixed height as a storey count
-only — no top RL appears in any source — so `comparator` is a bounded family at
-RL 46.0 / 48.0 / 50.0 / 52.0 / 55.75, of which 48.0 is the true eight-storey
-plate. It is never the applicant's model and must not be described as one.
+bounded eight-storey family: Buildings A and B on their approved footprints,
+cut to that RL — the comparator the sealed incremental table was computed
+against (see PROVENANCE.md, *The two comparators*). The 2020 approval fixed
+height as a storey count only — no top RL appears in any source — so the
+comparator is a bounded family at RL 46.0 / 48.0 / 50.0 / 52.0 / 55.75, of
+which 48.0 is the true eight-storey plate. It is never the applicant's model
+and must not be described as one. `Model.envelope_casters()` gives the
+rectangular envelopes the frozen browser page uses instead.
 
 ### The inverse
 

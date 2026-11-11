@@ -68,11 +68,32 @@ class Model:
         return out
 
     def comparator_casters(self, top_rl):
-        """The bounded eight-storey comparator prisms at one test RL.
+        """The eight-storey comparator at one test RL: Buildings A and B on
+        their approved footprints, cut to ``top_rl``.
+
+        This is the comparator the sealed v1.1-AB incremental table was
+        computed against: re-running the full year with it reproduces the
+        sealed day counts (Lots 60-63, RL 48.0 and 55.75) to within one day,
+        where the rectangular envelopes in ``d["comparator"]`` give 2-4 more
+        days at RL 48.0 and 12-14 more at RL 55.75.  The B communal roof and
+        lift overrun stand on the B plate above any test RL, so cutting to
+        ``top_rl`` removes them.
 
         The 2020 approval fixed height as a storey count only; no top RL
         appears in any source.  These are a bounded family, never the
         applicant's model, and must not be described as one.
+        """
+        a = self.d["approved"]
+        return [(a["building_A"]["footprint"], top_rl),
+                (a["building_B_plate"]["footprint"], top_rl)]
+
+    def envelope_casters(self, top_rl):
+        """The rectangular comparator envelopes in ``d["comparator"]`` at one RL.
+
+        The frozen browser page draws and computes its live comparator from
+        these, and ``first_contact_rl`` (the inverse) is defined against them.
+        They are not what the sealed incremental table used; see
+        ``comparator_casters``.
         """
         c = self.d["comparator"]
         return [(c["A"], top_rl), (c["B"], top_rl)]
@@ -157,7 +178,10 @@ class Model:
     # ---- the inverse: what envelope height would first reach this receptor? ---
 
     def first_contact_rl(self, pos, lot, alt, az, cell=LIVE_CELL):
-        """The lowest comparator top RL whose shadow would just touch this receptor.
+        """The lowest envelope top RL whose shadow would just touch this receptor.
+
+        Defined against the rectangular envelopes (``envelope_casters``), as the
+        frozen browser page's inverse is; not against ``comparator_casters``.
 
         This is the inverse of the forward shadow calculation.  Instead of
         asking what a given envelope takes, it asks what envelope height is

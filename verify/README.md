@@ -16,7 +16,7 @@ are byte-identical and the download can be hashed meaningfully:
 
 ```sh
 tar --sort=name --owner=0 --group=0 --numeric-owner \
-    --mtime='2026-11-10 00:00:00' -cf - <the 29 files listed in this pack> \
+    --mtime='2026-11-10 00:00:00' -cf - <the 34 files listed in this pack> \
   | gzip -n -9 > greville-verification-pack.tar.gz
 ```
 
@@ -87,12 +87,51 @@ is not drawing an impossible shadow even though this model's clock stops at
 | `out/geometry.dxf` | R12 DXF, MGA zone 56 eastings and northings, layered |
 | `out/geometry.geojson` | same features; WGS84 lon/lat for GIS, with the authoritative MGA coordinates in each feature's `mga2020_zone56` property |
 
-Layers: `APPROVED`, `COMPARATOR`, `CADASTRE_LOT`, `CADASTRE_PARCEL`,
+Layers: `APPROVED`, `COMPARATOR_ENVELOPE`, `CADASTRE_LOT`, `CADASTRE_PARCEL`,
 `RECEPTOR_YARD`, `RECEPTOR_SCHED`, `DWELLING`.
+
+The eight-storey comparator is Buildings A and B on their approved footprints
+(`APPROVED`, `building_A` and `building_B_plate`) cut to the comparator RL:
+that is what the sealed incremental table was computed against, and what
+`Model.comparator_casters()` and the Study page use. `COMPARATOR_ENVELOPE`
+carries the rectangular envelopes the frozen browser page draws for its live
+comparator instead; they give more affected days than the sealed table (see
+`../model/PROVENANCE.md`, *The two comparators*). The `SHADOW_COMPARATOR_RL48_*`
+layers of `shadows.dxf` are cast by the cut footprints.
 
 `out/shadows.dxf` and `out/shadows.geojson` carry the computed sweeps at every
 instant, layered by instant. **Each feature is one part of the sweep, not the
 finished shadow** — the shadow is their union. Areas are not derived from them.
+
+### In 3D, for Revit and other CAD
+
+`out/geometry.dxf` is flat outlines. `out_revit/` holds the same model in 3D:
+
+| file | what |
+|---|---|
+| `out_revit/greville_revit_mga.dxf` | AutoCAD 2000 DXF, units declared as metres, MGA zone 56 eastings and northings, heights in m AHD |
+| `out_revit/greville_revit_local.dxf` | identical geometry near the origin: local = MGA − (E 504045, N 6966712) |
+| `out_revit/README.txt` | layers, import settings, and what is left out and why |
+
+The approved buildings and the Lot 60–63 dwellings are closed solids at their
+model levels, the boundary fences are 1.5 m panels, and the backyards and lots
+are outlines at receiver level. In Revit: Insert → Link CAD, import units
+Meter. Place the local file *Origin to Internal Origin*; place the MGA file
+*Center to Center*, then Manage → Coordinates → Acquire Coordinates, because
+MGA coordinates are thousands of kilometres from Revit's origin.
+
+The approved buildings are drawn from the approved ground floor (RL 21.600);
+the model extrudes them from RL 0, and any base below the lowest receiver level
+(RL 23.320) casts exactly the same shadow on the backyards. The eight-storey
+comparator is on `COMPARATOR_RL48` and `COMPARATOR_RL55_75`: Buildings A and B
+on their approved footprints, cut to that RL, as the sealed incremental table
+used. Turn the approved layers off to see it alone.
+
+Checked: every solid is closed with outward faces, each volume equals footprint
+area × height to 1e-10, every footprint vertex matches the model, and the two
+files differ by exactly the stated offset. `export_revit.py` regenerates
+`out_revit/` byte for byte, but unlike everything else here it needs one
+package: `pip install ezdxf==1.4.5`.
 
 ## 5. Check the numbers
 
@@ -186,7 +225,9 @@ credits casters the frozen model did not and samples at a coarser cell — so it
 cannot be checked by equality. What it can be checked against is the claim its
 own README makes: adding a caster can only reduce a loss, never raise it. The
 gate drives the live page in a browser, reads the figures it actually renders,
-and fails if any exceeds the frozen loss by more than the sampling allowance.
+and fails if any exceeds the frozen loss by more than the sampling allowance —
+for the approved scheme and for the comparator at RL 48.0 and RL 55.75, 144
+comparisons in all.
 
 It gates a direction, not a value. It does not make the Study figures the
 frozen figures; those remain the ones in `model/`.
