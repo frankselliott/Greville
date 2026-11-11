@@ -61,6 +61,14 @@ input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(245,184,67,.35)}
 .btn:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 .btn.on{border-color:var(--sun);color:var(--sun);background:rgba(245,184,67,.09)}
 .presets{display:flex;gap:7px;flex-wrap:wrap}
+.lotstats{margin:12px 0 0;border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:14px 16px 12px}
+.lotstats h3{font-family:var(--serif);font-weight:400;font-size:1.25rem;margin:0 0 2px}
+.lotstats .sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.13em;text-transform:uppercase;color:var(--dimmer);margin-bottom:10px}
+.lotstats table{width:100%;border-collapse:collapse;font-size:.82rem}
+.lotstats th{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:500;text-align:left;padding:4px 8px 6px 0;vertical-align:bottom}
+.lotstats td{padding:5px 8px 5px 0;border-top:1px solid var(--line-soft);vertical-align:top}
+.lotstats td.v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--sun-pale);white-space:nowrap}
+.lotstats .fn{font-size:.72rem;color:var(--dim);margin-top:9px;line-height:1.5}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
 .seg .btn{border:none;border-radius:0;border-right:1px solid var(--line)}
 .seg .btn:last-child{border-right:none}
@@ -179,6 +187,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     <div class="presets" id="presets"></div>
   </div>
   <div class="wrap"><div class="ellivo-note" id="ellivoNote"></div></div>
+  <div class="wrap"><div class="lotstats" id="lotStats" hidden></div></div>
 </div>
 
 <div class="wrap">
@@ -306,7 +315,10 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     <div><b>Fences</b>Figures here are the open-fence end of the approved bracket. The approved
       Cluster 5 boundary is a 1500 mm metal batten fence whose solar opacity is not established by the
       source, so the frozen model brackets it: fully open gives Lot 63 34.948 m², fully opaque
-      21.961 m². Nothing between has been invented.</div>
+      21.961 m². Nothing between has been invented. The <b>hatched</b> shade is where each lot's own
+      fence would shade its own backyard if it were solid, which is the opaque end of the bracket. The
+      live figures count that ground as lost; the opaque-fence figures do not, which is why they are
+      lower. Choosing a lot's preset shows its sealed figures at both ends.</div>
     <div><b>Method</b>NOAA geometric solar position, UTC+10, no daylight saving. Geometry in EPSG:7856.
       Shadows are computed live in your browser by the engine that reproduced all 24 frozen peaks to
       within 0.001 m². Every figure is measured at each backyard's receiver level (the dwelling's
@@ -898,6 +910,40 @@ function drawShadowVolumes(ctx, V, sp){
   ctx.stroke();
 }
 
+/* Shade of each Cluster 5 lot's own 1500 mm boundary fence on its own backyard,
+   drawn as if the fence were solid: the frozen model's opaque bound (fence top at
+   the lot's receiver level + 1.5 m, shading that lot's own yard only). */
+function fenceShade(sp){
+  if (sp.alt <= 0.05) return [];
+  const d = sunDir(sp.az), L = 1.5 / Math.tan(sp.alt * Math.PI / 180), out = [];
+  for (const k in D.fences){
+    const quads = D.fences[k].lines.map(([a, b]) =>
+      [a, b, [b[0] + d[0]*L, b[1] + d[1]*L], [a[0] + d[0]*L, a[1] + d[1]*L]]);
+    out.push({ k, yard: open(D.pos[k]), quads });
+  }
+  return out;
+}
+let HATCH = null;
+function hatchPattern(ctx, px){
+  const c = document.createElement('canvas'); c.width = c.height = px; const h = c.getContext('2d');
+  h.fillStyle = 'rgba(236,98,62,0.26)'; h.fillRect(0, 0, px, px);
+  h.strokeStyle = 'rgba(244,116,74,0.95)'; h.lineWidth = Math.max(1.4, px / 6);
+  h.beginPath(); for (const o of [-px, 0, px]){ h.moveTo(o, px); h.lineTo(o + px, 0); } h.stroke();
+  return ctx.createPattern(c, 'repeat');
+}
+function drawFenceShade(ctx, sp, toScreen, px){
+  const pat = hatchPattern(ctx, px);
+  for (const f of fenceShade(sp)){
+    ctx.save(); ctx.beginPath();
+    f.yard.forEach((p, i) => { const q = toScreen(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+    ctx.closePath(); ctx.clip();
+    ctx.beginPath();
+    for (const qd of f.quads){ qd.forEach((p, i) => { const q = toScreen(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
+    ctx.fillStyle = pat; ctx.fill('nonzero');
+    ctx.restore();
+  }
+}
+
 /* Shadows on the real ground: each 1 m cell is tested at its own ground level
    with segPoly(), the frozen engine's own ray test, against every caster. */
 const TSH = { key: null, cv: null };
@@ -1047,6 +1093,8 @@ function drawScene(){
     flatShadows();
     if (S.vol) drawShadowVolumes(g, V, sp);
   }
+
+  if (up) drawFenceShade(g, sp, p => V.p(p[0], p[1], GZ), 12);
 
   /* fences */
   if (up) for (const k in D.fences){
@@ -1254,6 +1302,7 @@ function drawPlan(){
       q.forEach((p,i)=> i?pg.lineTo(p[0],p[1]):pg.moveTo(p[0],p[1])); pg.closePath(); }
     pg.fillStyle='rgba(16,15,34,0.86)'; pg.fill('nonzero');
     pg.fillStyle='rgba(126,115,190,0.18)'; pg.fill('nonzero');
+    drawFenceShade(pg, sp, P, 14);
   }
   for (const s of SELF){ ring(s.fp);
     pg.fillStyle='rgba(12,13,22,0.94)'; pg.fill();
@@ -1391,6 +1440,7 @@ document.getElementById('legend').innerHTML = [
   ['rgba(255,222,158,0.75)','Backyard measured','scheduled private open space'],
   ['rgba(40,36,74,0.95)','Shadow on the ground','cast by the modelled buildings'],
   ['rgba(150,104,66,0.8)','1500 mm boundary fence','approved metal batten'],
+  ['repeating-linear-gradient(135deg,rgba(244,116,74,.95) 0 2px,rgba(236,98,62,.26) 2px 6px)','Fence shade','each lot\'s own fence on its own backyard, drawn as if solid'],
 
   ['linear-gradient(180deg,#BA544A,#8E6A50)','Existing heritage laundry','outline from imagery · ridge assumed, result height-independent'],
   ['#3A3A40','Charcoal concrete retaining wall','park boundary · 570–1545 mm, carries the fence'],
@@ -1430,8 +1480,40 @@ for (const k of Object.keys(D.pos)){
   PRESETS.push({ n:`${D.lot_meta[k].label} worst`, doy:w.doy, min:w.min });
 }
 PRESETS.push({ n:'Cluster 4 worst', doy:73, min:440 });
+for (const p of PRESETS){ const m = /^Lot (6[0-3]) worst$/.exec(p.n); if (m) p.lot = `${m[1]}SP354191`; }
 document.getElementById('presets').innerHTML =
   PRESETS.map((p,i)=>`<button class="btn" data-p="${i}">${p.n}</button>`).join('');
+
+/* Sealed v1.1-AB figures for each Cluster 5 backyard (scheduled POS), shown when
+   its preset is chosen. Full-year rows: D.fullyear.sched. Rows beyond the
+   eight-storey comparator: the sealed incremental table, which exists for the
+   open fence only. The 1.8 m fence case is not the approved condition and is
+   left out. Checkable with verify/diff_original.py. */
+const SEALED_INC = {"60SP354191":{"RL48.0":{"days":234,"incremental":34.918,"instant":"2026-02-01T07:04:00"},"RL55.75":{"days":213,"incremental":34.918,"instant":"2026-02-01T07:04:00"}},"61SP354191":{"RL48.0":{"days":245,"incremental":34.899,"instant":"2026-03-13T07:41:00"},"RL55.75":{"days":222,"incremental":34.899,"instant":"2026-03-13T07:41:00"}},"62SP354191":{"RL48.0":{"days":254,"incremental":34.865,"instant":"2026-04-09T07:42:00"},"RL55.75":{"days":228,"incremental":34.865,"instant":"2026-04-07T07:47:00"}},"63SP354191":{"RL48.0":{"days":267,"incremental":34.948,"instant":"2026-01-23T07:26:00"},"RL55.75":{"days":236,"incremental":34.948,"instant":"2026-01-23T07:26:00"}}};
+function lotStats(k){
+  const el = document.getElementById('lotStats');
+  if (!k){ el.hidden = true; el.innerHTML = ''; return; }
+  const fy = c => D.fullyear.sched[`${c}/${k}`], o = fy('f000'), q = fy('f150');
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const when = iso => `${+iso.slice(8,10)} ${MON[+iso.slice(5,7)-1]} ${iso.slice(11,16)}`;
+  const inc = SEALED_INC[k];
+  const row = (label, a, b) => `<tr><td>${label}</td><td class="v">${a}</td><td class="v">${b}</td></tr>`;
+  el.innerHTML = `<h3>${D.lot_meta[k].label} · backyard ${ALLMETA[k].area.toFixed(1)} m²</h3>
+    <div class="sub">sealed v1.1-AB figures · scheduled private open space · every day of 2026</div>
+    <table><thead><tr><th></th><th>Fence open<br>lower bound</th><th>Fence opaque 1.5 m<br>upper bound</th></tr></thead><tbody>
+    ${row('Days with loss of sun to the approved buildings', o.days, q.days)}
+    ${row('Earliest and latest loss in the day', `${o.first_time}–${o.last_time}`, `${q.first_time}–${q.last_time}`)}
+    ${row('Largest loss', `${o.peak.toFixed(3)} m²<br>${when(o.instant)}`, `${q.peak.toFixed(3)} m²<br>${when(q.instant)}`)}
+    ${row('Days with loss beyond an eight-storey comparator at RL 48.0', inc['RL48.0'].days, '—')}
+    ${row('… at RL 55.75', inc['RL55.75'].days, '—')}
+    </tbody></table>
+    <div class="fn">Loss is sun the approved buildings take from ground that would otherwise be lit, after the
+      lot's own dwelling and fence. A day counts when the sealed model records any loss that day. The
+      fence's solar opacity is not established by the source, so both ends of the approved bracket are
+      shown; the sealed comparator rows exist for the open fence only. Times are UTC+10.
+      Check every figure with <code>verify/diff_original.py</code>.</div>`;
+  el.hidden = false;
+}
 
 /* ============ scheme toggle ============ */
 document.getElementById('compRL').innerHTML =
@@ -1444,10 +1526,11 @@ function schemeNote(){
       `Switch to the comparator to see what an eight-storey form on the same footprints would cast.`;
   } else {
     el.innerHTML = `Showing a <b>bounded eight-storey comparator</b> — both envelopes at ` +
-      `<b>RL ${S.compRL.toFixed(S.compRL%1?3:1)}</b>. Across the tested family (RL 46.0–55.75) the peak ` +
-      `loss to Cluster 5 is <b>identical to 0.001 m²</b>: no comparator in that range reaches those ` +
-      `backyards at the governing instants, so the whole approved effect is incremental. What does ` +
-      `move is recurrence — Lot 63 runs 259 affected days at RL 46.0 against 226 at RL 55.75.`;
+      `<b>RL ${S.compRL.toFixed(S.compRL%1?3:1)}</b>. In the sealed tables, at RL 48.0 (the true ` +
+      `eight-storey plate) and at RL 55.75, the most sun the approved scheme takes from each of Lots ` +
+      `60–63 beyond the comparator <b>equals its whole peak loss, to 0.001 m²</b>. What moves is ` +
+      `recurrence — Lot 63 has 267 days with loss beyond the comparator at RL 48.0 against 236 at ` +
+      `RL 55.75. RL 46.0, 50.0 and 52.0 are computed live on this page only.`;
   }
 }
 document.getElementById('terrBtn').addEventListener('click', () => {
@@ -1538,7 +1621,7 @@ doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value;
 todEl.addEventListener('input',()=>{ S.min=+todEl.value; stop(); paintFast(); });
 document.getElementById('presets').addEventListener('click',e=>{
   const b=e.target.closest('[data-p]'); if(!b) return;
-  const p=PRESETS[+b.dataset.p]; S.doy=p.doy; S.min=p.min; stop();
+  const p=PRESETS[+b.dataset.p]; S.doy=p.doy; S.min=p.min; stop(); lotStats(p.lot);
   doyEl.value=S.doy; applyDaylight();
   document.querySelectorAll('#presets .btn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');

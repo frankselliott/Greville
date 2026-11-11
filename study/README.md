@@ -50,6 +50,16 @@ Two further differences from the frozen page:
   before. Every figure on the page is still measured at each backyard's receiver
   level (the dwelling's floor level), so `../verify/gate_study.py` is unaffected;
   Terrain off restores the flat-ground drawing.
+* **Fence shade** is drawn hatched wherever each Cluster 5 lot's own 1500 mm
+  fence would shade its own backyard if it were solid: the fence top at the
+  lot's receiver level + 1.5 m, exactly the frozen model's opaque-fence bound.
+  It matches the model's ray test on every yard to the 0.1 m cell. The live
+  figures are the open-fence end and count that ground as lost.
+* Choosing a **Lot 60–63 preset** shows that lot's sealed v1.1-AB figures at
+  both ends of the fence bracket: days with loss, earliest and latest loss,
+  largest loss and when, and (open fence only, as sealed) days with loss beyond
+  the eight-storey comparator at RL 48.0 and RL 55.75. The 1.8 m case is not the
+  approved condition and is not shown.
 
 ## Shade in 3D
 
