@@ -61,13 +61,19 @@ input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(245,184,67,.35)}
 .btn:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 .btn.on{border-color:var(--sun);color:var(--sun);background:rgba(245,184,67,.09)}
 .presets{display:flex;gap:7px;flex-wrap:wrap}
-.lotstats{margin:12px 0 0;border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:14px 16px 12px}
+.lotstats{margin:18px 0 0;border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:14px 16px 12px}
 .lotstats h3{font-family:var(--serif);font-weight:400;font-size:1.25rem;margin:0 0 2px}
 .lotstats .sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.13em;text-transform:uppercase;color:var(--dimmer);margin-bottom:10px}
 .lotstats table{width:100%;border-collapse:collapse;font-size:.82rem}
 .lotstats th{font-family:var(--mono);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:500;text-align:left;padding:4px 8px 6px 0;vertical-align:bottom}
 .lotstats td{padding:5px 8px 5px 0;border-top:1px solid var(--line-soft);vertical-align:top}
 .lotstats td.v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--sun-pale);white-space:nowrap}
+.lotstats .scroll{overflow-x:auto}
+.lotstats td.lot{font-family:var(--serif);font-size:1.1rem;line-height:1.15;white-space:nowrap}
+.lotstats td.lot span{font-family:var(--mono);font-size:.62rem;color:var(--dimmer)}
+.lotstats td.fc{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.lotstats tr[data-second] td{border-top-style:dashed}
+.lotstats tr.on td{background:rgba(245,184,67,.07)}
 .lotstats .fn{font-size:.72rem;color:var(--dim);margin-top:9px;line-height:1.5}
 .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
 .seg .btn{border:none;border-radius:0;border-right:1px solid var(--line)}
@@ -187,7 +193,6 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     <div class="presets" id="presets"></div>
   </div>
   <div class="wrap"><div class="ellivo-note" id="ellivoNote"></div></div>
-  <div class="wrap"><div class="lotstats" id="lotStats" hidden></div></div>
 </div>
 
 <div class="wrap">
@@ -202,6 +207,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
     </div>
     <div class="legend" id="legend"></div>
   </div>
+  <div class="lotstats" id="lotStats"></div>
 
   <div class="grid2">
     <div class="panel">
@@ -318,7 +324,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       21.961 m². Nothing between has been invented. The <b>hatched</b> shade is where each lot's own
       fence would shade its own backyard if it were solid, which is the opaque end of the bracket. The
       live figures count that ground as lost; the opaque-fence figures do not, which is why they are
-      lower. Choosing a lot's preset shows its sealed figures at both ends.</div>
+      lower. The table under the map gives each lot's sealed figures at both ends.</div>
     <div><b>Method</b>NOAA geometric solar position, UTC+10, no daylight saving. Geometry in EPSG:7856.
       Shadows are computed live in your browser by the engine that reproduced all 24 frozen peaks to
       within 0.001 m². Every figure is measured at each backyard's receiver level (the dwelling's
@@ -1531,30 +1537,35 @@ document.getElementById('presets').innerHTML =
    open fence only. The 1.8 m fence case is not the approved condition and is
    left out. Checkable with verify/diff_original.py. */
 const SEALED_INC = {"60SP354191":{"RL48.0":{"days":234,"incremental":34.918,"instant":"2026-02-01T07:04:00"},"RL55.75":{"days":213,"incremental":34.918,"instant":"2026-02-01T07:04:00"}},"61SP354191":{"RL48.0":{"days":245,"incremental":34.899,"instant":"2026-03-13T07:41:00"},"RL55.75":{"days":222,"incremental":34.899,"instant":"2026-03-13T07:41:00"}},"62SP354191":{"RL48.0":{"days":254,"incremental":34.865,"instant":"2026-04-09T07:42:00"},"RL55.75":{"days":228,"incremental":34.865,"instant":"2026-04-07T07:47:00"}},"63SP354191":{"RL48.0":{"days":267,"incremental":34.948,"instant":"2026-01-23T07:26:00"},"RL55.75":{"days":236,"incremental":34.948,"instant":"2026-01-23T07:26:00"}}};
-function lotStats(k){
+function lotStats(sel){
   const el = document.getElementById('lotStats');
-  if (!k){ el.hidden = true; el.innerHTML = ''; return; }
-  const fy = c => D.fullyear.sched[`${c}/${k}`], o = fy('f000'), q = fy('f150');
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const when = iso => `${+iso.slice(8,10)} ${MON[+iso.slice(5,7)-1]} ${iso.slice(11,16)}`;
-  const inc = SEALED_INC[k];
-  const row = (label, a, b) => `<tr><td>${label}</td><td class="v">${a}</td><td class="v">${b}</td></tr>`;
-  el.innerHTML = `<h3>${D.lot_meta[k].label} · backyard ${ALLMETA[k].area.toFixed(1)} m²</h3>
+  let rows = '';
+  for (const k of Object.keys(D.pos)){
+    const inc = SEALED_INC[k], on = k === sel ? ' class="on"' : '';
+    for (const [c, label] of [['f000', 'fence open'], ['f150', 'fence opaque 1.5 m']]){
+      const r = D.fullyear.sched[`${c}/${k}`], first = c === 'f000';
+      rows += `<tr${on}${first ? '' : ' data-second'}>
+        ${first ? `<td rowspan="2" class="lot">${D.lot_meta[k].label}<br><span>${ALLMETA[k].area.toFixed(1)} m²</span></td>` : ''}
+        <td class="fc">${label}</td><td class="v">${r.days}</td><td class="v">${r.first_time}–${r.last_time}</td>
+        <td class="v">${r.peak.toFixed(3)} m² · ${when(r.instant)}</td>
+        <td class="v">${first ? inc['RL48.0'].days : '—'}</td><td class="v">${first ? inc['RL55.75'].days : '—'}</td></tr>`;
+    }
+  }
+  el.innerHTML = `<h3>Cluster 5 backyards · the full year</h3>
     <div class="sub">sealed v1.1-AB figures · scheduled private open space · every day of 2026</div>
-    <table><thead><tr><th></th><th>Fence open<br>lower bound</th><th>Fence opaque 1.5 m<br>upper bound</th></tr></thead><tbody>
-    ${row('Days with loss of sun to the approved buildings', o.days, q.days)}
-    ${row('Earliest and latest loss in the day', `${o.first_time}–${o.last_time}`, `${q.first_time}–${q.last_time}`)}
-    ${row('Largest loss', `${o.peak.toFixed(3)} m²<br>${when(o.instant)}`, `${q.peak.toFixed(3)} m²<br>${when(q.instant)}`)}
-    ${row('Days with loss beyond an eight-storey comparator at RL 48.0', inc['RL48.0'].days, '—')}
-    ${row('… at RL 55.75', inc['RL55.75'].days, '—')}
-    </tbody></table>
-    <div class="fn">Loss is sun the approved buildings take from ground that would otherwise be lit, after the
-      lot's own dwelling and fence. A day counts when the sealed model records any loss that day. The
-      fence's solar opacity is not established by the source, so both ends of the approved bracket are
-      shown; the sealed comparator rows exist for the open fence only. Times are UTC+10.
-      Check every figure with <code>verify/diff_original.py</code>.</div>`;
-  el.hidden = false;
+    <div class="scroll"><table><thead><tr><th>Lot</th><th>Fence case</th><th>Days with loss</th><th>Earliest–latest loss</th>
+      <th>Largest loss · when</th><th>Days beyond comparator<br>RL 48.0</th><th>Days beyond comparator<br>RL 55.75</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="fn">Loss is sun the approved buildings take from the backyard that would otherwise be lit, after the
+      lot's own dwelling and fence. A day counts when the sealed model records any loss that day. "Beyond
+      comparator" counts days the approved scheme takes sun an eight-storey comparator on the same footprints
+      would not. The fence's solar opacity is not established by the source, so both ends of the approved
+      bracket are shown; the sealed comparator rows exist for the open fence only, and the 1.8 m case is not
+      the approved condition. Times are UTC+10. Check every figure with <code>verify/diff_original.py</code>.</div>`;
 }
+lotStats(null);
 
 /* ============ scheme toggle ============ */
 document.getElementById('compRL').innerHTML =
@@ -1662,7 +1673,7 @@ doyEl.addEventListener('input',()=>{ S.doy=+doyEl.value;
 todEl.addEventListener('input',()=>{ S.min=+todEl.value; stop(); paintFast(); });
 document.getElementById('presets').addEventListener('click',e=>{
   const b=e.target.closest('[data-p]'); if(!b) return;
-  const p=PRESETS[+b.dataset.p]; S.doy=p.doy; S.min=p.min; stop(); lotStats(p.lot);
+  const p=PRESETS[+b.dataset.p]; S.doy=p.doy; S.min=p.min; stop(); lotStats(p.lot || null);
   doyEl.value=S.doy; applyDaylight();
   document.querySelectorAll('#presets .btn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');

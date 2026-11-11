@@ -58,8 +58,8 @@ Two further differences from the frozen page:
   lot's receiver level + 1.5 m, exactly the frozen model's opaque-fence bound.
   It matches the model's ray test on every yard to the 0.1 m cell. The live
   figures are the open-fence end and count that ground as lost.
-* Choosing a **Lot 60–63 preset** shows that lot's sealed v1.1-AB figures at
-  both ends of the fence bracket: days with loss, earliest and latest loss,
+* A table **under the map** gives each of Lots 60–63 its sealed v1.1-AB figures
+  at both ends of the fence bracket (a lot's preset highlights its rows): days with loss, earliest and latest loss,
   largest loss and when, and (open fence only, as sealed) days with loss beyond
   the eight-storey comparator at RL 48.0 and RL 55.75. The 1.8 m case is not the
   approved condition and is not shown.
