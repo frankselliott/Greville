@@ -28,7 +28,8 @@ reads from this folder, and no frozen figure depends on it.
 
 One display use: the Shadow Study page (`../study/`) draws its shadows on a 2 m
 ground grid interpolated from these contours. That changes where shade is
-*drawn* on the map, not any figure the page reports. The v1.1-AB release
+*drawn* on the map, not any figure the page reports. With its Terrain
+toggle on, the page also draws the contour lines themselves. The v1.1-AB release
 (SHA-256 `6df4dde6…c76d4f0`) and the frozen page (`cd551cef…b128f9f`) are
 unchanged by it.
 
