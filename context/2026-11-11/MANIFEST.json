@@ -1,0 +1,134 @@
+{
+ "bbox_epsg7856": [
+  503840.0,
+  6966480.0,
+  504360.0,
+  6966900.0
+ ],
+ "fetched_at": "2026-11-11T02:09:25+00:00",
+ "layers": {
+  "addresses": {
+   "copyright": "\u00a9 State of Queensland (Department of Resources) 2024",
+   "count": 391,
+   "layer_name": "Addresses",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/PlanningCadastre/LandParcelPropertyFramework/MapServer/0/query",
+    "where": "1=1"
+   }
+  },
+  "buildings": {
+   "copyright": "\u00a9 The State of Queensland (Department of Natural Resources and Mines, Manufacturing, and Regional and Rural Development)",
+   "count": 257,
+   "layer_name": "Building outlines [generated]",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Structure/BuildingsAndSettlements/MapServer/11/query",
+    "where": "status = 'Current'"
+   }
+  },
+  "contours": {
+   "clipped_to_bbox": true,
+   "copyright": "\u00a9 State of Queensland (Department of Natural Resources and Mines, Manufacturing and Regional and Rural Development)",
+   "count": 46,
+   "layer_name": "Contour LiDAR 1m",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Elevation/Contours/MapServer/30/query",
+    "where": "1=1"
+   }
+  },
+  "parcels": {
+   "copyright": "\u00a9 State of Queensland (Department of Resources) 2024",
+   "count": 472,
+   "layer_name": "Cadastral parcels",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/PlanningCadastre/LandParcelPropertyFramework/MapServer/4/query",
+    "where": "1=1"
+   }
+  },
+  "rail": {
+   "copyright": "\u00a9 State of Queensland (Department of Natural Resources and Mines, Manufacturing, and Regional and Rural Development)",
+   "count": 4,
+   "layer_name": "Railways [detail]",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Transportation/OtherTransport/MapServer/155/query",
+    "where": "1=1"
+   }
+  },
+  "roads": {
+   "copyright": "\u00a9 State of Queensland (Department of Resources) 2023",
+   "count": 37,
+   "layer_name": "Roads and tracks",
+   "query": {
+    "f": "geojson",
+    "geometry": "503840.000,6966480.000,504360.000,6966900.000",
+    "geometryType": "esriGeometryEnvelope",
+    "inSR": 7856,
+    "orderByFields": "objectid",
+    "outFields": "*",
+    "outSR": 7856,
+    "returnGeometry": "true",
+    "spatialRel": "esriSpatialRelIntersects",
+    "url": "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Transportation/RoadsAndTracks/MapServer/10/query",
+    "where": "1=1"
+   }
+  }
+ },
+ "sha256": {
+  "NOTICE.txt": "8e18fac3851874f648023ee35bdb9e405ce27e7d292a9523d7e331869297e8a6",
+  "raw/addresses.geojson": "03edb628f2017a45f904c79fd244dbdd473fcc5963c64b25c44cd4fd2ce46f92",
+  "raw/buildings.geojson": "7a376649e9886f19335eab0d1d9b25126022b81df193cc0dcb879abf391bacfd",
+  "raw/contours.geojson": "0d4ff60c973bba3cce7879376f7c3902b3b09e5d10cf7551197aabb2b40347fc",
+  "raw/parcels.geojson": "5a8082215bbb469c688fccec46596995e2782c31b9a8da5bffd044cf825903b4",
+  "raw/rail.geojson": "4add22d7c6fa4ee2cfbc8f8baa43beea0ce289aa3d1bfde169dc8e5d0b269b76",
+  "raw/roads.geojson": "22f5242683150a75f275fd9cd05a0585899d5eaea79ef30d5d99d81c90bf70dc",
+  "shadow_context.json": "fd6a4c45370b475f8253a56a876c6d02570a66ee79ac89433ca7d06adc4f49ce"
+ },
+ "warnings": [
+  "building 2710944: RL order base<=eave<=top violated (21.94, 25.615, 25.186)",
+  "building 2711147: RL order base<=eave<=top violated (22.12, 25.313, 25.236)"
+ ]
+}

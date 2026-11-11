@@ -1,0 +1,19 @@
+Map data: (c) State of Queensland (Department of Resources), licensed under
+CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Layers: Cadastral
+parcels, Addresses, Building outlines [generated] (LiDAR, Brisbane 2025
+project), Contour LiDAR 1m, Roads and tracks, Railways [detail].
+Changes: queried by bounding box, reprojected to GDA2020 / MGA zone 56
+(EPSG:7856) by the service, ring winding normalised, heights derived as
+eave/top RL minus ground RL. Processed by E. Franks.
+
+Accuracy limits (publisher's own statements and observed):
+- Cadastre is an index, not survey; registered plan dimensions prevail.
+- Building outlines are auto-generated from LiDAR class 6 points and
+  orthogonally simplified; presence/absence is prioritised over shape.
+  Attached dwellings are often merged into one block. Expect ~1-4 m edge
+  error. Heights are LiDAR surface elevations, not surveyed RLs.
+- 1 m contours are generalised and stated by the publisher to be for
+  cartographic use only, not precision work or modelling.
+- Layers have different capture dates (LiDAR May 2025; cadastre current
+  at fetch time). Anything built after the LiDAR capture is absent.
+No aerial or satellite imagery is used or embedded.
