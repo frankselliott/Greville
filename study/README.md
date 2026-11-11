@@ -33,13 +33,18 @@ loss figure, never raise it — so where they intercept, the number here falls
 below the frozen peak. The page says so itself, and the frozen model's own
 figures are unaffected.
 
-Two further differences from the frozen page:
+Further differences from the frozen page:
 
 * It carries a registered base drawing: cadastre, building outlines, roads
   and rail, © State of Queensland (CC BY 4.0). It is a drawing, not
   photography; the frozen page carries no base map at all.
 * Its live areas recompute at a coarser cell than the frozen gate, so live
   readouts differ in the third decimal.
+* Its **eight-storey comparator** is Buildings A and B on their approved
+  footprints cut to the chosen RL — what the sealed incremental table was
+  computed against. The frozen page draws its comparator from rectangular
+  envelopes instead, which give more affected days; see
+  `../model/PROVENANCE.md`, *The two comparators*.
 * With **Terrain** on (the default), the *drawn* shadows land on the real ground:
   each 1 m of ground is tested at its own level with the same ray test the
   figures use. Levels come from a 2 m grid interpolated between the Queensland
@@ -91,8 +96,8 @@ not content:
 3. `<title>` was lifted into `<head>` and a `noindex` meta added.
 
 The fourth is an addition, so this page is **no longer byte-identical to the
-artifact**: the Shade in 3D toggle described above. It is drawn from the sweep
-the page already computes and changes no figure. The frozen visualiser at
+artifact**: the Shade in 3D toggle described above. Every later addition is in
+the list of differences above. None of them changes a frozen figure. The frozen visualiser at
 `../index.html` is untouched and still hashes to
 `cd551cef6a414987b1153b08dd765fe92393e2170760f0d4d6d8a8481b128f9f`.
 

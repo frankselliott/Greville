@@ -234,10 +234,11 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       60–63) and eight Type F (Cluster 4, lots 64–71), together with the approved Sorella buildings.
       All of them cast. Lot 72 is excluded — it sits 7.09 m clear of the row.</div>
     <div><b>Levels</b>Apartment floors at the approved RLs: ground 21.600, rooftop terrace 62.900,
-      level 14 at 66.600. Townhouses 9.5 m above their floor level. The park-boundary retaining
+      level 14 at 66.600. Type G townhouses 9.5 m and Type F 11.5 m above their floor level. The park-boundary retaining
       wall is charcoal concrete, 570–1545 mm, carrying the 1500 mm batten fence (LCP 5.16–5.18);
       which end is the tall end is not stated in the source, so the taper is indicative.
-      Type F is 11.5 m and Type G 9.5 m above natural ground (MOD_Pt1 sheets 5.11 and 5.13).</div>
+      The source gives those heights above natural ground (MOD_Pt1 sheets 5.11 and 5.13); the model
+      measures them from floor level, as the frozen model does.</div>
     <div><b>Model</b>greville_shadow_model_v1.1-AB<br><code id="fHash"></code></div>
     <div><b>Ground base</b>A drawn block plan, not photography. Cadastre, building outlines, roads
       and the rail corridor are © State of Queensland (CC BY 4.0), reprojected, clipped and styled, with the road reserve darkened so the kerb line survives the scene lighting;
@@ -263,8 +264,8 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       position at every instant used here, the frozen figures recomputed beside their stored
       values, and the registration record for the applicant's sheets. It carries its own
       coordinate conversion, self-testing against the Flinders Peak point published in the
-      GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its export
-      script reproduces every file byte for byte. Start at <code>verify/README.md</code>.</div>
+      GDA2020 Technical Manual to better than a tenth of a millimetre. Re-running its two export
+      scripts reproduces every file they generate, byte for byte. Start at <code>verify/README.md</code>.</div>
     <div><b>Checked against the sealed release</b>The model's data — the approved geometry,
       the receptors and every results table, as sealed in the v1.1-AB release — is downloadable
       at <a href="download/greville_model_data_v1.1-AB.tar.gz">download/greville_model_data_v1.1-AB.tar.gz</a>
@@ -331,7 +332,8 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       lower. The table under the map gives each lot's sealed figures at both ends.</div>
     <div><b>Method</b>NOAA geometric solar position, UTC+10, no daylight saving. Geometry in EPSG:7856.
       Shadows are computed live in your browser by the engine that reproduced all 24 frozen peaks to
-      within 0.001 m². Every figure is measured at each backyard's receiver level (the dwelling's
+      within 0.001 m² at its 0.02 m test cell; live figures here use a coarser cell, so they can differ
+      in the third decimal. Every figure is measured at each backyard's receiver level (the dwelling's
       floor level), as in the frozen model.</div>
     <div><b>Shadows on terrain</b>The ground is drawn flat, but with <b>Terrain</b> on the drawn
       shadows land on the real ground levels: each 1 m of ground is tested at its own level, with
