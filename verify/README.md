@@ -141,7 +141,7 @@ python3 run_tests.py           # 29 tests against physics and geometry, not agai
 python3 verify_frozen_peaks.py # every frozen figure, recomputed
 ```
 
-Three of those 29 are worth naming, because they are the ones that do not
+Three of those 29 — the three in `tests/test_sweep_vs_ray.py` — are worth naming, because they are the ones that do not
 depend on the original source at all — which matters, because the engine is
 the one part of the model that §5a does not check against the sealed release
 (see `model/PROVENANCE.md`). `tests/test_sweep_vs_ray.py`
@@ -217,7 +217,7 @@ python3 gate_study.py path/to/index.html    # from this pack: the Study page sav
 ```
 
 It needs node with playwright. The Study page is not part of this pack; save it
-from the site (it is one self-contained HTML file) and pass its path.
+from the site and pass its path (the page opens and computes on its own).
 
 `PROVENANCE.md` says of the Study page: *"If its figures are ever to be relied
 on, it needs its own gate."* This is it. The Study is not the frozen model — it
@@ -225,7 +225,7 @@ credits casters the frozen model did not and samples at a coarser cell — so it
 cannot be checked by equality. What it can be checked against is the claim its
 own README makes: adding a caster can only reduce a loss, never raise it. The
 gate drives the live page in a browser, reads the figures it actually renders,
-and fails if any exceeds the frozen loss by more than the sampling allowance —
+and fails if any exceeds the model's loss by more than the sampling allowance —
 for the approved scheme and for the comparator at RL 48.0 and RL 55.75, 144
 comparisons in all.
 

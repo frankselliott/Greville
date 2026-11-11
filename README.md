@@ -1,7 +1,10 @@
 # Greville shadow visualiser — hosting repository
 
-This repository exists to serve one frozen artifact at a URL. It is a hosting
-target, not a development project. **Nothing here should be edited.**
+This repository serves the frozen evidentiary visualiser at the root, and
+alongside it the Shadow Study (`study/`), the envelope inverse (`inverse/`),
+the reconstructed model (`model/`), the verification pack (`verify/`) and open
+map context (`context/`). Each has its own README. **The frozen visualiser and
+its mirror must never be edited**; everything else is versioned work around it.
 
 ## What is served
 
@@ -83,13 +86,13 @@ decimal.
 ## Access control
 
 This repository is public, and GitHub Pages serves it on an open URL with no
-access control. `noindex` and `robots.txt` keep it out of search engines; that
-is not access control.
+access control, by choice: the material is meant to be checked.
 
-For live-appeal material the intended posture is Cloudflare Access in front of
-`greville.nrltipping.com` (Zero Trust > Access > Applications > Self-hosted,
-allow named emails only). That route is configured in
-`nrltipping-greville/wrangler.toml` and remains the preferred destination.
+The Study and inverse pages carry a `noindex` tag, so search engines leave them
+out. The frozen visualiser cannot carry one without changing its hash, and the
+`robots.txt` here is served under `/Greville/`, where crawlers do not look, so
+it has no effect. The frozen page can therefore appear in search results.
+Neither measure is access control.
 
 ## Status
 
