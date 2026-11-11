@@ -93,6 +93,40 @@ Reimplementing the hull method reproduces all 21 offline values to
 **0.028 mm**. Nothing reported turns on the difference: every value on both
 sides sits metres clear of the 46.0–55.75 m comparator family.
 
+## The two comparators
+
+The sealed release carries two comparator geometries, and they are not the same.
+
+- The frozen *offline* incremental table — the sealed day counts — was computed
+  against **Buildings A and B on their approved footprints, cut to the
+  comparator RL**.
+- The frozen *browser* page draws and computes its live comparator from the
+  **rectangular envelopes** in the data file's `comparator` entry.
+
+Re-running the full year of 2026 (04:00–10:00 at one-minute steps, Cluster 5
+scheduled private open space, open fence) settles which the table used:
+
+| Lot | RL | sealed days | cut footprints | envelopes |
+|---|---|---|---|---|
+| 60 | 48.0 | 234 | 235 | 238 |
+| 61 | 48.0 | 245 | 245 | 247 |
+| 62 | 48.0 | 254 | 254 | 257 |
+| 63 | 48.0 | 267 | 266 | 269 |
+| 60 | 55.75 | 213 | 214 | 226 |
+| 61 | 55.75 | 222 | 223 | 234 |
+| 62 | 55.75 | 228 | 228 | 242 |
+| 63 | 55.75 | 236 | 235 | 249 |
+
+The cut footprints match within one day — the residue of the re-run's coarser grid (0.25 m cells, 0.25° azimuth bins); the envelopes do not. Both reproduce all 42
+sealed comparator-at-peak values, because at those instants the comparator
+shades either nothing or the whole yard.
+
+`Model.comparator_casters()` and the Study page's comparator therefore use the
+cut footprints, so they agree with the sealed table they sit beside.
+`Model.envelope_casters()` keeps the envelopes, and `first_contact_rl()` and
+the inverse page stay defined against them, as the frozen browser page's
+inverse is. The frozen page itself is unchanged.
+
 ## The data file
 
 `data/greville_model_v1.1-AB.json` is the `__MODEL__` literal lifted verbatim

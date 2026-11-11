@@ -257,7 +257,7 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       verification pack.</div>
     <div><b>Checking this yourself</b>A verification pack is downloadable at
       <a href="download/greville-verification-pack.tar.gz">download/greville-verification-pack.tar.gz</a>
-      (234 KB). It holds the model data and engine, the 29 independent tests, the geometry as
+      (322 KB). It holds the model data and engine, the 29 independent tests, the geometry as
       DXF and GeoJSON in GDA2020 / MGA zone 56 (EPSG:7856), the model in 3D as DXF ready for Revit
       and other CAD, the computed shadow sweeps, the sun
       position at every instant used here, the frozen figures recomputed beside their stored
@@ -294,10 +294,13 @@ footer code{font-family:var(--mono);font-size:.68rem;color:var(--dim);word-break
       approved buildings alone, so the two extents are not like for like.</div>
     <div><b>The eight-storey comparator</b>The 2020 approval fixed height as a storey count only —
       no top RL appears in any source. The model therefore tests a bounded family at RL 46.0, 48.0, 50.0,
-      52.0 and 55.75; RL 48.0 is the true eight-storey plate. Across that whole family the peak
-      incremental loss to Cluster 5 is identical to 0.001 m², because no comparator in the range
-      reaches those backyards at the governing instants. This is a bounded comparator, not the
-      applicant's model, and must never be described as one.</div>
+      52.0 and 55.75; RL 48.0 is the true eight-storey plate. Each comparator is Buildings A and B on
+      their approved footprints, cut to that RL, which is what the sealed incremental table was
+      computed against. In that table, at RL 48.0 and RL 55.75, the most sun the approved scheme takes
+      from each of Lots 60–63 beyond the comparator equals its whole peak loss, to 0.001 m²; RL 46.0,
+      50.0 and 52.0 are computed live on this page only. (The frozen page draws its live comparator
+      from rectangular envelopes instead; those give more days than the sealed table.) This is a
+      bounded comparator, not the applicant's model, and must never be described as one.</div>
     <div><b>Cluster 4 status</b>The eight Type F dwellings and their gardens are derived, not traced:
       POS bands from the receptor source-lock, footprints reconstructed from the stamped unit-sheet ground extent
       (4199 × 7650 mm) clipped to the DCDB lot — they reproduce the sheet area to ±0.4 m². Their
@@ -631,7 +634,12 @@ const MAT = {
 function casters(){
   if (S.scheme === 'approved')
     return Object.values(D.approved).map(b => ({fp:b.footprint, top:b.top_rl, base:b.base_rl}));
-  return ['A','B'].map(k => ({fp:D.comparator[k], top:S.compRL, base:0.0}));
+  /* Buildings A and B on their approved footprints, cut to the comparator RL:
+     the comparator the sealed incremental table was computed against (the
+     rectangular envelopes in D.comparator are the frozen page's, and give
+     more days than the sealed table; model/PROVENANCE.md, The two comparators) */
+  return [D.approved.building_A.footprint, D.approved.building_B_plate.footprint]
+    .map(fp => ({fp, top:S.compRL, base:0.0}));
 }
 
 /* the buildings, with their approved levels */
@@ -643,8 +651,8 @@ function buildMassing(){
   BUILD = [];
   const A = D.approved;
   if (S.scheme === 'comparator'){
-    for (const k of ['A','B'])
-      BUILD.push({ ring:ccw(open(D.comparator[k])), base:D.ground_rl, top:S.compRL,
+    for (const [k, fp] of [['A', A.building_A.footprint], ['B', A.building_B_plate.footprint]])
+      BUILD.push({ ring:ccw(open(fp)), base:D.ground_rl, top:S.compRL,
                    mat:'comp', levels:levelsBetween(D.ground_rl, S.compRL), win:true,
                    name:'comparator '+k });
   } else {
@@ -1480,7 +1488,7 @@ function renderTiles(){
 /* ============ legend ============ */
 document.getElementById('legend').innerHTML = [
   ['linear-gradient(180deg,#CEBA96,#8A7F72)','Approved Sorella apartments','modelled to the approved levels'],
-  ['linear-gradient(180deg,#96A8C4,#6A7086)','Eight-storey comparator','shown only when the toggle is on'],
+  ['linear-gradient(180deg,#96A8C4,#6A7086)','Eight-storey comparator','approved footprints cut to the chosen RL · shown only when the toggle is on'],
   ['linear-gradient(180deg,#DDCBAC,#A8785F)','Type G townhouses, Lots 60–63','Cluster 5 · 9.5 m · backyard to the north'],
   ['linear-gradient(180deg,#CEC4B6,#68625E)','Type F townhouses, Lots 64–71','Cluster 4 · 11.5 m · garden to the south'],
   ['linear-gradient(180deg,#C6BCB0,#5C5654)','Earlier Greville terraces','Clusters 1–3 · 9.5 m · outline from imagery'],
@@ -1578,7 +1586,7 @@ function schemeNote(){
     el.innerHTML = `Showing the scheme <b>as approved</b> — Buildings A and B at RL 62.900 to 67.500. ` +
       `Switch to the comparator to see what an eight-storey form on the same footprints would cast.`;
   } else {
-    el.innerHTML = `Showing a <b>bounded eight-storey comparator</b> — both envelopes at ` +
+    el.innerHTML = `Showing a <b>bounded eight-storey comparator</b> — Buildings A and B on their approved footprints, cut to ` +
       `<b>RL ${S.compRL.toFixed(S.compRL%1?3:1)}</b>. In the sealed tables, at RL 48.0 (the true ` +
       `eight-storey plate) and at RL 55.75, the most sun the approved scheme takes from each of Lots ` +
       `60–63 beyond the comparator <b>equals its whole peak loss, to 0.001 m²</b>. What moves is ` +

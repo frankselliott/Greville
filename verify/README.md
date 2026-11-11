@@ -87,8 +87,17 @@ is not drawing an impossible shadow even though this model's clock stops at
 | `out/geometry.dxf` | R12 DXF, MGA zone 56 eastings and northings, layered |
 | `out/geometry.geojson` | same features; WGS84 lon/lat for GIS, with the authoritative MGA coordinates in each feature's `mga2020_zone56` property |
 
-Layers: `APPROVED`, `COMPARATOR`, `CADASTRE_LOT`, `CADASTRE_PARCEL`,
+Layers: `APPROVED`, `COMPARATOR_ENVELOPE`, `CADASTRE_LOT`, `CADASTRE_PARCEL`,
 `RECEPTOR_YARD`, `RECEPTOR_SCHED`, `DWELLING`.
+
+The eight-storey comparator is Buildings A and B on their approved footprints
+(`APPROVED`, `building_A` and `building_B_plate`) cut to the comparator RL:
+that is what the sealed incremental table was computed against, and what
+`Model.comparator_casters()` and the Study page use. `COMPARATOR_ENVELOPE`
+carries the rectangular envelopes the frozen browser page draws for its live
+comparator instead; they give more affected days than the sealed table (see
+`../model/PROVENANCE.md`, *The two comparators*). The `SHADOW_COMPARATOR_RL48_*`
+layers of `shadows.dxf` are cast by the cut footprints.
 
 `out/shadows.dxf` and `out/shadows.geojson` carry the computed sweeps at every
 instant, layered by instant. **Each feature is one part of the sweep, not the
@@ -114,10 +123,9 @@ MGA coordinates are thousands of kilometres from Revit's origin.
 The approved buildings are drawn from the approved ground floor (RL 21.600);
 the model extrudes them from RL 0, and any base below the lowest receiver level
 (RL 23.320) casts exactly the same shadow on the backyards. The eight-storey
-comparator is not included: the sealed day counts were computed against the
-approved A and B-plate footprints cut to the comparator height, not the
-rectangular envelopes on the `COMPARATOR` layer of `geometry.dxf`, so a 3D
-comparator here would invite the wrong one.
+comparator is on `COMPARATOR_RL48` and `COMPARATOR_RL55_75`: Buildings A and B
+on their approved footprints, cut to that RL, as the sealed incremental table
+used. Turn the approved layers off to see it alone.
 
 Checked: every solid is closed with outward faces, each volume equals footprint
 area × height to 1e-10, every footprint vertex matches the model, and the two
@@ -217,7 +225,9 @@ credits casters the frozen model did not and samples at a coarser cell — so it
 cannot be checked by equality. What it can be checked against is the claim its
 own README makes: adding a caster can only reduce a loss, never raise it. The
 gate drives the live page in a browser, reads the figures it actually renders,
-and fails if any exceeds the frozen loss by more than the sampling allowance.
+and fails if any exceeds the frozen loss by more than the sampling allowance —
+for the approved scheme and for the comparator at RL 48.0 and RL 55.75, 144
+comparisons in all.
 
 It gates a direction, not a value. It does not make the Study figures the
 frozen figures; those remain the ones in `model/`.

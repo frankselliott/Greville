@@ -15,6 +15,10 @@ solids rather than outlines:
   APPROVED_A, APPROVED_B_PLATE      approved ground floor RL 21.600 to top RL
   APPROVED_B_COMMUNAL_ROOF,
   APPROVED_B_LIFT_OVERRUN           on the B plate roof, RL 62.900 to top RL
+  COMPARATOR_RL48, COMPARATOR_RL55_75
+                                    the eight-storey comparator: Buildings A and B on
+                                    their approved footprints, RL 21.600 cut to RL 48.0
+                                    and to RL 55.75 (as the sealed incremental table)
   DWELLINGS_CLUSTER5                each Lot 60-63 dwelling, receiver level to top RL
   FENCE_1500                        each lot's boundary fence, receiver level + 1.5 m
                                     (geometry only: its solar opacity is not
@@ -26,8 +30,7 @@ solids rather than outlines:
 The model itself extrudes the approved buildings from RL 0. Any base below
 the lowest receiver level (RL 23.320) casts exactly the same shadow on the
 backyards, so drawing them from the approved ground floor changes nothing that
-is measured. The eight-storey comparator is deliberately not included; see
-README.txt.
+is measured.
 
 Needs ezdxf (pip install ezdxf==1.4.5). Output is byte-reproducible with that
 version. Run from this directory:   python3 export_revit.py
@@ -88,8 +91,10 @@ def outline(msp, layer, poly, z, off):
     msp.add_lwpolyline(pts, close=True, dxfattribs={'layer': layer, 'elevation': z})
 
 
+COMPARATOR_RLS = [(48.0, 'COMPARATOR_RL48'), (55.75, 'COMPARATOR_RL55_75')]
 LAYERS = [('APPROVED_A', 30), ('APPROVED_B_PLATE', 30), ('APPROVED_B_COMMUNAL_ROOF', 32),
-          ('APPROVED_B_LIFT_OVERRUN', 32), ('DWELLINGS_CLUSTER5', 41), ('FENCE_1500', 23),
+          ('APPROVED_B_LIFT_OVERRUN', 32), ('COMPARATOR_RL48', 150), ('COMPARATOR_RL55_75', 152),
+          ('DWELLINGS_CLUSTER5', 41), ('FENCE_1500', 23),
           ('RECEPTOR_SCHED', 2), ('RECEPTOR_YARD', 52), ('CADASTRE_LOT', 8), ('CADASTRE_PARCEL', 9)]
 
 
@@ -109,6 +114,9 @@ def build(path, off):
           A['building_B_communal_roof']['top_rl'], off)
     prism(msp, 'APPROVED_B_LIFT_OVERRUN', A['building_B_lift_overrun']['footprint'], plate_top,
           A['building_B_lift_overrun']['top_rl'], off)
+    for h, layer in COMPARATOR_RLS:             # A and B on their approved footprints, cut to h
+        for k in ('building_A', 'building_B_plate'):
+            prism(msp, layer, A[k]['footprint'], APPROVED_GROUND_RL, h, off)
     for lot in sorted(D['occluders']):
         z = D['receiver_rl'][lot]
         prism(msp, 'DWELLINGS_CLUSTER5', D['occluders'][lot]['footprint'], z, D['occluders'][lot]['top_rl'], off)
@@ -146,6 +154,11 @@ Layers
   APPROVED_A, APPROVED_B_PLATE   closed solids, approved ground floor RL 21.600 to top RL
   APPROVED_B_COMMUNAL_ROOF,
   APPROVED_B_LIFT_OVERRUN        on the B plate roof, RL 62.900 to top RL
+  COMPARATOR_RL48,
+  COMPARATOR_RL55_75             the eight-storey comparator: Buildings A and B on their
+                                 approved footprints, RL 21.600 cut to RL 48.0 / RL 55.75.
+                                 This is what the sealed incremental table used. Turn the
+                                 approved layers off to see it alone.
   DWELLINGS_CLUSTER5             Lot 60-63 dwellings, receiver level to top RL
   FENCE_1500                     boundary fences, receiver level + 1.5 m. Geometry only:
                                  their solar opacity is not established, so the model
@@ -158,10 +171,9 @@ The model extrudes the approved buildings from RL 0. Any base below the lowest
 receiver level (RL 23.320) gives exactly the same shadow on the backyards, so
 starting them at the approved ground floor changes nothing that is measured.
 
-The eight-storey comparator is not included. The sealed day counts were
-computed against the approved A and B-plate footprints cut to the comparator
-height, not the rectangular envelopes in geometry.dxf (layer COMPARATOR); until
-that is reconciled, a 3D comparator here would invite the wrong one.
+The rectangular envelopes on the COMPARATOR_ENVELOPE layer of geometry.dxf are
+what the frozen browser page draws for its comparator; they are not what the
+sealed results used, and are not drawn here.
 
 Regenerate: python3 export_revit.py  (needs ezdxf 1.4.5; byte-reproducible)
 """ % (E0, N0, D['solar']['latitude'], D['solar']['longitude']))

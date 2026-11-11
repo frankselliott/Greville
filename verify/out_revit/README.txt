@@ -20,6 +20,11 @@ Layers
   APPROVED_A, APPROVED_B_PLATE   closed solids, approved ground floor RL 21.600 to top RL
   APPROVED_B_COMMUNAL_ROOF,
   APPROVED_B_LIFT_OVERRUN        on the B plate roof, RL 62.900 to top RL
+  COMPARATOR_RL48,
+  COMPARATOR_RL55_75             the eight-storey comparator: Buildings A and B on their
+                                 approved footprints, RL 21.600 cut to RL 48.0 / RL 55.75.
+                                 This is what the sealed incremental table used. Turn the
+                                 approved layers off to see it alone.
   DWELLINGS_CLUSTER5             Lot 60-63 dwellings, receiver level to top RL
   FENCE_1500                     boundary fences, receiver level + 1.5 m. Geometry only:
                                  their solar opacity is not established, so the model
@@ -32,9 +37,8 @@ The model extrudes the approved buildings from RL 0. Any base below the lowest
 receiver level (RL 23.320) gives exactly the same shadow on the backyards, so
 starting them at the approved ground floor changes nothing that is measured.
 
-The eight-storey comparator is not included. The sealed day counts were
-computed against the approved A and B-plate footprints cut to the comparator
-height, not the rectangular envelopes in geometry.dxf (layer COMPARATOR); until
-that is reconciled, a 3D comparator here would invite the wrong one.
+The rectangular envelopes on the COMPARATOR_ENVELOPE layer of geometry.dxf are
+what the frozen browser page draws for its comparator; they are not what the
+sealed results used, and are not drawn here.
 
 Regenerate: python3 export_revit.py  (needs ezdxf 1.4.5; byte-reproducible)

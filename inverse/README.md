@@ -8,6 +8,11 @@ backyards. This one asks: **how tall would something have to be** to reach this
 ground at all, at this moment? That height is the *first-contact RL*, and where
 it sits above the bounded comparator family, nothing in that family reaches.
 
+The inverse is defined against the rectangular comparator envelopes, as the
+frozen page's own inverse is. The sealed incremental table and the Study page's
+comparator use Buildings A and B on their approved footprints cut to the
+comparator RL instead; see `../model/PROVENANCE.md`, *The two comparators*.
+
 ## What it does not do
 
 It does not restate, recompute or alter a single frozen forward figure. The

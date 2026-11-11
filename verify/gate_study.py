@@ -20,6 +20,10 @@ against the frozen Python engine:
   2. Where the extra casters do not intercept, the two should agree to within
      the sampling allowance, which is the Study's coarser cell.
 
+The same test is applied to the page's eight-storey comparator at RL 48.0 and
+RL 55.75, against Model.comparator_loss (Buildings A and B on their approved
+footprints cut to that RL, as the sealed incremental table used).
+
 Requires node with playwright, which the model itself does not.
 Run:  python3 gate_study.py [path/to/study/index.html]
 
@@ -55,13 +59,20 @@ const { chromium } = require('playwright');
   p.on('pageerror', e => errs.push(e.message));
   await p.goto('file://' + page, { waitUntil: 'load' });
   await p.waitForTimeout(2500);
-  const out = await p.evaluate(w => w.map(([doy, min]) => {
-    const sp = solarAt(doy, min);
-    const row = { doy, min, alt: sp.alt, az: sp.az, loss: {} };
-    for (const k of Object.keys(ALLPOS))
-      if (ALLMETA[k].cluster === 5) row.loss[k] = lossLot(k, sp, GRIDS[k], GC);
-    return row;
-  }), want);
+  const out = await p.evaluate(w => {
+    const rows = [];
+    for (const [scheme, rl] of [['approved', null], ['comparator', 48.0], ['comparator', 55.75]]){
+      S.scheme = scheme; if (rl !== null) S.compRL = rl; buildMassing();
+      for (const [doy, min] of w){
+        const sp = solarAt(doy, min);
+        const row = { scheme, rl, doy, min, alt: sp.alt, az: sp.az, loss: {} };
+        for (const k of Object.keys(ALLPOS))
+          if (ALLMETA[k].cluster === 5) row.loss[k] = lossLot(k, sp, GRIDS[k], GC);
+        rows.push(row);
+      }
+    }
+    return rows;
+  }, want);
   await b.close();
   console.log(JSON.stringify({ rows: out, errors: errs }));
 })();
@@ -111,7 +122,7 @@ def main():
     print('Study page gate — figures as the page renders them, against the frozen engine')
     print('receptor: sched (the scheduled private open space), fence case f000')
     print('the Study credits extra casters, so its loss must never EXCEED the frozen loss\n')
-    print('   doy   time   alt      lot   study_m2  frozen_m2   study-frozen   verdict')
+    print('   scheme         doy   time   alt      lot   study_m2  frozen_m2   study-frozen   verdict')
     fails = 0; rows = 0
     for row in data['rows']:
         doy, mins = row['doy'], row['min']
@@ -126,13 +137,18 @@ def main():
             # ALLMETA area comes from D.peaks['sched/f000/...'].pos_area_m2 and
             # ALLPOS from D.pos, which is the sched polygon. Comparing it against
             # the 'yard' receptor compares different ground and is meaningless.
-            frozen = M.evaluate_at('sched', lot, 'f000', when)['loss']
+            if row['scheme'] == 'approved':
+                frozen = M.evaluate_at('sched', lot, 'f000', when)['loss']
+            else:
+                frozen = M.evaluate_at('sched', lot, 'f000', when,
+                                       comparator_rl=row['rl'])['comparator_loss']
             delta = study - frozen
             ok = delta <= allow
             if not ok: fails += 1
             rows += 1
-            print('   %3d  %02d:%02d  %5.1f   %s  %8.2f  %9.2f   %+12.2f   %s'
-                  % (doy, mins // 60, mins % 60, row['alt'], lot[:2], study, frozen,
+            tag = 'approved' if row['scheme'] == 'approved' else 'comp RL%g' % row['rl']
+            print('   %-13s  %3d  %02d:%02d  %5.1f   %s  %8.2f  %9.2f   %+12.2f   %s'
+                  % (tag, doy, mins // 60, mins % 60, row['alt'], lot[:2], study, frozen,
                      delta, 'ok' if ok else 'EXCEEDS FROZEN'))
     print('\n%d comparisons, allowance %+.2f m2 (1.5 x the Study cell of %.2f m)'
           % (rows, allow, GC))
