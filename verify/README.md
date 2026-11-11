@@ -16,7 +16,7 @@ are byte-identical and the download can be hashed meaningfully:
 
 ```sh
 tar --sort=name --owner=0 --group=0 --numeric-owner \
-    --mtime='2026-11-10 00:00:00' -cf - <the 29 files listed in this pack> \
+    --mtime='2026-11-10 00:00:00' -cf - <the 34 files listed in this pack> \
   | gzip -n -9 > greville-verification-pack.tar.gz
 ```
 
@@ -93,6 +93,37 @@ Layers: `APPROVED`, `COMPARATOR`, `CADASTRE_LOT`, `CADASTRE_PARCEL`,
 `out/shadows.dxf` and `out/shadows.geojson` carry the computed sweeps at every
 instant, layered by instant. **Each feature is one part of the sweep, not the
 finished shadow** — the shadow is their union. Areas are not derived from them.
+
+### In 3D, for Revit and other CAD
+
+`out/geometry.dxf` is flat outlines. `out_revit/` holds the same model in 3D:
+
+| file | what |
+|---|---|
+| `out_revit/greville_revit_mga.dxf` | AutoCAD 2000 DXF, units declared as metres, MGA zone 56 eastings and northings, heights in m AHD |
+| `out_revit/greville_revit_local.dxf` | identical geometry near the origin: local = MGA − (E 504045, N 6966712) |
+| `out_revit/README.txt` | layers, import settings, and what is left out and why |
+
+The approved buildings and the Lot 60–63 dwellings are closed solids at their
+model levels, the boundary fences are 1.5 m panels, and the backyards and lots
+are outlines at receiver level. In Revit: Insert → Link CAD, import units
+Meter. Place the local file *Origin to Internal Origin*; place the MGA file
+*Center to Center*, then Manage → Coordinates → Acquire Coordinates, because
+MGA coordinates are thousands of kilometres from Revit's origin.
+
+The approved buildings are drawn from the approved ground floor (RL 21.600);
+the model extrudes them from RL 0, and any base below the lowest receiver level
+(RL 23.320) casts exactly the same shadow on the backyards. The eight-storey
+comparator is not included: the sealed day counts were computed against the
+approved A and B-plate footprints cut to the comparator height, not the
+rectangular envelopes on the `COMPARATOR` layer of `geometry.dxf`, so a 3D
+comparator here would invite the wrong one.
+
+Checked: every solid is closed with outward faces, each volume equals footprint
+area × height to 1e-10, every footprint vertex matches the model, and the two
+files differ by exactly the stated offset. `export_revit.py` regenerates
+`out_revit/` byte for byte, but unlike everything else here it needs one
+package: `pip install ezdxf==1.4.5`.
 
 ## 5. Check the numbers
 
