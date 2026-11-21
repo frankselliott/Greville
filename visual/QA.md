@@ -13,3 +13,11 @@ Every entry records a test that **actually ran**, on which commit or working tre
 | Q0.5 | VA4 code archive = archive manifest | SHA-256 `a75ad6b3…2901` = `GRE_VA4_SHA256SUMS.txt` entry | PASS |
 | Q0.6 | Three.js tarball integrity | sha512 of `three-0.160.1.tgz` = npm `dist.integrity` | PASS |
 | Q0.7 | Pages deployment reachable for checking | `curl https://frankselliott.github.io/Greville/` | NOT RUN: the build environment's proxy refuses `*.github.io` (HTTP 403 from the proxy). Recorded as a limitation; see M6. |
+
+## M1 — geometry pipeline
+
+| # | Test | Command | Result |
+|---|---|---|---|
+| Q1.1 | Asset build with source pinning and the archived-ARTW/POD equality assertion | `python3 -I visual/tools/build_assets.py <scene_dump_v2.json> <VA4 code dir>` | PASS. All 13 build checks pass (manifest `checks`). |
+| Q1.2 | Unit tests (coords, projection vs archived Python, Three.js matrices, shift convention, solid angle, fit vs archived Python, ambiguity flags, manifest hashes, scenario identity, preset RLs and envelopes) | `node --test visual/tests/*.test.mjs` | PASS, 10/10 |
+| Q1.3 | Python reference fixture from the archived fit core (`adr_core.py` sha `f1e0caa8…`) | `python3 -I visual/tools/xcheck_fit.py <adr_core.py>` | ng57_up: n = 24, RMS 0.349 px, grade A, position error 0.029 m. w01_shift (free principal point): n = 24, RMS 0.389 px, grade A, 0.065 m. |

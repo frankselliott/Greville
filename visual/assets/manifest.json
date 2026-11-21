@@ -1,0 +1,231 @@
+{
+ "schema": "greville-visual-manifest/1",
+ "generator": "visual/tools/build_assets.py",
+ "generator_sha256": "53a6a8d116f3f703199de4583d9190e2177e0f220da4a38eeca93cdb0c121be3",
+ "sources": {
+  "S-VA2": {
+   "file": "scene_dump_v2.json",
+   "sha256": "b9d4ca3a19e98454060896ae07a80a58d8be625d60c178bbce613e8ee4aba70c"
+  },
+  "S-VA4a": {
+   "file": "code/partD_artic.py",
+   "sha256": "b82fea3ce34b210f188d0167f67eb94a364879e4be802bc347e7dbf2ddf319b0"
+  },
+  "S-VA4b": {
+   "file": "code/masses.py",
+   "sha256": "4034dc81b0e6713081de15eabfaf0851bcf5edd9a8e498d8f24b99bff3177f82"
+  },
+  "S-VA4c": {
+   "file": "code/adr/control_points_library_va4.json",
+   "sha256": "1ae589eac3c90497e2b39fe3a0444129ba79ce1f55b959464cd9e74425c4a694"
+  },
+  "S-VA4": {
+   "file": "GRE_VA4_code_and_results.zip",
+   "sha256": "a75ad6b31c0241de5a8148eac89711146c5e5a7f461f07f9429b43febed52901"
+  }
+ },
+ "assets": {
+  "scene.json": {
+   "sha256": "62f5e36fa12e5676c43243ac5da1b31febf2568ee5793b8066fe575e8a747667",
+   "bytes": 435127
+  },
+  "controls.json": {
+   "sha256": "9feab0ac976f7b7f3d39fd6bafdb00b66463db43f2913385462fe10c7d5a9eca",
+   "bytes": 108943
+  }
+ },
+ "collections": {
+  "CTX_VA2": {
+   "label": "Context (VA2): LiDAR envelopes, heritage laundry, approved townhouse massing",
+   "classification": "source-derived",
+   "source": [
+    "S-VA2"
+   ],
+   "family": null,
+   "n_prisms": 432,
+   "replaces": null
+  },
+  "CTX_VA4C4_ADD": {
+   "label": "VA4 plan-derived Cluster 4 masses (Lots 48-54), replacing 7 LiDAR template quads",
+   "classification": "reconstructed",
+   "source": [
+    "S-VA4b"
+   ],
+   "family": null,
+   "n_prisms": 29,
+   "replaces": [
+    "ctx-3013149",
+    "ctx-3013155",
+    "ctx-3013150",
+    "ctx-3013151",
+    "ctx-3013152",
+    "ctx-3013153",
+    "ctx-3013154"
+   ]
+  },
+  "E1_SK48": {
+   "label": "SK00.03 A footprints extruded to RL 48.0",
+   "classification": "reconstructed",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "SK",
+   "n_prisms": 2,
+   "replaces": null
+  },
+  "E1_SK52": {
+   "label": "SK00.03 A footprints extruded to RL 52.0",
+   "classification": "sensitivity",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "SK",
+   "n_prisms": 2,
+   "replaces": null
+  },
+  "E2": {
+   "label": "Approved Buildings A/B massing (VA2 plates, B communal roof, lift overruns)",
+   "classification": "source-derived",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "E2",
+   "n_prisms": 5,
+   "replaces": null
+  },
+  "ARTW": {
+   "label": "VA4 Part D: Building B west balcony line (scaled, DA-106/107)",
+   "classification": "sensitivity",
+   "source": [
+    "S-VA4a"
+   ],
+   "family": null,
+   "n_prisms": 4,
+   "replaces": null
+  },
+  "POD": {
+   "label": "VA4 Part D: A/B west podium and B south podium (scaled, DA-103/402)",
+   "classification": "sensitivity",
+   "source": [
+    "S-VA4a"
+   ],
+   "family": null,
+   "n_prisms": 3,
+   "replaces": null
+  }
+ },
+ "scenarios": {
+  "E1_SK48": {
+   "members": [
+    "E1_SK48"
+   ],
+   "classification": "reconstructed"
+  },
+  "E1_SK52": {
+   "members": [
+    "E1_SK52"
+   ],
+   "classification": "sensitivity"
+  },
+  "E1_SK48_POD": {
+   "members": [
+    "E1_SK48",
+    "POD"
+   ],
+   "classification": "hypothetical"
+  },
+  "E2": {
+   "members": [
+    "E2"
+   ],
+   "classification": "source-derived"
+  },
+  "E2c": {
+   "members": [
+    "E2",
+    "ARTW",
+    "POD"
+   ],
+   "classification": "sensitivity"
+  }
+ },
+ "transformation": "none to source values; local frame x=E-504045, y=N-6966712, z=RL AHD; viewer maps (x,y,z)->(X=x,Y=z,Z=-y)",
+ "licence": "Derived numeric massing from publicly lodged DA drawings (no drawing reproduced); LiDAR/DEM/canopy derived from Queensland Government data (CC BY 4.0).",
+ "excluded": [
+  "E1_REC48",
+  "E1_REC52",
+  "E1_CUT48",
+  "E1_SK46.5 (other families / not exposed)",
+  "SENS_trees12_opaque",
+  "SENS_C5_verge_trees (invented crowns)",
+  "SENS_C3_laundry_flat_top",
+  "model/ shadow-model geometry (different method)"
+ ],
+ "checks": [
+  {
+   "gate": "G1.4 NG55 RL = DEM+1.6",
+   "ok": true,
+   "detail": "DEM 22.755 +1.6 = 24.355 vs 24.36"
+  },
+  {
+   "gate": "G1.4 NG57 RL = DEM+1.6",
+   "ok": true,
+   "detail": "DEM 22.375 +1.6 = 23.975 vs 23.97"
+  },
+  {
+   "gate": "G1.4 NG59 RL = DEM+1.6",
+   "ok": true,
+   "detail": "DEM 22.135 +1.6 = 23.735 vs 23.73"
+  },
+  {
+   "gate": "G1.5 NG55 envelopes",
+   "ok": true,
+   "detail": "E1 66.32 (archive 66.3), E2 71.48 (archive 71.5); d_E2 12.91 m"
+  },
+  {
+   "gate": "G1.5 NG57 envelopes",
+   "ok": true,
+   "detail": "E1 67.33 (archive 67.3), E2 72.09 (archive 72.1); d_E2 12.58 m"
+  },
+  {
+   "gate": "G1.5 NG59 envelopes",
+   "ok": true,
+   "detail": "E1 67.10 (archive 67.1), E2 71.91 (archive 71.9); d_E2 12.79 m"
+  },
+  {
+   "gate": "G1.2 E1_SK48 single family",
+   "ok": true,
+   "detail": "{'SK'}"
+  },
+  {
+   "gate": "G1.2 E1_SK52 single family",
+   "ok": true,
+   "detail": "{'SK'}"
+  },
+  {
+   "gate": "G1.2 E1_SK48_POD single family",
+   "ok": true,
+   "detail": "{'SK'}"
+  },
+  {
+   "gate": "G1.2 E2 single family",
+   "ok": true,
+   "detail": "{'E2'}"
+  },
+  {
+   "gate": "G1.2 E2c single family",
+   "ok": true,
+   "detail": "{'E2'}"
+  },
+  {
+   "gate": "G1.2 prism ids unique across collections",
+   "ok": true,
+   "detail": "477 prisms"
+  },
+  {
+   "gate": "controls count 628",
+   "ok": true,
+   "detail": "628"
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+three@0.160.1 (npm), build/three.module.min.js
+sha256 3e690ac7d180b0aadf0891bea39eec643e29e2d3e75c99b18689518665f69ba6
+tarball integrity sha512-Bgl2wPJypDOZ1stAxwfWAcJ0WQf7QzlptsxkjYiURPz+n5k4RBDLsq+6f9Y75TYxn6aHLcWz+JNmwTOXWrQTBQ==
+Licence: MIT (LICENSE in this folder)

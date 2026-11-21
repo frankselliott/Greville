@@ -46,7 +46,7 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G0.3 | Source files located and hash-matched to the archive manifests | PASS (`SOURCE_REGISTER.md` §2) |
 | G0.4 | Existing `model/run_tests.py` baseline recorded | PASS (QA Q0.3) |
 
-## M1 — Geometry pipeline — **NOT STARTED**
+## M1 — Geometry pipeline — **DONE**
 
 **Depends on:** M0.
 
@@ -64,6 +64,8 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G1.4 | Preset eye RLs: NG55/57/59 = DEM + 1.60 m within 0.02 m; W01 = 24.92 (stated, an assumption) |
 | G1.5 | Regression against the private archive: E1 SK48 / E2 B-plate elevation-angle envelopes at NG55/57/59 reproduce the archived values (66.3–67.3° / 71.5–72.1°) within 0.2° |
 | G1.6 | Asset hashes in the manifest equal the files on disk |
+
+**M1 results** (QA Q1.x): G1.1–G1.6 **PASS**. The build refuses unpinned sources and asserts the VA4 ARTW/POD prisms equal the archived Part D run. NG55 / 57 / 59 eye RL = DEM + 1.6 to within 0.005 m. Envelopes: NG57 E1 67.33° / E2 72.09° (archive 67.3 / 72.1); NG55 66.32 / 71.48 (66.3 / 71.5); NG59 67.10 / 71.91 (67.1 / 71.9). 477 prisms; 628 controls; one family per scenario.
 
 ## M2 — Working 3D viewer — **NOT STARTED**
 
