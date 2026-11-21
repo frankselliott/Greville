@@ -116,7 +116,28 @@ def main(scene_path, va4_code):
     controls = [dict(id=p['id'], cls=p['cls'], x=p['x'], y=p['y'], z=p['z'], status=p['source_status'],
                      needs_context='CTX_VA4C4' if p['id'].split(':')[0] in c4ids else None) for p in L]
     checks.append(('controls count 628', len(controls) == 628, str(len(controls))))
-    scene = dict(schema='greville-visual-scene/1', frame=dict(epsg=7856, E0=E0, N0=N0, vertical='AHD', local='x=E-E0, y=N-N0, z=RL; Z up',
+    # ---- storey levels (approved plans, DIMENSIONED RLs per VA4 D_dims / D_DA402 extraction) and E1 inferred levels
+    lv_B = [25.3, 29.4] + [round(32.5 + 3.1 * k, 3) for k in range(0, 10)]            # L01, L02, L03..L12 (60.4)
+    lv_A = [25.3, 29.4] + [round(32.5 + 3.1 * k, 3) for k in range(0, 11)]            # L01, L02, L03..L13 (63.5)
+    assert abs(lv_B[-1] - 60.4) < 1e-9 and abs(lv_A[-1] - 63.5) < 1e-9
+    levels = dict(
+        E2=dict(status='DIMENSIONED', source='DA-201 Rev 11 / DA-200 Rev 9 / DA-402 Rev 10 (Ground RL 21.600, L01 25.300, L02 29.400, L03 32.500, +3.100 per level; B L12 60.400, rooftop 62.900; A L13 63.500, roof 66.600)',
+                A=lv_A, B=lv_B, ground=21.6),
+        E1=dict(status='INFERRED', source='SK00.01 B: Ground + Levels 1-7 (8 storeys) below a rooftop with no units; ground RL 21.6 assumed; RL 48.0 top inferred; equal storeys of 3.3 m assumed',
+                A=[round(21.6 + 3.3 * k, 3) for k in range(1, 8)], B=[round(21.6 + 3.3 * k, 3) for k in range(1, 8)], ground=21.6))
+    # ---- public basemap (repository context/2026-11-11, CC BY 4.0 State of Queensland), transformed to the local frame
+    ctxp = os.path.abspath(os.path.join(VIS, '..', 'context', '2026-11-11', 'shadow_context.json')); h_ctx = sha(ctxp)
+    assert h_ctx == 'fd6a4c45370b475f8253a56a876c6d02570a66ee79ac89433ca7d06adc4f49ce', h_ctx
+    CX = json.load(open(ctxp)); assert CX['crs'] == 'EPSG:7856'
+    loc = lambda ring: [[round(x - E0, 3), round(y - N0, 3)] for x, y in ring]
+    parcels = [dict(lotplan=p['lotplan'], type=p['parcel_typ'], rings=[loc(r) for poly in p['polygons'] for r in poly]) for p in CX['parcels']]
+    contours = [dict(z=c['elevation_m'], line=loc(c['coords'])) for c in CX['contours']]
+    railp = os.path.join(os.path.dirname(ctxp), 'raw', 'rail.geojson'); h_rail = sha(railp)
+    rail = [loc(f['geometry']['coordinates']) for f in json.load(open(railp))['features'] if f['geometry']['type'] == 'LineString']
+    basemap = dict(schema='greville-visual-basemap/1', src='context/2026-11-11 (repository)', licence='(c) State of Queensland (Department of Resources), CC BY 4.0',
+                   note='Cadastre is an index, not survey. 1 m contours are generalised (cartographic use). Fill colours are schematic.',
+                   site_lotplan='913SP337678', parcels=parcels, contours=contours, rail=rail)
+    scene = dict(schema='greville-visual-scene/1', levels=levels, frame=dict(epsg=7856, E0=E0, N0=N0, vertical='AHD', local='x=E-E0, y=N-N0, z=RL; Z up',
                  three='X=x (east), Y=z (up), Z=-y (north is -Z)', site_grid_rotation_deg=AZ),
                  collections=collections, scenarios=scenarios, default_scenarios=dict(historical='E1_SK48', approved='E2'),
                  terrain=dict(x0=T['x0'], y0=T['y0'], step=T['step'], nx=T['nx'], ny=T['ny'], z=T['z'], src='S-VA2'),
@@ -124,12 +145,15 @@ def main(scene_path, va4_code):
     os.makedirs(OUT, exist_ok=True)
     def dump(name, obj):
         p = os.path.join(OUT, name); s = json.dumps(obj, separators=(',', ':'), sort_keys=False); open(p, 'w').write(s); return sha(p), len(s)
+    hb, nb_ = dump('basemap.json', basemap)
     hs, ns_ = dump('scene.json', scene); hc, nc = dump('controls.json', dict(schema='greville-visual-controls/1', src='S-VA4c', points=controls))
     manifest = dict(schema='greville-visual-manifest/1', generator='visual/tools/build_assets.py', generator_sha256=sha(os.path.abspath(__file__)),
                     sources={'S-VA2': dict(file='scene_dump_v2.json', sha256=h_scene), 'S-VA4a': dict(file='code/partD_artic.py', sha256=h_pd),
                              'S-VA4b': dict(file='code/masses.py', sha256=h_ms), 'S-VA4c': dict(file='code/adr/control_points_library_va4.json', sha256=h_lib),
+                             'S-CTX': dict(file='context/2026-11-11/shadow_context.json (this repository; CC BY 4.0)', sha256=h_ctx),
+                             'S-RAIL': dict(file='context/2026-11-11/raw/rail.geojson (this repository; CC BY 4.0)', sha256=h_rail),
                              'S-VA4': dict(file='GRE_VA4_code_and_results.zip', sha256='a75ad6b31c0241de5a8148eac89711146c5e5a7f461f07f9429b43febed52901')},
-                    assets={'scene.json': dict(sha256=hs, bytes=ns_), 'controls.json': dict(sha256=hc, bytes=nc)},
+                    assets={'scene.json': dict(sha256=hs, bytes=ns_), 'controls.json': dict(sha256=hc, bytes=nc), 'basemap.json': dict(sha256=hb, bytes=nb_)},
                     collections={k: dict(label=v['label'], classification=v['classification'], source=v['source'], family=v.get('family'), n_prisms=len(v['prisms']),
                                          replaces=v.get('replaces')) for k, v in collections.items()},
                     scenarios={s['id']: dict(members=s['members'], classification=s['classification']) for s in scenarios},

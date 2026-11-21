@@ -24,7 +24,7 @@ export function attachControls(el, app) {
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', (e) => { e.preventDefault(); app.zoom(Math.exp(e.deltaY * 0.001)); }, { passive: false });
   window.addEventListener('keydown', (e) => {
-    if (isTyping(e)) return; const k = e.key; let used = true; const step = e.altKey ? 0.1 : 0.5, ang = e.altKey ? 0.2 : 2;
+    if (isTyping(e) || e.ctrlKey || e.metaKey || app.keysBlocked?.()) return; const k = e.key; let used = true; const step = e.altKey ? 0.1 : 0.5, ang = e.altKey ? 0.2 : 2;
     if (k === 'w' || k === 'W' || (e.shiftKey && k === 'ArrowUp')) app.move(step, 0);
     else if (k === 's' || k === 'S' || (e.shiftKey && k === 'ArrowDown')) app.move(-step, 0);
     else if (k === 'a' || k === 'A' || (e.shiftKey && k === 'ArrowLeft')) app.move(0, -step);

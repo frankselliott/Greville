@@ -203,6 +203,33 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
     - `curl -sS https://frankselliott.github.io/Greville/` returns the frozen root page, whose SHA-256 should equal `cd551cef…`;
     - `https://frankselliott.github.io/Greville/visual/` loads the viewer.
 
+## v1.1 — Usability and rendering — **DONE**
+
+**Request:** make the viewer usable with menus, make the images look much better, as accurate as possible.
+**Rule kept:** nothing in v1.1 changes a prism, the terrain heights, a preset, the camera model or a mask metric. Every new layer is a display layer, and each is labelled with its status.
+
+**Work items:**
+- **U1 — Menus and chrome.** Menu bar (File, View, Camera, Scenario, Layers, Lighting, Help) with keyboard navigation; collapsible panel sections; help dialog; shortcuts (1–5, L, M, G, ?, Ctrl+S); status bar; minimap; compass ribbon and elevation ruler; shareable URL state.
+- **R1 — Render pipeline.** Physically based materials; sky + PMREM image-based light; sun at the frozen NOAA position with PCF soft shadows; GTAO ambient occlusion; MSAA; ACES tone mapping; sRGB; CIE standard overcast sky; quality levels; interactive frames skip AO.
+- **R2 — Accuracy layers.** Storey lines at the dimensioned E2 RLs (solid) and the inferred E1 RLs (dashed); cadastral ground texture (DCDB parcels, 1 m contours, rail); outward-facing prism winding (needed for single-sided shadowed materials).
+- **D1 — Defect found during v1.1:** on high-DPI screens, off-screen renders (export panels, mask pixels) used `renderer.setViewport`, which multiplies by the device pixel ratio even when a render target is bound. Fixed by setting the viewport and scissor on the render target itself.
+- **D2 — Defect found during v1.1:** on narrow screens the grid column could grow to its content width and push the movement pad off-screen. Fixed with `minmax(0, 1fr)`.
+
+**Gates:**
+
+| Gate | Test |
+|---|---|
+| G7.1 | Every v1.0 gate still passes, unchanged thresholds (IoU ≥ 0.99, bit-identical camera across E1/E2 switches, deterministic export) |
+| G7.2 | Sun direction equals the repository's frozen solar engine to 1e-9°, and the export records it |
+| G7.3 | Menus open, act through the panel controls, are keyboard-navigable, and never move the camera |
+| G7.4 | A shared link reproduces the camera, scenarios, view, layers, lighting and quality |
+| G7.5 | Storey lines sit exactly at the recorded levels and carry their status |
+| G7.6 | At device pixel ratio 2, masks still match the ray-caster and exports are byte-identical to 1× |
+
+**v1.1 results:**
+- **G7.1–G7.6 — PASS.** Full suite: protected PASS, unit 15/15, e2e 20/20. Details and numbers are in QA.md §v1.1.
+- **G6.3 (live URL).** Still verified only after the owner merges, as for v1.0.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.
@@ -210,3 +237,4 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 3. **Massing is schematic.** Balconies are filled to their lines, and there are no balustrades, screens or façades. The VA2 context is generalised LiDAR. The Cluster 4 plan-derived masses are an optional reconstructed variant.
 4. **Matching is manual.** There is no automatic landmark detection: matching is manual pairing plus a robust fit. Control points are model vertices, not survey points.
 5. **Rendering determinism** is proven on one machine and GPU path. The renderer string is recorded in every export.
+6. **Lighting is illustrative** (v1.1). The sun direction is exact for the frozen convention, but the brightness balance is calibrated by eye. Shadow-map resolution is about 0.16 m per texel over ±330 m. Use `/study/` for shadow evidence.

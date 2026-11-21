@@ -131,11 +131,39 @@ test('G1.4/G1.5 presets: hypothetical eye RL = DEM + 1.6 m; envelope angles repr
 });
 
 test('G5.4 static check: no absolute-root or external URLs in served app files (works under any sub-path, no network)', () => {
-  const files = ['index.html', 'css/visual.css', 'js/main.js', 'js/coords.js', 'js/camera_model.js', 'js/fit.js', 'js/scene_build.js', 'js/controls.js', 'js/compare.js', 'js/match.js', 'js/export.js', 'js/hash.js'];
+  const files = ['index.html', 'css/visual.css', 'js/main.js', 'js/coords.js', 'js/camera_model.js', 'js/fit.js', 'js/scene_build.js', 'js/controls.js', 'js/compare.js', 'js/match.js', 'js/export.js', 'js/hash.js',
+    'js/render_fx.js', 'js/sun.js', 'js/basemap.js', 'js/ui.js'];
   for (const f of files) {
     const s = readFileSync(path.join(VIS, f), 'utf8');
     assert.ok(!/(src|href)\s*=\s*["']\//.test(s), `${f}: absolute-root src/href`);
     assert.ok(!/(fetch|import)\s*\(\s*["']\//.test(s), `${f}: absolute-root fetch/import`);
     assert.ok(!/(src|href)\s*=\s*["']https?:/.test(s) && !/(fetch|import)\s*\(\s*["']https?:/.test(s) && !/from\s+["']https?:/.test(s), `${f}: external URL`);
   }
+});
+
+test('sun position equals the repository frozen solar engine (model/greville_model/solar.py) to 1e-9 deg', async () => {
+  const { sunPosition, SITE } = await import('../js/sun.js');
+  const R = J('tests/fixtures/sun_reference.json'); assert.equal(SITE.lat, R.site.latitude); assert.equal(SITE.lon, R.site.longitude);
+  for (const c of R.cases) { const s = sunPosition(c.y, c.m, c.d, c.hh, c.mm); assert.ok(Math.abs(s.alt - c.alt) < 1e-9 && Math.abs(((s.az - c.az + 540) % 360) - 180) < 1e-9, `${c.m}/${c.d} ${c.hh}:${c.mm} ${s.alt},${s.az} vs ${c.alt},${c.az}`); }
+});
+
+test('v1.1 storey levels: E2 equal the dimensioned drawing RLs; E1 are flagged INFERRED; all lie inside the tower extents', () => {
+  const L = scene.levels; assert.equal(L.E2.status, 'DIMENSIONED'); assert.equal(L.E1.status, 'INFERRED');
+  assert.deepEqual(L.E2.A.slice(0, 3), [25.3, 29.4, 32.5]); assert.equal(L.E2.A.at(-1), 63.5); assert.equal(L.E2.B.at(-1), 60.4);
+  for (let i = 3; i < L.E2.A.length; i++) assert.ok(Math.abs(L.E2.A[i] - L.E2.A[i - 1] - 3.1) < 1e-9, `E2 A step ${i}`);
+  L.E1.A.forEach((z, k) => assert.ok(Math.abs(z - (21.6 + 3.3 * (k + 1))) < 1e-9));
+  const top = (k, cls) => Math.max(...scene.collections[k].prisms.filter(p => p.cls === cls).map(p => p.zt));
+  assert.ok(L.E2.A.at(-1) < top('E2', 'A') && L.E2.B.at(-1) < top('E2', 'B') && L.E1.A.at(-1) < top('E1_SK48', 'A'));
+});
+
+test('v1.1 basemap asset: CC BY 4.0 cadastre includes the site parcel; contours and rail present; manifest records sources', () => {
+  const B = J('assets/basemap.json'); assert.match(B.licence, /CC BY 4\.0/); assert.ok(B.parcels.some(p => p.lotplan === B.site_lotplan));
+  assert.ok(B.parcels.length > 300 && B.contours.length > 20 && B.rail.length >= 1);
+  assert.ok(manifest.sources['S-CTX'] && manifest.sources['S-RAIL'] && manifest.assets['basemap.json']);
+});
+
+test('v1.1 vendored Three.js add-ons match their recorded SHA-256 sums', () => {
+  const sums = readFileSync(path.join(VIS, 'vendor/three/addons/SHA256SUMS'), 'utf8').trim().split('\n').map(l => l.trim().split(/\s+/));
+  assert.ok(sums.length >= 10);
+  for (const [h, f] of sums) assert.equal(createHash('sha256').update(readFileSync(path.join(VIS, 'vendor/three/addons', f))).digest('hex'), h, f);
 });

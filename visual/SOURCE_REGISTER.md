@@ -78,3 +78,16 @@ The archived upstairs window cameras W03, W04 and W05 are **not** offered as gro
   - The building massing records dimensions measured from publicly lodged development-application drawings. No drawing content is reproduced.
   - Three.js is MIT.
 - **Images loaded into the perspective-match mode stay in the browser** (object URL). They are hashed locally and never uploaded.
+
+## 6. Added in v1.1 (display layers; geometry unchanged)
+
+| ID | Item | Source | Status | Use |
+|---|---|---|---|---|
+| S-CTX | `context/2026-11-11/shadow_context.json` (this repository) | Queensland DCDB parcels and LiDAR-derived 1 m contours, © State of Queensland, CC BY 4.0 | source-derived (cartographic) | ground texture (`assets/basemap.json`); minimap |
+| S-RAIL | `context/2026-11-11/raw/rail.geojson` (this repository) | Queensland rail centrelines, CC BY 4.0 | source-derived (cartographic) | dashed rail line on the ground texture and minimap |
+| LVL-E2 | `scene.json` `levels.E2` | DA-201 Rev 11 / DA-200 Rev 9 / DA-402 Rev 10 dimensioned RLs: ground 21.600; L01 25.300; L02 29.400; L03 32.500, then +3.100 per level; B L12 60.400; A L13 63.500 | DIMENSIONED | solid storey lines on E2 collections |
+| LVL-E1 | `scene.json` `levels.E1` | SK00.01 B: ground + levels 1–7 (8 storeys) below a rooftop; RL 21.6 ground and equal 3.3 m storeys **assumed** | INFERRED | dashed storey lines on E1 collections |
+| SUN | `js/sun.js` | line-for-line port of `model/greville_model/solar.py` (NOAA, UTC+10, no refraction) | frozen convention; unit-tested to 1e-9° against the Python engine | sun direction for illustrative lighting |
+| VEND | `vendor/three/addons/*` | Three.js r160.1 examples (EffectComposer, RenderPass, OutputPass, GTAOPass, Sky, shaders), MIT | third-party code, hashed | render pipeline |
+
+The storey lines, ground map and lighting are display layers. None of them changes a prism, the terrain heights, the camera model or any mask metric.

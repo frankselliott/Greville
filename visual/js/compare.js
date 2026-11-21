@@ -8,16 +8,20 @@ export function renderMaskPixels(app, par, scen, w, h) {
   const R = app.renderer, rt = new THREE.WebGLRenderTarget(w, h, { samples: 0 });
   const saved = []; const towerKeys = new Set(['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']);
   app.applyVisibility(scen); const mv = app.markers.visible; app.markers.visible = false;
+  const bgs = app.fx?.backgrounds() || [], bgV = bgs.map(b => b.visible); bgs.forEach(b => { b.visible = false; });   // sky and backdrop never count
+  saved.push([app.groups.BACKDROP, 'visible', app.groups.BACKDROP.visible]); app.groups.BACKDROP.visible = false;
   app.root.traverse(o => {
     if (o.isLineSegments) { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
     if (o.isMesh || o.isInstancedMesh) { saved.push([o, 'material', o.material]); const coll = o.userData?.collection; o.material = coll && towerKeys.has(coll) ? app.M.white : app.M.black; }
   });
   app.setCameraMatrices(par, app.cam.W, app.cam.H);
   const prevRT = R.getRenderTarget(), prevClear = R.getClearColor(new THREE.Color()).getHex(), sc = R.getScissorTest();
-  R.setRenderTarget(rt); R.setScissorTest(false); R.setViewport(0, 0, w, h); R.setClearColor(0x000000, 1); R.clear(); R.render(app.scene, app.camera);
+  // the target's own viewport (0, 0, w, h) is used as is: renderer.setViewport() would multiply it by the device pixel ratio
+  rt.viewport.set(0, 0, w, h); rt.scissorTest = false;
+  R.setRenderTarget(rt); R.setClearColor(0x000000, 1); R.clear(); R.render(app.scene, app.camera);
   const px = new Uint8Array(w * h * 4); R.readRenderTargetPixels(rt, 0, 0, w, h, px);
   R.setRenderTarget(prevRT); R.setClearColor(prevClear, 1); R.setScissorTest(sc);
-  for (const [o, k, v] of saved) o[k] = v; app.markers.visible = mv; rt.dispose();
+  for (const [o, k, v] of saved) o[k] = v; app.markers.visible = mv; bgs.forEach((b, i) => { b.visible = bgV[i]; }); rt.dispose();
   const m = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m[(h - 1 - y) * w + x] = px[(y * w + x) * 4] > 127 ? 1 : 0;   // flip to image rows
   return m;
 }

@@ -9,7 +9,10 @@ const FIX = (n) => JSON.parse(fs.readFileSync(path.join(VIS, 'tests', 'fixtures'
 const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 let srv, base, browser; const external = [];
 
-async function open(viewport = { width: 1400, height: 900 }, extra = {}, query = '') {
+// Interaction and invariance tests run at quality=low (the camera model does not depend on render quality); tests about rendering
+// itself (page load, export determinism, high-DPI) pass { full: true } or an explicit q= and use the full pipeline.
+async function open(viewport = { width: 1400, height: 900 }, extra = {}, query = '', { full = false } = {}) {
+  if (!full && !/[?&]q=/.test(query)) query += (query ? '&' : '?') + 'q=low';
   const ctx = await browser.newContext({ viewport, acceptDownloads: true, ...extra });
   await ctx.route('**/*', (r) => { const u = new URL(r.request().url()); if (u.hostname !== '127.0.0.1' && u.protocol !== 'blob:' && u.protocol !== 'data:') { external.push(u.href); return r.abort(); } return r.continue(); });
   const page = await ctx.newPage(); const errors = [];
@@ -25,7 +28,8 @@ test.before(async () => { srv = await start(0); base = `http://127.0.0.1:${srv.a
 test.after(async () => { await browser?.close(); srv?.close(); });
 
 test('M2/G5.4 page loads under the /Greville/ sub-path with no errors and no external requests', async () => {
-  const { ctx, page, errors } = await open();
+  const { ctx, page, errors } = await open(undefined, {}, '', { full: true });
+  await page.waitForTimeout(1500);                                   // let the full-quality (ambient occlusion) frame run as well
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   const info = await page.evaluate(() => ({ presets: window.__visual.S.presets.map(p => p.id), webgl: !!window.__visual.renderer.getContext() }));
   assert.deepEqual(info.presets, ['W01', 'NG55', 'NG57', 'NG59']); assert.ok(info.webgl);
@@ -198,7 +202,7 @@ test('G4.5 framing comparison: four panels, same station and geometry, different
 });
 
 test('G5.1/G5.2 export: PNG hash recorded in JSON; re-export of the same state is byte-identical; record carries required fields', async () => {
-  const { ctx, page } = await open(undefined, {}, '?preset=W01');
+  const { ctx, page } = await open(undefined, {}, '?preset=W01', { full: true });
   const downloads = []; page.on('download', d => downloads.push(d));
   const grab = async () => { const n0 = downloads.length; await page.click('#btnExport'); await page.waitForFunction(() => !!window.__visual.lastExport);
     for (let i = 0; i < 100 && downloads.length < n0 + 2; i++) await page.waitForTimeout(100);
@@ -211,6 +215,12 @@ test('G5.1/G5.2 export: PNG hash recorded in JSON; re-export of the same state i
   assert.equal(rec.camera.preset_id, 'W01'); assert.equal(rec.camera.mga_E, 504057.91); assert.equal(rec.camera.eye_RL, 24.92); assert.equal(rec.camera.frame_px.W, 1800);
   assert.ok(rec.assets['scene.json'].sha256.length === 64 && Object.keys(rec.app.app_file_sha256).length >= 10);
   assert.ok(!/Court admissible|survey verified|Cedar supplied/i.test(JSON.stringify(rec)));
+  // v1.1: the lighting block records the exact frozen-engine sun position for the stated date/time, and is labelled illustrative
+  const { sunPosition } = await import(path.join(VIS, 'js', 'sun.js'));
+  const L = rec.lighting; assert.equal(L.mode, 'sun'); assert.match(L.status, /ILLUSTRATIVE/);
+  const [yy, mo, dd] = L.date.split('-').map(Number), [hh, mi] = L.time_local.split(':').map(Number), sp = sunPosition(yy, mo, dd, hh, mi);
+  assert.equal(L.sun_altitude_deg, sp.alt); assert.equal(L.sun_azimuth_deg, sp.az);
+  assert.ok(rec.renderer.quality && rec.renderer.depth && rec.context.storey_lines.E2.status === 'DIMENSIONED' && rec.context.storey_lines.E1.status === 'INFERRED');
   // PNG really is the frame size
   assert.equal(a['.png'].readUInt32BE(16), 1800); assert.equal(a['.png'].readUInt32BE(20), 1200);
   await ctx.close();
@@ -222,4 +232,85 @@ test('G5.3 existing site still works: frozen root viewer and /study/ load under 
   assert.equal(sha(body), 'cd551cef6a414987b1153b08dd765fe92393e2170760f0d4d6d8a8481b128f9f');
   const r2 = await page.goto(`${base}study/`); assert.equal(r2.status(), 200); await page.waitForTimeout(1500);
   assert.deepEqual(errs, []); await ctx.close();
+});
+
+test('v1.1 menu bar: every menu opens; commands act through the panel controls; keyboard navigation; Escape closes', async () => {
+  const { ctx, page, errors } = await open(undefined, {}, '?preset=NG57');
+  const names = await page.$$eval('#menubar .mtop', bs => bs.map(b => b.textContent));
+  assert.deepEqual(names, ['File', 'View', 'Camera', 'Scenario', 'Layers', 'Lighting', 'Help']);
+  for (const n of names) { await page.click(`#menubar .mtop[data-menu="${n}"]`); assert.ok(await page.isVisible(`.menu[data-menu="${n}"]`), n); assert.ok((await page.$$(`.menu[data-menu="${n}"] [role^=menuitem]`)).length >= 2, n); await page.keyboard.press('Escape'); assert.ok(!(await page.isVisible(`.menu[data-menu="${n}"]`)), n + ' closes'); }
+  const pick = async (menu, text) => { await page.click(`#menubar .mtop[data-menu="${menu}"]`); await page.click(`.menu[data-menu="${menu}"] [role^=menuitem]:has-text("${text}")`); await settle(page); };
+  await pick('View', 'Side by side'); assert.equal(await page.evaluate(() => window.__visual.state.view), 'side'); assert.ok(await page.isChecked('input[name=view][value=side]'));
+  await pick('Lighting', 'Winter solstice'); assert.deepEqual(await page.evaluate(() => window.__visual.fx.lighting.date), [2026, 6, 21]); assert.equal(await page.inputValue('#lDate'), '2026-06-21');
+  await pick('Lighting', '08:00'); assert.deepEqual(await page.evaluate(() => window.__visual.fx.lighting.time), [8, 0]);
+  await pick('Layers', 'Storey lines'); assert.equal(await page.evaluate(() => window.__visual.state.storeys), false); assert.equal(await page.isChecked('#storeys'), false);
+  await page.click('#menubar .mtop[data-menu="Layers"]'); assert.equal(await page.getAttribute('.menu[data-menu="Layers"] [role=menuitemcheckbox]:has-text("Storey lines")', 'aria-checked'), 'false'); await page.keyboard.press('Escape');
+  await pick('Scenario', 'E1_SK52'); assert.equal(await page.evaluate(() => window.__visual.activeScenario()), 'E1_SK52');
+  await pick('Camera', 'W01'); assert.equal(await page.evaluate(() => window.__visual.state.preset), 'W01');
+  await pick('Camera', 'Free'); assert.equal(await page.evaluate(() => window.__visual.state.mode), 'free'); assert.ok(await page.isVisible('#nonphysical'));
+  // keyboard: focus a top-level item, ArrowDown enters the menu, ArrowRight moves to the next menu
+  await page.focus('#menubar .mtop[data-menu="View"]'); await page.keyboard.press('ArrowDown');
+  assert.equal(await page.evaluate(() => document.activeElement.closest('.menu')?.dataset.menu), 'View');
+  await page.keyboard.press('ArrowRight'); assert.equal(await page.evaluate(() => document.activeElement.closest('.menu')?.dataset.menu), 'Camera');
+  const c0 = (await camSnap(page)).cam; await page.keyboard.press('ArrowDown'); assert.deepEqual((await camSnap(page)).cam, c0, 'arrow keys inside a menu never move the camera');
+  await page.keyboard.press('Escape'); assert.equal(await page.$$eval('.menu:not([hidden])', m => m.length), 0);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test('v1.1 help dialog (? key and Help menu), view shortcuts 1-5, L lighting toggle and Ctrl+S export shortcut', async () => {
+  const { ctx, page } = await open(undefined, {}, '?preset=NG57');
+  await page.keyboard.press('?'); assert.ok(await page.evaluate(() => document.getElementById('helpDlg').open));
+  const c0 = (await camSnap(page)).cam; await page.keyboard.press('w'); assert.deepEqual((await camSnap(page)).cam, c0, 'keys do not reach the camera while help is open');
+  await page.keyboard.press('Escape'); assert.ok(!(await page.evaluate(() => document.getElementById('helpDlg').open)));
+  await page.click('#menubar .mtop[data-menu="Help"]'); await page.click('.menu[data-menu="Help"] [role=menuitem]:has-text("Help and keyboard")'); assert.ok(await page.evaluate(() => document.getElementById('helpDlg').open)); await page.keyboard.press('Escape');
+  for (const [k, v] of [['2', 'side'], ['3', 'swipe'], ['5', 'framing'], ['1', 'single']]) { await page.keyboard.press(k); await settle(page); assert.equal(await page.evaluate(() => window.__visual.state.view), v, k); }
+  await page.keyboard.press('l'); assert.equal(await page.evaluate(() => window.__visual.fx.lighting.mode), 'overcast'); await page.keyboard.press('l'); assert.equal(await page.evaluate(() => window.__visual.fx.lighting.mode), 'sun');
+  await page.evaluate(() => { window.__visual.exportNow = () => { window.__ctrlS = (window.__ctrlS || 0) + 1; }; });
+  const c1 = (await camSnap(page)).cam; await page.keyboard.press('Control+s'); assert.equal(await page.evaluate(() => window.__ctrlS), 1); assert.deepEqual((await camSnap(page)).cam, c1, 'Ctrl+S does not also move the camera');
+  await ctx.close();
+});
+
+test('v1.1 shareable link: the URL reproduces camera, scenarios, view, layers, lighting and quality exactly', async () => {
+  const { ctx, page } = await open(undefined, {}, '?preset=NG55');
+  await page.evaluate(() => { const a = window.__visual; a.setCam({ ...a.cam, pitch: 12.5, hfov: 70.25, heading: 3.75 }); });
+  await page.selectOption('#histSel', 'E1_SK52'); await page.click('#btnHist');
+  await page.check('input[name=view][value=swipe]'); await page.evaluate(() => { const s = document.getElementById('swipe'); s.value = '0.3'; s.dispatchEvent(new Event('input')); });
+  await page.selectOption('#groundSel', 'plain'); await page.uncheck('#storeys'); await page.check('#canopy');
+  await page.fill('#lDate', '2026-06-21'); await page.dispatchEvent('#lDate', 'change');
+  await page.evaluate(() => { const t = document.getElementById('lTime'); t.value = String(8 * 60 + 30); t.dispatchEvent(new Event('input')); });
+  await page.selectOption('#qualitySel', 'low'); await settle(page); await page.waitForTimeout(600);
+  const url = page.url(); const snap = async (p) => p.evaluate(() => { const a = window.__visual; return { preset: a.state.preset, view: a.state.view, swipe: a.state.swipe, side: a.state.side, hist: a.state.hist, appr: a.state.appr, ground: a.state.ground, storeys: a.state.storeys, canopy: a.state.canopy, light: a.fx.lighting, q: a.fx.quality, cam: a.cam }; });
+  const want = await snap(page); assert.match(url, /preset=NG55/); assert.equal(await page.evaluate(() => window.__visual.ui.linkURL().split('?')[1]), url.split('?')[1]);
+  const p2 = await ctx.newPage(); await p2.goto(url); await p2.waitForSelector('body[data-ready="1"]'); await settle(p2);
+  const got = await snap(p2);
+  for (const k of ['preset', 'view', 'swipe', 'side', 'hist', 'appr', 'ground', 'storeys', 'canopy', 'light', 'q']) assert.deepEqual(got[k], want[k], k);
+  for (const k of ['x', 'y', 'z', 'heading', 'pitch', 'roll', 'hfov', 'cy', 'W', 'H']) assert.ok(Math.abs(got.cam[k] - want.cam[k]) < 1e-3, `${k} ${got.cam[k]} vs ${want.cam[k]}`);
+  await ctx.close();
+});
+
+test('v1.1 storey lines: E2 drawn at every dimensioned RL inside the tower extents (solid); E1 inferred levels dashed', async () => {
+  const { ctx, page } = await open();
+  const r = await page.evaluate(() => { const a = window.__visual, out = {};
+    for (const k of ['E1_SK48', 'E2']) { const s = a.groups[k].children.find(c => c.userData.role === 'storeys'); const pos = s.geometry.attributes.position; const zs = new Set(); for (let i = 0; i < pos.count; i++) zs.add(+pos.getY(i).toFixed(3)); out[k] = { dashed: !!s.material.isLineDashedMaterial, status: s.userData.status, zs: [...zs].sort((p, q) => p - q) }; }
+    return { out, L: a.S.levels }; });
+  assert.equal(r.out.E2.dashed, false); assert.equal(r.out.E2.status, 'DIMENSIONED'); assert.deepEqual(r.out.E2.zs, [...new Set([...r.L.E2.A, ...r.L.E2.B])].sort((p, q) => p - q));
+  assert.equal(r.out.E1_SK48.dashed, true); assert.equal(r.out.E1_SK48.status, 'INFERRED'); assert.deepEqual(r.out.E1_SK48.zs, r.L.E1.A);
+  await ctx.close();
+});
+
+test('v1.1 high-DPI regression (deviceScaleFactor 2): masks match the ray-caster and exports are identical to 1x', async () => {
+  const F = FIX('xrender_W01_E2.json'); const n = F.W * F.H; const ref = unrle(F.mask_rle, n);
+  const grab = async (dpr) => {
+    const { ctx, page } = await open({ width: 1200, height: 800 }, { deviceScaleFactor: dpr }, '?preset=W01&q=medium');
+    const m = await page.evaluate(async ({ cam, W, H }) => { const a = window.__visual; const { renderMaskPixels } = await import('./js/compare.js'); a.state.canopy = true;
+      const par = [cam.x, cam.y, cam.z, cam.heading, 0, 0, W / 2 / Math.tan(cam.hfov * Math.PI / 360), W / 2, H / 2 + cam.shift * W / 2];
+      const s = { W: a.cam.W, H: a.cam.H }; a.cam.W = W; a.cam.H = H; const mm = renderMaskPixels(a, par, 'E2', W, H); a.cam.W = s.W; a.cam.H = s.H; a.state.canopy = false; return { m: Array.from(mm), dpr: window.devicePixelRatio }; }, { cam: F.camera, W: F.W, H: F.H });
+    const downloads = []; page.on('download', d => downloads.push(d)); await page.click('#btnExport'); await page.waitForFunction(() => !!window.__visual.lastExport, null, { timeout: 120000 });
+    for (let i = 0; i < 100 && downloads.length < 2; i++) await page.waitForTimeout(100);
+    const png = fs.readFileSync(await downloads.find(d => d.suggestedFilename().endsWith('.png')).path()); await ctx.close(); return { ...m, png };
+  };
+  const one = await grab(1), two = await grab(2); assert.equal(two.dpr, 2);
+  let inter = 0, uni = 0; for (let i = 0; i < n; i++) { if (ref[i] && two.m[i]) inter++; if (ref[i] || two.m[i]) uni++; }
+  assert.ok(inter / uni >= 0.99, `DPR 2 mask IoU ${inter / uni}`); assert.deepEqual(two.m, one.m, 'mask identical at 1x and 2x');
+  assert.equal(two.png.readUInt32BE(16), 1800); assert.equal(two.png.readUInt32BE(20), 1200); assert.equal(sha(two.png), sha(one.png), 'export identical at 1x and 2x');
 });
