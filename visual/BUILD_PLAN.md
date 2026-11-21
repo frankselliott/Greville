@@ -67,7 +67,7 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 
 **M1 results** (QA Q1.x): G1.1–G1.6 **PASS**. The build refuses unpinned sources and asserts the VA4 ARTW/POD prisms equal the archived Part D run. NG55 / 57 / 59 eye RL = DEM + 1.6 to within 0.005 m. Envelopes: NG57 E1 67.33° / E2 72.09° (archive 67.3 / 72.1); NG55 66.32 / 71.48 (66.3 / 71.5); NG59 67.10 / 71.91 (67.1 / 71.9). 477 prisms; 628 controls; one family per scenario.
 
-## M2 — Working 3D viewer — **NOT STARTED**
+## M2 — Working 3D viewer — **DONE**
 
 **Depends on:** M1.
 
@@ -87,7 +87,14 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G2.4 | Look-around, zoom (FOV), eye up/down, local movement and reset work by mouse, keyboard and touch (Playwright desktop and mobile emulation) |
 | G2.5 | Station mode refuses movement into a solid prism and beyond the local radius. The free/overview camera is labelled NONPHYSICAL. |
 
-## M3 — Historical versus approved comparison — **NOT STARTED**
+**M2 results** (QA Q2.x): G2.1–G2.5 **PASS**.
+- **Independent renderer:** WebGL tower silhouettes against the archived VA2 ray-caster give IoU 0.99965 (W01 E1), 0.99968 (W01 E2) and 1.00000 (NG57 E1 and E2, roofline frame).
+- **Projection:** JS equals the archived Python to 1e-6 px.
+- **Presets:** exact.
+- **Controls:** mouse, keyboard and touch (iPhone 13 emulation) all work.
+- **Collision:** a point inside townhouse mass C5-57 is refused in station mode and accepted in free mode.
+
+## M3 — Historical versus approved comparison — **DONE**
 
 **Depends on:** M2.
 
@@ -106,7 +113,12 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G3.3 | The side-by-side panels and the swipe halves use one camera object (identical matrices) |
 | G3.4 | The mask overlay is computed from depth-tested renders. The added-area measure equals the sum of pixel solid angles (unit test against the analytic pinhole formula). |
 
-## M4 — Perspective matching (external image) — **NOT STARTED**
+**M3 results**: G3.1–G3.4 **PASS**.
+- **Invariance:** 4 presets × 11 switches × (desktop 1400 × 900, Pixel 7) all hold, with camera, matrices, frame and canvas identical.
+- **Mask readout:** at NG57 (pitch 40°, HFOV 100°), the top elevation is 67.25° → 72.06°, consistent with the archive envelopes.
+- **Solid angle:** the analytic solid-angle check is within 2e-4.
+
+## M4 — Perspective matching (external image) — **DONE**
 
 **Depends on:** M3.
 
@@ -130,7 +142,15 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G4.4 | After a fit, the E1/E2 switch keeps the fitted camera exactly (as G3.1) |
 | G4.5 | The same-station framing comparison (HFOV and pitch panels) renders identical geometry with labelled framing |
 
-## M5 — Forensic exports and automated QA — **NOT STARTED**
+**M4 results**: G4.1–G4.5 **PASS**.
+- **Image privacy:** the image SHA-256 is computed in the browser and equals the Node SHA-256, with zero non-local requests.
+- **Archived fixtures:** synthetic recovery in Node gives ng57_up / w01_shift position errors < 0.10 m, agreeing with the archived Python within 0.02 m.
+- **In-browser synthetic:** 16 points, < 0.10 m, RMS < 0.6 px.
+- **Ambiguity flags:** 5 exact pairs give UNDERDETERMINED / FEW_POINTS, and a single-façade set gives COPLANAR + SUBJECT_ONLY.
+- **Fitted camera:** it survives the E1/E2 toggles unchanged.
+- **Not done:** automatic landmark detection. Matching is manual picking plus a least-squares fit; this is deliberate, so that the fit is never silently "verified".
+
+## M5 — Forensic exports and automated QA — **DONE**
 
 **Depends on:** M4.
 
@@ -149,7 +169,14 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G5.3 | Protected files are unchanged (`check_protected.py`); `/study/` and the root viewer still load (Playwright) |
 | G5.4 | No absolute-root or external URLs; the page works from a sub-path |
 
-## M6 — Deployment and verification — **NOT STARTED**
+**M5 results**: G5.1–G5.4 **PASS**.
+- **Export:** the PNG SHA-256 recorded in the JSON equals the downloaded PNG. Two consecutive exports are byte-identical (same machine and GPU path).
+- **Frame size:** the PNG is 1800 × 1200, as the frame.
+- **Labels:** the forbidden labels are absent.
+- **Protected files:** unchanged.
+- **Existing pages:** the root viewer is served byte-identical (`cd551cef…`) and `/study/` loads without errors under `/Greville/`.
+
+## M6 — Deployment and verification — **IN PROGRESS**
 
 **Depends on:** M5.
 

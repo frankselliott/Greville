@@ -129,3 +129,13 @@ test('G1.4/G1.5 presets: hypothetical eye RL = DEM + 1.6 m; envelope angles repr
     assert.ok(Math.abs(a1 - want[p.id][0]) <= 0.2 && Math.abs(a2 - want[p.id][1]) <= 0.2, `${p.id} ${a1} ${a2}`);
   }
 });
+
+test('G5.4 static check: no absolute-root or external URLs in served app files (works under any sub-path, no network)', () => {
+  const files = ['index.html', 'css/visual.css', 'js/main.js', 'js/coords.js', 'js/camera_model.js', 'js/fit.js', 'js/scene_build.js', 'js/controls.js', 'js/compare.js', 'js/match.js', 'js/export.js', 'js/hash.js'];
+  for (const f of files) {
+    const s = readFileSync(path.join(VIS, f), 'utf8');
+    assert.ok(!/(src|href)\s*=\s*["']\//.test(s), `${f}: absolute-root src/href`);
+    assert.ok(!/(fetch|import)\s*\(\s*["']\//.test(s), `${f}: absolute-root fetch/import`);
+    assert.ok(!/(src|href)\s*=\s*["']https?:/.test(s) && !/(fetch|import)\s*\(\s*["']https?:/.test(s) && !/from\s+["']https?:/.test(s), `${f}: external URL`);
+  }
+});
