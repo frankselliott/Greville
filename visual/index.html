@@ -6,28 +6,31 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Greville Visual Viewer</title>
 <link rel="stylesheet" href="css/visual.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js" } }</script>
 </head>
 <body>
 <header>
-  <button id="panelToggle" aria-label="Show or hide controls">☰</button>
-  <h1>Greville — 3D visual viewer</h1>
+  <button id="panelToggle" aria-label="Show or hide controls" aria-controls="panel">☰</button>
+  <h1>Greville <span class="h1sub">3D visual viewer</span></h1>
+  <nav id="menubar" role="menubar" aria-label="Main menu"></nav>
   <span class="badge">Investigative model view · not expert evidence · not survey</span>
+  <button id="btnHelp" class="iconbtn" aria-label="Help and keyboard shortcuts (?)" title="Help (?)">?</button>
 </header>
 <aside id="panel">
-  <section>
-    <h2>Viewpoint</h2>
+  <details open data-sec="viewpoint">
+    <summary><h2>Viewpoint</h2></summary>
     <div id="presets" class="presets"></div>
     <p id="presetNote" class="note"></p>
-  </section>
-  <section>
-    <h2>Scenario <small>(T toggles; the camera never moves)</small></h2>
+  </details>
+  <details open data-sec="scenario">
+    <summary><h2>Scenario <small>(T toggles; the camera never moves)</small></h2></summary>
     <div class="seg"><button id="btnHist">E1</button><button id="btnAppr" class="on">E2</button></div>
     <label>Historical <select id="histSel"></select></label>
     <label>Approved <select id="apprSel"></select></label>
     <p id="scenNote" class="note"></p>
-  </section>
-  <section>
-    <h2>View</h2>
+  </details>
+  <details open data-sec="view">
+    <summary><h2>View</h2></summary>
     <div class="radios">
       <label><input type="radio" name="view" value="single" checked> Single</label>
       <label><input type="radio" name="view" value="side"> Side by side</label>
@@ -38,9 +41,23 @@
     <div id="swipeRow" hidden><input id="swipe" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Swipe position"></div>
     <div id="framingRow" hidden><p class="note">Same station and geometry; only HFOV and pitch differ. A change of framing is not a change of development.</p></div>
     <p id="maskOut" class="note" hidden></p>
-  </section>
-  <section>
-    <h2>Camera</h2>
+  </details>
+  <details open data-sec="lighting">
+    <summary><h2>Lighting <small>(illustrative)</small></h2></summary>
+    <div class="radios">
+      <label><input type="radio" name="light" value="sun" checked> Sun at date and time</label>
+      <label><input type="radio" name="light" value="overcast"> Overcast / neutral</label>
+    </div>
+    <div class="grid2">
+      <label>Date <input id="lDate" type="date" value="2026-03-21"></label>
+      <label>Time (AEST) <output id="lTimeOut">10:00</output><input id="lTime" type="range" min="300" max="1200" step="5" value="600" aria-label="Time of day, AEST"></label>
+    </div>
+    <div class="chips"><button data-date="2026-06-21">21 Jun (winter)</button><button data-date="2026-03-21">21 Mar</button><button data-date="2026-09-23">23 Sep</button><button data-date="2026-12-22">22 Dec (summer)</button></div>
+    <label>Quality <select id="qualitySel"><option value="high">High: soft sun shadows, ambient occlusion, MSAA</option><option value="medium">Medium: shadows, MSAA</option><option value="low">Low: no shadows (fast)</option></select></label>
+    <p id="sunOut" class="note"></p>
+  </details>
+  <details open data-sec="camera">
+    <summary><h2>Camera</h2></summary>
     <div class="radios">
       <label><input type="radio" name="mode" value="station" checked> Station (limits on)</label>
       <label><input type="radio" name="mode" value="free"> Free — NONPHYSICAL</label>
@@ -52,18 +69,22 @@
       <label>Pitch° <input id="fPitch" type="number" step="0.1"></label><label>Roll° <input id="fRoll" type="number" step="0.1"></label>
       <label>HFOV° <input id="fHfov" type="number" step="0.1"></label><label>Shift <input id="fShift" type="number" step="0.001"></label>
     </div>
-    <p class="note">Drag to look · wheel or pinch to zoom (HFOV) · W A S D to move · R / F eye up/down · Home to reset</p>
-    <button id="btnReset">Reset to preset</button>
-  </section>
-  <section>
-    <h2>Layers</h2>
+    <p class="note">Drag to look · wheel or pinch to zoom (HFOV) · W A S D to move · R / F eye up/down · Home to reset · ? for help</p>
+    <button id="btnReset">Reset to preset</button> <button id="btnCopyLink">Copy link to this view</button>
+  </details>
+  <details open data-sec="layers">
+    <summary><h2>Layers</h2></summary>
     <label>Context <select id="ctxSel"><option value="CTX_VA2">VA2 context (LiDAR envelopes)</option><option value="CTX_VA4C4">VA4 Cluster 4 plan-derived masses (reconstructed)</option></select></label>
     <label><input type="checkbox" id="canopy"> LiDAR canopy heightfield (rail corridor)</label>
     <label><input type="checkbox" id="edges" checked> Edges</label>
+    <label><input type="checkbox" id="storeys" checked> Storey lines (E2 dimensioned RLs; E1 inferred, dashed)</label>
+    <label>Ground <select id="groundSel"><option value="cadastre">Cadastre + 1 m contours (DCDB, LiDAR)</option><option value="cadastre-plain">Cadastre only</option><option value="plain">Plain</option></select></label>
     <label>Tower colour <select id="colourMode"><option value="neutral">Neutral (same for E1 and E2)</option><option value="scenario">By scenario</option></select></label>
-  </section>
-  <section>
-    <h2>Perspective match <small>(local only)</small></h2>
+    <label><input type="checkbox" id="guides" checked> Compass and elevation-angle guides</label>
+    <label><input type="checkbox" id="minimapChk" checked> Minimap</label>
+  </details>
+  <details open data-sec="match">
+    <summary><h2>Perspective match <small>(local only)</small></h2></summary>
     <input id="imgFile" type="file" accept="image/png,image/jpeg">
     <p id="imgInfo" class="note mono"></p>
     <label>Image opacity <input id="imgOpacity" type="range" min="0" max="1" step="0.05" value="0.5"></label>
@@ -80,25 +101,26 @@
     <button id="btnFit">Fit camera</button> <button id="btnClearPairs">Clear pairs</button> <button id="btnSynth">Synthetic test</button>
     <div id="fitOut" class="note"></div>
     <p id="synthOut" class="note"></p>
-  </section>
-  <section>
-    <h2>Export</h2>
-    <button id="btnExport" class="primary">Save PNG + JSON</button>
-    <p class="note">Rendered off-screen at the exact frame size. The JSON records the camera, scenario, asset hashes and app file hashes.</p>
-  </section>
-  <section>
-    <h2>Sources and status</h2>
-    <p class="note">Massing is derived from publicly lodged development-application drawings (no drawing is reproduced). Terrain, building envelopes and canopy are derived from Queensland Government LiDAR (CC BY 4.0). Three.js is MIT-licensed. See <a href="SOURCE_REGISTER.md">SOURCE_REGISTER.md</a>, <a href="QA.md">QA.md</a> and <a href="BUILD_PLAN.md">BUILD_PLAN.md</a>.</p>
+  </details>
+  <details open data-sec="export">
+    <summary><h2>Export</h2></summary>
+    <button id="btnExport" class="primary">Save PNG + JSON</button> <span class="kbd">Ctrl+S</span>
+    <p class="note">Rendered off-screen at the exact frame size, at the selected quality. The JSON records the camera, scenario, lighting, asset hashes and app file hashes.</p>
+  </details>
+  <details data-sec="sources">
+    <summary><h2>Sources and status</h2></summary>
+    <p class="note">Massing is derived from publicly lodged development-application drawings (no drawing is reproduced). Terrain, building envelopes and canopy are derived from Queensland Government LiDAR; the ground map is the Queensland Digital Cadastral Database (both © State of Queensland, CC BY 4.0). Three.js is MIT-licensed. See <a href="SOURCE_REGISTER.md">SOURCE_REGISTER.md</a>, <a href="QA.md">QA.md</a> and <a href="BUILD_PLAN.md">BUILD_PLAN.md</a>.</p>
     <p class="legend"><span class="tag source-derived">source-derived</span> <span class="tag reconstructed">reconstructed</span> <span class="tag sensitivity">sensitivity</span> <span class="tag hypothetical">hypothetical</span> <span class="tag model-defined">model-defined</span></p>
     <p id="srcStatus" class="note mono"></p>
-  </section>
+  </details>
 </aside>
 <main id="stage">
   <canvas id="gl"></canvas>
   <canvas id="overlay"></canvas>
+  <canvas id="minimap" width="220" height="220" aria-label="Minimap: parcels, modelled footprints, viewpoints and the camera's field of view"></canvas>
   <div id="loading">Loading model…</div>
   <div id="nonphysical" hidden></div>
-  <div id="flash" hidden></div>
+  <div id="flash" hidden role="status" aria-live="polite"></div>
   <div id="hud" class="mono"></div>
   <button id="quickToggle" title="Toggle historical / approved (T). The camera does not move.">E2</button>
   <div id="pad" aria-label="Movement">
@@ -106,6 +128,43 @@
     <button id="mvU" aria-label="Eye up">↑eye</button><button id="mvD" aria-label="Eye down">↓eye</button>
   </div>
 </main>
+<dialog id="helpDlg" aria-labelledby="helpTitle">
+  <form method="dialog"><button class="iconbtn close" aria-label="Close">✕</button></form>
+  <h2 id="helpTitle">Greville 3D visual viewer — help</h2>
+  <div class="helpgrid">
+    <section>
+      <h3>Keyboard</h3>
+      <table class="keys">
+        <tr><td><kbd>T</kbd></td><td>Toggle historical (E1) / approved (E2). The camera never moves.</td></tr>
+        <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Move 0.5 m (hold <kbd>Alt</kbd> for 0.1 m)</td></tr>
+        <tr><td><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></td><td>Look 2° (<kbd>Alt</kbd> 0.2°)</td></tr>
+        <tr><td><kbd>R</kbd> / <kbd>F</kbd></td><td>Eye up / down 0.05 m</td></tr>
+        <tr><td><kbd>+</kbd> / <kbd>−</kbd></td><td>Zoom (narrower / wider HFOV)</td></tr>
+        <tr><td><kbd>Home</kbd> or <kbd>0</kbd></td><td>Reset to the preset camera</td></tr>
+        <tr><td><kbd>1</kbd>–<kbd>5</kbd></td><td>Single · Side by side · Swipe · Mask · Framing</td></tr>
+        <tr><td><kbd>L</kbd></td><td>Sun / overcast lighting</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save PNG + JSON record</td></tr>
+        <tr><td><kbd>?</kbd></td><td>This help</td></tr>
+      </table>
+      <h3>Mouse and touch</h3>
+      <p>Drag to look (orbit in Overview) · wheel or pinch to zoom · the on-screen pad moves on touch screens.</p>
+    </section>
+    <section>
+      <h3>What is accurate, and what is not</h3>
+      <ul>
+        <li><b>Geometry and camera</b> are unchanged by any display setting. Tower silhouettes are tested against an independent ray-caster (IoU ≥ 0.99).</li>
+        <li><b>Sun position</b> is the repository's frozen NOAA convention (UTC+10, no refraction), checked to 1e-9°.</li>
+        <li><b>Lighting, shadows and ambient occlusion are illustrative.</b> They show the modelled solids under that sun; they are not a shadow study (see <code>/study/</code>) and say nothing about finishes or glazing.</li>
+        <li><b>Storey lines</b>: E2 at the floor RLs dimensioned on the approved drawings (solid); E1 at <i>inferred</i> equal 3.3 m storeys (dashed).</li>
+        <li><b>Ground</b>: cadastral parcels and 1 m contours are a cartographic index, not survey and not imagery. The grey plane beyond the terrain edge is outside the model.</li>
+        <li>Massing is schematic: no balustrades, screens, windows, finishes or invented trees.</li>
+        <li>Only W01 is a model-defined source viewpoint; NG55/NG57/NG59 are hypothetical positions.</li>
+      </ul>
+      <h3>Guides</h3>
+      <p>The top ribbon shows grid bearings along the horizon; the left scale shows elevation angle above the horizontal through the image centre's bearing. Both are computed from the exact camera model.</p>
+    </section>
+  </div>
+</dialog>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

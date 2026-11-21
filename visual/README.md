@@ -12,7 +12,7 @@ It is an **investigative technical tool**:
 
 ## Run locally
 
-There is no build step: static ES modules plus a vendored Three.js r160.1.
+There is no build step: static ES modules plus a vendored Three.js r160.1 and its MIT add-ons (post-processing, GTAO, Sky; hashes in `vendor/three/addons/SHA256SUMS`), resolved by an import map.
 
 ```
 cd <repository root>
@@ -23,6 +23,18 @@ node visual/tests/serve.cjs 8766      # serves the repo under /Greville/, like G
 Any static server also works, for example `python3 -m http.server` from the repository root, then open `/visual/`. Opening via `file://` does not work, because browsers block module and JSON loading from `file://`.
 
 ## Using it
+
+**Menus.** The menu bar holds every command: **File** (save PNG + JSON, load a perspective image, copy a link to this view), **View** (view modes 1–5, side panel, minimap, guides, render quality), **Camera** (viewpoints, station/free/overview, reset, level), **Scenario** (E1/E2 choices and the toggle), **Layers** (context variant, canopy, edges, storey lines, ground map, tower colour), **Lighting** (sun or overcast, solstice/equinox dates, times) and **Help** (shortcuts and the accuracy statement; also the **?** key). Each menu command drives the same side-panel control a mouse user would, so there is one code path per action. Panel sections collapse; the browser remembers which.
+
+**Shortcuts.** T toggle E1/E2 · W A S D move · arrows look · R/F eye height · +/− zoom · Home reset · 1–5 view modes · L sun/overcast · M minimap · G guides · Ctrl+S save · ? help.
+
+**Shareable link.** The address bar always encodes the current preset, camera (when changed from the preset), scenarios, view, layers, lighting and quality. *Copy link to this view* copies it; opening it reproduces the view.
+
+**Guides.** A compass ribbon gives grid bearings along the horizontal; an elevation ruler gives elevation angle along a line of constant bearing (labelled with that bearing); a dashed line marks the horizontal (0°). All three are projected through the exact camera model. The minimap shows the cadastre, modelled footprints of the current scenario, viewpoints and the camera's horizontal field of view; click it to move the target (Overview) or the camera (Free).
+
+**Rendering.** Physically based materials in neutral, untextured tones; sky and image-based light; a sun at the true position for the chosen date and time (the repository's frozen NOAA convention, AEST, no refraction) with soft shadow maps; ground-truth ambient occlusion; 4× MSAA; ACES tone mapping. *Overcast* uses a CIE standard overcast sky (no sun, no shadows). Quality High / Medium / Low trades effects for speed (mobile defaults to Medium); while you move, frames skip ambient occlusion and the full frame follows when you stop. **Lighting is illustrative**: it changes no geometry or camera, and the shadows are not a shadow study (see `/study/`).
+
+**Storey lines and ground.** E2 storey lines are drawn at the floor RLs dimensioned on the approved drawings (solid); E1 at inferred equal 3.3 m storeys (dashed, labelled INFERRED). The ground carries the Queensland cadastre (DCDB parcels, road parcels, the site parcel outlined) and 1 m LiDAR contours — a cartographic index, not survey or imagery. A plain grey plane beyond the terrain edge is outside the model and sits below every modelled surface.
 
 1. **Viewpoint.** Pick a preset.
    - **W01** is the model-defined Lot 63 courtyard viewpoint. It uses the archived camera: heading 87°, HFOV 73.7°, vertical shift 0.2081, frame 1800 × 1200, and an assumed standing eye at RL 24.92.
@@ -42,7 +54,8 @@ Any static server also works, for example `python3 -m http.server` from the repo
 5. **Export.** *Save PNG + JSON* renders off-screen at the exact frame size.
    - The JSON records the camera (MGA E/N, eye RL, heading, pitch, roll, HFOV, focal length, principal point, matrices) and the scenario with its collections and classification.
    - It also records asset and source SHA-256 values, app-file SHA-256 values, version and source commit, drawing references, assumptions, limitations, any mask metrics and any image-match record.
-   - The PNG's SHA-256 is in the JSON.
+   - It records the lighting (mode, date, time, sun altitude and azimuth, engine), render quality and pipeline, storey-line status and the ground-map source.
+   - The PNG's SHA-256 is in the JSON. Exports are rendered at full quality with seeded ambient-occlusion noise, so re-exporting the same state is byte-identical, and identical on standard and high-DPI screens.
 
 ## Matching an external perspective image (for example an applicant-supplied view)
 

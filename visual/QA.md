@@ -35,3 +35,25 @@ Every entry records a test that **actually ran**, on which commit or working tre
 | Q5.1 | Export determinism (e2e test 14) | as above | The PNG SHA-256 in the JSON matches the file; a second export is byte-identical; 1800 × 1200 |
 
 Browser: Playwright Chromium (headless; renderer as recorded in each export JSON). Rendering determinism is established on this machine only. Another GPU or driver can differ by anti-aliased edge pixels, which is why the export JSON records the renderer string.
+
+## v1.1 — usability and rendering (branch `claude/visual-v1-1`, base `22c6d8c`)
+
+| # | Test | Command | Result |
+|---|---|---|---|
+| Q7.1 | Protected files | `python3 visual/tools/check_protected.py` | PASS (84 files; both frozen viewers byte-identical) |
+| Q7.2 | Unit tests | `node --test visual/tests/unit.test.mjs` | 15/15 PASS (adds: sun = frozen engine to 1e-9° over 48 cases; storey levels; basemap asset; vendored add-on hashes) |
+| Q7.3 | End-to-end | `node --test visual/tests/e2e.test.cjs` | 20/20 PASS in 229 s (15 v1.0 tests, thresholds unchanged, + 5 v1.1 tests) |
+| Q7.4 | Silhouettes after dropping the logarithmic depth buffer (needed for ambient occlusion; near 0.2 m, far 3000 m) | e2e test 2 | IoU unchanged from v1.0: W01 E1 0.99965 (17 px), W01 E2 0.99968 (37 px), NG57 E1 1.00000, NG57 E2 1.00000 |
+| Q7.5 | Export determinism at full quality (shadows + GTAO with seeded noise) | e2e test 14 | Re-export byte-identical; JSON sun altitude/azimuth equal the frozen engine's values exactly |
+| Q7.6 | High-DPI regression (D1) | e2e test 20 | At device pixel ratio 2: W01 E2 mask IoU ≥ 0.99 against the ray-caster and identical to 1×; export PNG SHA-256 identical to 1× |
+| Q7.7 | Phone layout (D2) | e2e test 5 (Pixel/iPhone viewports) | First run FAILED: the movement pad was pushed off-screen by the menu bar's width. Fixed with `minmax(0, 1fr)`; PASS |
+| Q7.8 | Menus, help, shortcuts, link round-trip, storey lines | e2e tests 16–19 | PASS |
+
+**Lighting calibration (by eye, recorded so it can be challenged).**
+- Three.js r160 has no `scene.environmentIntensity` (added in r163). The first build therefore ran the sky light at full strength, which washed every surface out (sunlit and shaded ground sampled at sRGB 228 vs 193).
+- It is now set per material (`envMapIntensity` 0.35, sun 3.0, hemisphere 0.12, exposure 0.8, ACES). Overview samples: sunlit ground ≈ 207, shaded ground ≈ 117–141, sunlit roof ≈ 193–199, shaded wall ≈ 105–159.
+- These are display choices, not photometry. No metric depends on them.
+
+**Cross-check of sun and camera.**
+- At W01 on 21 June 07:30, the rendered sun disc sits at grid bearing ≈ 57°, elevation ≈ 9°.
+- This agrees with the engine (azimuth 57.3°, altitude 9.4°) read off the independently projected compass and elevation guides.

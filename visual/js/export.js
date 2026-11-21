@@ -5,6 +5,8 @@ import * as K from './coords.js';
 import * as CM from './camera_model.js';
 import { maskCompare } from './compare.js';
 import { sha256Hex, appFileHashes } from './hash.js';
+import { QUALITY } from './render_fx.js';
+import { SITE } from './sun.js';
 
 const DRAWINGS = {   // drawing references as recorded in the archive source registers (SOURCE_REGISTER.md §2)
   E1_SK48: ['SK00.03 Rev A Building Envelope Plan (received, not approved; A005453331); RL 48.0 inferred'],
@@ -21,23 +23,21 @@ function panelsFor(view, W, H) {
 }
 export async function renderExport(app) {
   const st = app.state, c = app.cam, W = c.W, H = c.H; const { OW, OH, rects } = panelsFor(st.view, W, H);
-  const R = app.renderer, rt = new THREE.WebGLRenderTarget(OW, OH, { samples: 4 }); const prev = R.getRenderTarget();
+  const R = app.renderer, rt = new THREE.WebGLRenderTarget(OW, OH, { samples: 0 }); const prev = R.getRenderTarget();
   const A = app.activeScenario('historical'), B = app.activeScenario('approved'), cur = app.activeScenario(), par = app.renderPar();
-  const panels = [];
-  R.setRenderTarget(rt); R.setScissorTest(true); R.setClearColor(0xeef1f4, 1);
-  const draw = (rect, p, scen, clip = null) => {
-    app.applyVisibility(scen); app.setCameraMatrices(p, W, H);
-    const [x, y, w, h] = rect, gy = OH - y - h; R.setViewport(x, gy, w, h);
-    R.setScissor(clip ? x + Math.round(clip[0] * w) : x, gy, clip ? Math.round((clip[1] - clip[0]) * w) : w, h); R.clear(); R.render(app.scene, app.camera);
-  };
-  if (st.view === 'side') { draw(rects[0], par, A); draw(rects[1], par, B); panels.push({ rect: rects[0], scenario: A }, { rect: rects[1], scenario: B }); }
-  else if (st.view === 'swipe') { draw(rects[0], par, A, [0, st.swipe]); draw(rects[0], par, B, [st.swipe, 1]); panels.push({ rect: rects[0], scenario: A, clip: [0, st.swipe] }, { rect: rects[0], scenario: B, clip: [st.swipe, 1] }); }
-  else if (st.view === 'framing') st.framing.forEach((fr, i) => { const p = app.par(); p[4] = fr.pitch; p[6] = CM.focalFromHfov(W, fr.hfov); draw(rects[i], p, cur); panels.push({ rect: rects[i], scenario: cur, hfov_deg: fr.hfov, pitch_deg: fr.pitch, par: p }); });
+  const panels = []; const fx = app.fx, wasInteractive = fx.interactive; fx.interactive = false;     // exports are always full quality
+  R.setRenderTarget(rt); R.setClearColor(0xc9ced4, 1); R.clear();
+  const draw = (rect, p, scen, clip = null, i = 0) => { const [x, y, w, h] = rect; fx.renderPanel({ target: rt, rect: { x, yGL: OH - y - h, w, h }, par: p, scen, key: `export${i}`, pr: 1, clip }); };
+  if (st.view === 'side') { draw(rects[0], par, A, null, 0); draw(rects[1], par, B, null, 1); panels.push({ rect: rects[0], scenario: A }, { rect: rects[1], scenario: B }); }
+  else if (st.view === 'swipe') { draw(rects[0], par, A, [0, st.swipe], 0); draw(rects[0], par, B, [st.swipe, 1], 1); panels.push({ rect: rects[0], scenario: A, clip: [0, st.swipe] }, { rect: rects[0], scenario: B, clip: [st.swipe, 1] }); }
+  else if (st.view === 'framing') st.framing.forEach((fr, i) => { const p = app.par(); p[4] = fr.pitch; p[6] = CM.focalFromHfov(W, fr.hfov); draw(rects[i], p, cur, null, i); panels.push({ rect: rects[i], scenario: cur, hfov_deg: fr.hfov, pitch_deg: fr.pitch, par: p }); });
   else if (st.view === 'mask') { draw(rects[0], par, B); panels.push({ rect: rects[0], scenario: B, overlay: `mask ${B} vs ${A}` }); }
   else { draw(rects[0], par, cur); panels.push({ rect: rects[0], scenario: cur }); }
-  const px = new Uint8Array(OW * OH * 4); R.readRenderTargetPixels(rt, 0, 0, OW, OH, px); R.setScissorTest(false); R.setRenderTarget(prev); rt.dispose();
+  const px = new Uint8Array(OW * OH * 4); R.readRenderTargetPixels(rt, 0, 0, OW, OH, px); R.setRenderTarget(prev); rt.dispose();
+  fx.dropComposers('export'); fx.interactive = wasInteractive;
   const cv = document.createElement('canvas'); cv.width = OW; cv.height = OH; const ctx = cv.getContext('2d'); const img = ctx.createImageData(OW, OH);
   for (let y = 0; y < OH; y++) img.data.set(px.subarray((OH - 1 - y) * OW * 4, (OH - y) * OW * 4), y * OW * 4);
+  for (let i = 3; i < img.data.length; i += 4) img.data[i] = 255;                                    // opaque output
   ctx.putImageData(img, 0, 0);
   let mask = null;
   if (st.view === 'mask') { mask = maskCompare(app, par, A, B, W); ctx.drawImage(mask.canvas, 0, 0, W, H); }
@@ -49,6 +49,17 @@ export async function renderExport(app) {
   app.render();
   const blob = await new Promise(res => cv.toBlob(res, 'image/png')); const buf = await blob.arrayBuffer();
   return { blob, buf, OW, OH, panels, mask, annotations, par };
+}
+function lightingRecord(app) {
+  const L = app.fx.lighting, s = app.fx.sunInfo, p = (n) => String(n).padStart(2, '0');
+  const base = { status: 'ILLUSTRATIVE: display lighting only; it changes no geometry or camera and is not a shadow study.', mode: L.mode };
+  if (L.mode !== 'sun') return { ...base, description: 'overcast / neutral sky light, no direct sun, no shadows' };
+  return { ...base, date: `${L.date[0]}-${p(L.date[1])}-${p(L.date[2])}`, time_local: `${p(L.time[0])}:${p(L.time[1])}`, timezone: 'AEST (UTC+10, no daylight saving)',
+           sun_altitude_deg: s.alt, sun_azimuth_deg: s.az, sun_above_horizon: s.alt > 0.5, azimuth_reference: 'clockwise from grid north (MGA56); grid convergence ~0.01 deg ignored',
+           engine: 'NOAA geometric algorithm, no refraction; port of model/greville_model/solar.py (unit-tested to 1e-9 deg)', site: SITE };
+}
+function storeyRecord(app) {
+  const L = app.S.levels; return { E2: { status: L.E2.status, source: L.E2.source, style: 'solid' }, E1: { status: L.E1.status, source: L.E1.source, style: 'dashed' } };
 }
 export async function buildRecord(app, out) {
   const st = app.state, c = app.cam, p = app.preset(st.preset); const [E, N] = K.localToMga(c.x, c.y, c.z); const g = K.demAt(app.S.terrain, c.x, c.y);
@@ -72,7 +83,9 @@ export async function buildRecord(app, out) {
               render_parameters: out.par, frame_px: { W: c.W, H: c.H }, three_matrices: { world_col_major: m.world, projection_col_major: m.proj, near: app.camera.near, far: app.camera.far },
               eye_basis: p.eye_basis, framing_basis: p.framing_basis },
     view: { mode: st.view, swipe: st.view === 'swipe' ? st.swipe : undefined, panels: out.panels.map(q => ({ ...q, par: q.par || undefined })), output_px: { W: out.OW, H: out.OH }, burned_in_annotations: out.annotations },
-    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, colour_mode: st.colour, lighting: 'fixed neutral diagnostic lighting (hemisphere + directional); not a sun position' },
+    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, storey_lines: st.storeys ? storeyRecord(app) : false, colour_mode: st.colour,
+                                           ground: st.ground === 'plain' ? 'plain' : { layer: st.ground, source: 'assets/basemap.json (DCDB parcels, 1 m contours, rail; (c) State of Queensland, CC BY 4.0)', sha256: app.manifest.assets['basemap.json']?.sha256, note: 'cartographic index, not survey or imagery' } },
+    lighting: lightingRecord(app),
     assets: app.manifest.assets, sources: app.manifest.sources, asset_manifest_generator: app.manifest.generator_sha256, context_drawings: DRAWINGS.context,
     mask_metrics: out.mask ? { note: 'Frame-limited angular areas for THIS camera and frame only. Not an amenity measure, not comparable across frames without stating denominators.', historical: out.mask.A, approved: out.mask.B,
                                only_approved_deg2: out.mask.add_deg2, only_historical_deg2: out.mask.removed_deg2, tower_historical_deg2: out.mask.towerA_deg2, tower_approved_deg2: out.mask.towerB_deg2, frame_deg2: out.mask.frame_deg2,
@@ -82,7 +95,9 @@ export async function buildRecord(app, out) {
                   'E1 is a reconstruction of a received (not approved) 2020 envelope; no 2020 RL was fixed.', 'No vegetation except the optional LiDAR canopy layer; no trees invented.'],
     limitations: ['Model geometry, not survey. Presets other than W01 are hypothetical positions.', 'Framing (HFOV, pitch, shift) changes what an image shows without any change to the geometry.',
                   'A low-residual image match can still be underdetermined; see image_match.flags.'],
-    renderer: { webgl: gl.getParameter(gl.VERSION), renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), antialias_samples: 4, three: 'r160.1' },
+    renderer: { webgl: gl.getParameter(gl.VERSION), renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), three: 'r160.1', quality: app.fx.quality, ...QUALITY[app.fx.quality],
+                pipeline: 'MeshStandardMaterial (PBR, untextured neutral tones); Sky + PMREM image-based light; DirectionalLight at the sun vector with PCF soft shadow map; GTAO ambient occlusion (seeded noise) when quality=high; MSAA; ACES filmic tone mapping; sRGB output',
+                depth: { near: app.camera.near, far: app.camera.far, logarithmic: false } },
     png: { bytes: out.buf.byteLength, sha256: await sha256Hex(out.buf) },
   };
   return rec;

@@ -1,7 +1,7 @@
 {
  "schema": "greville-visual-manifest/1",
  "generator": "visual/tools/build_assets.py",
- "generator_sha256": "53a6a8d116f3f703199de4583d9190e2177e0f220da4a38eeca93cdb0c121be3",
+ "generator_sha256": "15efbaee0340090d4861c5762a076369a5583972c9d57d21ced75342b604333a",
  "sources": {
   "S-VA2": {
    "file": "scene_dump_v2.json",
@@ -19,6 +19,14 @@
    "file": "code/adr/control_points_library_va4.json",
    "sha256": "1ae589eac3c90497e2b39fe3a0444129ba79ce1f55b959464cd9e74425c4a694"
   },
+  "S-CTX": {
+   "file": "context/2026-11-11/shadow_context.json (this repository; CC BY 4.0)",
+   "sha256": "fd6a4c45370b475f8253a56a876c6d02570a66ee79ac89433ca7d06adc4f49ce"
+  },
+  "S-RAIL": {
+   "file": "context/2026-11-11/raw/rail.geojson (this repository; CC BY 4.0)",
+   "sha256": "4add22d7c6fa4ee2cfbc8f8baa43beea0ce289aa3d1bfde169dc8e5d0b269b76"
+  },
   "S-VA4": {
    "file": "GRE_VA4_code_and_results.zip",
    "sha256": "a75ad6b31c0241de5a8148eac89711146c5e5a7f461f07f9429b43febed52901"
@@ -26,12 +34,16 @@
  },
  "assets": {
   "scene.json": {
-   "sha256": "62f5e36fa12e5676c43243ac5da1b31febf2568ee5793b8066fe575e8a747667",
-   "bytes": 435127
+   "sha256": "5bf8665e5e757a2f599c59e453af02f217b1a9528e5a85dc2c69d9a39ee5b9cf",
+   "bytes": 435790
   },
   "controls.json": {
    "sha256": "9feab0ac976f7b7f3d39fd6bafdb00b66463db43f2913385462fe10c7d5a9eca",
    "bytes": 108943
+  },
+  "basemap.json": {
+   "sha256": "172ae661869d90a10e454e0dbc43d7633ba9aafbac082187eb197778bfac542c",
+   "bytes": 202063
   }
  },
  "collections": {
