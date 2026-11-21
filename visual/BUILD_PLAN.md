@@ -176,7 +176,7 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 - **Protected files:** unchanged.
 - **Existing pages:** the root viewer is served byte-identical (`cd551cef…`) and `/study/` loads without errors under `/Greville/`.
 
-## M6 — Deployment and verification — **IN PROGRESS**
+## M6 — Deployment and verification — **DONE except G6.3 (BLOCKED: needs the owner's merge and network access)**
 
 **Depends on:** M5.
 
@@ -193,3 +193,20 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 | G6.1 | The full test suite passes on the final commit |
 | G6.2 | The branch is pushed and the PR opened |
 | G6.3 | The live `/Greville/visual/` URL serves the new page. This needs the PR merged to the Pages branch by the repository owner, and network access to `*.github.io` to verify. |
+
+**M6 results:**
+- **G6.1 — PASS.** The full suite passes on commit `8ac93d8`: protected check PASS, unit 11/11, e2e 15/15.
+- **G6.2 — PASS.** Branch `claude/visual-viewer` pushed; draft PR #26 opened against `claude/new-session-hmmz55`.
+- **G6.3 — BLOCKED.**
+  - **Why.** The live URL needs the PR merged into the Pages source branch, which is the repository owner's decision; nothing has been merged automatically. Checking the deployed page also needs `*.github.io`, which this build environment's proxy refuses.
+  - **After merge, verify with:**
+    - `curl -sS https://frankselliott.github.io/Greville/` returns the frozen root page, whose SHA-256 should equal `cd551cef…`;
+    - `https://frankselliott.github.io/Greville/visual/` loads the viewer.
+
+## Outstanding limitations and source gaps
+
+1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.
+2. **E1 is a reconstruction.** It is a received, not approved, 2020 envelope with an inferred RL. E2c (the VA4 corrections) is scaled and provisional.
+3. **Massing is schematic.** Balconies are filled to their lines, and there are no balustrades, screens or façades. The VA2 context is generalised LiDAR. The Cluster 4 plan-derived masses are an optional reconstructed variant.
+4. **Matching is manual.** There is no automatic landmark detection: matching is manual pairing plus a robust fit. Control points are model vertices, not survey points.
+5. **Rendering determinism** is proven on one machine and GPU path. The renderer string is recorded in every export.
