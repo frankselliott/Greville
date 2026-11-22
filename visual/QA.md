@@ -72,3 +72,19 @@ Browser: Playwright Chromium (headless; renderer as recorded in each export JSON
 **Defect found and fixed during development.** The first montage showed the towers in front of the laundry roof, which stands in front of them in the model. The cause was draw order: the depth-only occluders were drawn after the towers, so the depth test had nothing to test against. The occluders are now forced to render first (`renderOrder −10`). The occlusion test (Q8.4) guards against a regression.
 
 **Not a defect, but worth recording.** Loading a photograph resets the principal point to the image centre. This is right for an ordinary photograph. A frame rendered with a lens shift (such as W01's archived 0.2081) needs that shift entered again, either by hand or through the fit.
+
+## v1.3 — usability pass (branch `claude/visual-montage`)
+
+| # | Test | Result |
+|---|---|---|
+| Q9.1 | Protected files | PASS |
+| Q9.2 | Unit tests | 18/18 PASS |
+| Q9.3 | End-to-end | 23/23 PASS in 160 s. IoU unchanged: 0.99965 / 0.99968 / 1 / 1. |
+| Q9.4 | New UX test | PASS. It covers: tabs and arrow keys; step order (photo → align → montage → save) with controls disabled until there is a photo; drop-to-load; the picking banner, with Esc stopping picking and leaving the camera unchanged; the scenario bar swapping E1/E2 without moving the camera; Save and Share in the header; the minimap fold; and the status-bar text. |
+
+**Defects found by the UX test:**
+1. Mouse clicks on on-stage controls were captured by the drag-look handler's pointer capture, so the scenario bar did not respond to a mouse.
+2. Locked photo steps blocked the synthetic self-test, which does not need a photo.
+3. Pill-style radios hid the real input from the pointer.
+
+All three are fixed.

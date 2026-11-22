@@ -35,7 +35,7 @@ export class Montage {
     $('btnMontageExport').onclick = () => this.exportPackage().catch(e => this.app.flash('Montage export failed: ' + e.message));
     const st = app.stage; let down = false;
     const paint = (e) => { if (!this.painting || !down) return; e.preventDefault(); this.paintAt(e, e.shiftKey); };
-    st.addEventListener('pointerdown', (e) => { if (!this.painting) return; down = true; try { st.setPointerCapture(e.pointerId); } catch (_) { /* synthetic */ } paint(e); });
+    st.addEventListener('pointerdown', (e) => { if (!this.painting || e.target.closest?.('button, input, select, a, #compareBar, #mapWrap, #pad, #pickBanner')) return; down = true; try { st.setPointerCapture(e.pointerId); } catch (_) { /* synthetic */ } paint(e); });
     st.addEventListener('pointermove', paint); st.addEventListener('pointerup', () => { if (down) { down = false; this.app.render(); } });
     this.ui();
   }
@@ -211,13 +211,14 @@ export class Montage {
   }
   ui() {
     const m = this.meta, s = m?.summary; const el = $('exifInfo'); if (!el) return;
-    if (!m) { el.textContent = 'No photo metadata yet.'; return; }
-    const parts = [s.make || s.model ? `${s.make || ''} ${s.model || ''}`.trim() : 'camera: not recorded',
-      s.datetime_original ? `taken ${s.datetime_original}${s.offset_time_original ? ' ' + s.offset_time_original : ' (no time zone)'}` : 'time: not recorded',
-      s.focal_35mm_equiv ? `${s.focal_35mm_equiv} mm equiv. → HFOV ${m.hfov_from_exif.toFixed(2)}°` : 'focal length: not recorded (fit estimates it)',
-      m.gps_mga ? `GPS → MGA E ${m.gps_mga.E.toFixed(1)} N ${m.gps_mga.N.toFixed(1)}${s.gps.h_error_m ? ` ±${s.gps.h_error_m} m` : ''}` : 'GPS: not recorded',
-      s.digital_zoom && s.digital_zoom > 1.01 ? `DIGITAL ZOOM ${s.digital_zoom}× (cropped)` : null].filter(Boolean);
-    el.textContent = parts.join(' · ');
+    if (!m) { el.textContent = ''; return; }
+    const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const rows = [['Camera', s.make || s.model ? esc(`${s.make || ''} ${s.model || ''}`.trim()) : '<i>not recorded</i>'],
+      ['Taken', s.datetime_original ? esc(`${s.datetime_original}${s.offset_time_original ? ' ' + s.offset_time_original : ''}`) + (s.offset_time_original ? '' : ' <span class="warn">(no time zone)</span>') : '<i>not recorded</i>'],
+      ['Lens', s.focal_35mm_equiv ? `${s.focal_35mm_equiv} mm equiv. → HFOV ${m.hfov_from_exif.toFixed(2)}°` : '<i>not recorded: the fit estimates it</i>'],
+      ['GPS', m.gps_mga ? `GPS → MGA E ${m.gps_mga.E.toFixed(1)} N ${m.gps_mga.N.toFixed(1)}${s.gps.h_error_m ? ` ±${s.gps.h_error_m} m` : ''}` : '<i>not recorded</i>']];
+    if (s.digital_zoom && s.digital_zoom > 1.01) rows.push(['Warning', `<span class="warn">digital zoom ${s.digital_zoom}× (cropped frame)</span>`]);
+    el.innerHTML = `<dl class="meta">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
   }
 }
 // ---- minimal ZIP writer (stored, no compression) -------------------------------------------------------------------------

@@ -24,6 +24,17 @@ Any static server also works, for example `python3 -m http.server` from the repo
 
 ## Using it
 
+**Layout (v1.3).**
+- **Header:** *Save image* (Ctrl+S) and *Share* (copy a link to this exact view) are always there.
+- **On the view:** the scenario bar shows which form you are looking at. Click **E1** or **E2**, or **⇄** (T), to swap. The camera never moves.
+- **Side panel:** four tabs.
+  - **Compare:** viewpoint, scenarios, view mode, camera.
+  - **Scene:** lighting and layers.
+  - **Photo:** the four-step photomontage. You can also drop a photo onto the view to start it.
+  - **About:** what this is, and its sources.
+- **Status bar:** the exact camera in readable segments.
+- **Phone:** the panel is a bottom sheet, opened with ☰ and closed with ✕.
+
 **Menus.** The menu bar holds every command: **File** (save PNG + JSON, load a perspective image, copy a link to this view), **View** (view modes 1–5, side panel, minimap, guides, render quality), **Camera** (viewpoints, station/free/overview, reset, level), **Scenario** (E1/E2 choices and the toggle), **Layers** (context variant, canopy, edges, storey lines, ground map, tower colour), **Lighting** (sun or overcast, solstice/equinox dates, times) and **Help** (shortcuts and the accuracy statement; also the **?** key). Each menu command drives the same side-panel control a mouse user would, so there is one code path per action. Panel sections collapse; the browser remembers which.
 
 **Shortcuts.** T toggle E1/E2 · W A S D move · arrows look · R/F eye height · +/− zoom · Home reset · 1–5 view modes · L sun/overcast · M minimap · G guides · Ctrl+S save · ? help.

@@ -18,7 +18,7 @@ export class MatchUI {
     $('btnUseImageFrame').onclick = () => this.useImageFrame();
     $('ctrlSearch').onchange = (e) => this.chooseControl(e.target.value);
     const dl = $('ctrlList'); for (const p of app.controlsLib) { const o = document.createElement('option'); o.value = p.id; dl.appendChild(o); }
-    app.stage.addEventListener('pointerdown', (e) => { if (this.picking) { e.preventDefault(); this.click(e); } });
+    app.stage.addEventListener('pointerdown', (e) => { if (this.picking && !e.target.closest?.('button, input, select, a, #compareBar, #mapWrap, #pad, #pickBanner')) { e.preventDefault(); this.click(e); } });
     this.ui();
   }
   async load(file) {
@@ -114,13 +114,17 @@ export class MatchUI {
     if (this.pending) { const [x, y] = P(this.pending.u, this.pending.v); c.strokeStyle = '#eb6834'; c.lineWidth = 2; c.strokeRect(x - 7, y - 7, 14, 14); }
   }
   ui() {
-    $('imgInfo').textContent = this.image ? `${this.image.name} · ${this.image.W}×${this.image.H} px · ${this.image.bytes} B · SHA-256 ${this.image.sha256}` : 'No image loaded. Images stay in this browser; they are never uploaded.';
-    $('btnPick').textContent = this.picking ? (this.step === 'image' ? 'Picking: click a point on the IMAGE…' : 'Picking: click the matching CONTROL dot (or type its ID)…') : 'Add landmark pairs';
+    $('imgInfo').textContent = this.image ? `${this.image.name} · ${this.image.W}×${this.image.H} px · ${this.image.bytes} B · SHA-256 ${this.image.sha256}` : '';
+    const dz = $('dropzone'); if (dz) dz.innerHTML = this.image ? `<b>Replace photo…</b> (or drop another on the view)` : `<b>Choose photo…</b> or drop it on the view<br><small>JPEG with its original metadata is best (HEIC: export as JPEG)</small>`;
+    $('btnPick').textContent = this.picking ? 'Stop adding pairs' : (this.pairs.length ? 'Add more pairs' : 'Add landmark pairs');
     $('btnPick').classList.toggle('on', this.picking);
+    const bn = $('pickBanner'); if (bn) { bn.hidden = !this.picking;
+      bn.innerHTML = this.step === 'image' ? `<b>Pair ${this.pairs.length + 1}:</b> click a landmark on the photo (a building corner, gutter end, pole top) · <kbd>Esc</kbd> to stop`
+                                           : `<b>Pair ${this.pairs.length + 1}:</b> now click the matching <span style="color:#ff8a80">red dot</span> on the model, or type its ID in the panel · <kbd>Esc</kbd> to stop`; }
     const rows = this.pairs.map((p, i) => `<tr><td>${i + 1}</td><td>${p.id}</td><td>${p.cls}</td><td>${p.u.toFixed(1)}, ${p.v.toFixed(1)}</td><td>${this.fit ? this.fit.resid_px[i].toFixed(2) : '—'}</td><td>${this.fit && this.fit.loo_px.length ? this.fit.loo_px[i].toFixed(2) : '—'}</td></tr>`).join('');
     $('pairTable').innerHTML = `<tr><th>#</th><th>control</th><th>class</th><th>image u, v</th><th>resid px</th><th>LOO px</th></tr>${rows}`;
     const F = this.fit;
-    $('fitOut').innerHTML = !F ? `${this.pairs.length} pair(s). A fit needs 4 or more pairs; a determined camera needs 8 or more well-spread, non-coplanar points, including context beyond the towers.` :
+    $('fitOut').innerHTML = !F ? (this.pairs.length ? `${this.pairs.length} pair${this.pairs.length === 1 ? '' : 's'} so far: ${this.pairs.length < 4 ? `${4 - this.pairs.length} more to try a fit, ` : ''}8+ for a determined camera.` : '') :
       `<b>${this.status()}</b><br>n ${F.n} · RMS ${F.rms_px.toFixed(2)} px · max ${F.max_px.toFixed(2)} px · LOO max ${F.loo_px.length ? Math.max(...F.loo_px).toFixed(2) : 'n/a'} px · cond ${F.cond ? F.cond.toExponential(1) : '—'}<br>` +
       `E ${(F.par[0] + 504045).toFixed(2)} ±${F.se[0].toFixed(2)} · N ${(F.par[1] + 6966712).toFixed(2)} ±${F.se[1].toFixed(2)} · RL ${F.par[2].toFixed(2)} ±${F.se[2].toFixed(2)} · hdg ${F.par[3].toFixed(2)}° · pitch ${F.par[4].toFixed(2)}° · roll ${F.par[5].toFixed(2)}° · HFOV ${F.hfov_deg.toFixed(2)}°` +
       (this.flags.length ? '<ul>' + this.flags.map(f => `<li class="${f.severity}">${f.code}: ${f.text}</li>`).join('') + '</ul>' : '') +

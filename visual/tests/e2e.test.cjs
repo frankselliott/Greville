@@ -20,6 +20,8 @@ async function open(viewport = { width: 1400, height: 900 }, extra = {}, query =
   await page.goto(`${base}visual/${query}`); await page.waitForSelector('body[data-ready="1"]', { timeout: 60000 }); await settle(page);
   return { ctx, page, errors };
 }
+const tab = (page, name) => page.click(`[data-tab-btn="${name}"]`);            // v1.3 tabbed panel
+const unfold = (page, sel) => page.evaluate((sel) => { document.querySelector(sel).open = true; }, sel);
 const settle = (page) => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const camSnap = (page) => page.evaluate(() => { const a = window.__visual; return { cam: { ...a.cam }, world: [...a.camera.matrixWorld.elements], proj: [...a.camera.projectionMatrix.elements], canvas: [a.canvas.width, a.canvas.height], mode: a.state.mode }; });
 function unrle(r, n) { const m = new Uint8Array(n); let v = r.first, k = 0; for (const run of r.runs) { if (v) m.fill(1, k, k + run); k += run; v = 1 - v; } return m; }
@@ -70,7 +72,7 @@ test('G2.3 presets load exact source coordinates, RL and archived W01 framing', 
 });
 
 test('G2.4 mouse, keyboard and reset controls (desktop)', async () => {
-  const { ctx, page } = await open();
+  const { ctx, page } = await open(undefined, {}, '?preset=NG57');            // W01's archived eye (2.22 m) sits at the station limit, so "raise eye" is tested at NG57
   const c0 = (await camSnap(page)).cam; const box = await page.locator('#stage').boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + 80, box.y + box.height / 2 - 40, { steps: 4 }); await page.mouse.up(); await settle(page);
   const c1 = (await camSnap(page)).cam; assert.ok(c1.heading !== c0.heading && c1.pitch > c0.pitch, 'drag looks');
@@ -181,7 +183,7 @@ test('G4.1 image import is local: hashed in the browser, shown, never uploaded',
 test('G4.2/G4.3/G4.4 in-browser fit: synthetic recovery; few points flagged UNDERDETERMINED; fitted camera survives E1/E2 switching', async () => {
   const { ctx, page } = await open(undefined, {}, '?preset=NG57');
   await page.evaluate(() => { const a = window.__visual; a.setMode('free'); a.cam = { ...a.cam, y: a.cam.y - 30, z: a.cam.z + 4, pitch: 22, hfov: 80 }; a.render(); });
-  await settle(page); await page.click('#btnSynth');
+  await settle(page); await tab(page, 'photo'); await unfold(page, '#step2 details.more'); await page.click('#btnSynth');
   const syn = await page.evaluate(() => window.__visual.match.lastSynthetic); assert.ok(syn && syn.n >= 8 && syn.dpos < 0.10 && Math.abs(syn.dheading) < 0.1 && syn.rms < 0.6, JSON.stringify(syn));
   // five exact pairs -> fit looks tidy but must be flagged
   const st = await page.evaluate(() => { const a = window.__visual, M = a.match; const par = a.par();
@@ -275,7 +277,7 @@ test('v1.1 shareable link: the URL reproduces camera, scenarios, view, layers, l
   await page.evaluate(() => { const a = window.__visual; a.setCam({ ...a.cam, pitch: 12.5, hfov: 70.25, heading: 3.75 }); });
   await page.selectOption('#histSel', 'E1_SK52'); await page.click('#btnHist');
   await page.check('input[name=view][value=swipe]'); await page.evaluate(() => { const s = document.getElementById('swipe'); s.value = '0.3'; s.dispatchEvent(new Event('input')); });
-  await page.selectOption('#groundSel', 'plain'); await page.uncheck('#storeys'); await page.check('#canopy');
+  await tab(page, 'scene'); await page.selectOption('#groundSel', 'plain'); await page.uncheck('#storeys'); await page.check('#canopy');
   await page.fill('#lDate', '2026-06-21'); await page.dispatchEvent('#lDate', 'change');
   await page.evaluate(() => { const t = document.getElementById('lTime'); t.value = String(8 * 60 + 30); t.dispatchEvent(new Event('input')); });
   await page.selectOption('#qualitySel', 'low'); await settle(page); await page.waitForTimeout(600);
@@ -342,7 +344,7 @@ test('v1.2 photomontage: occlusion equals the tested masks; foreground mask keep
     return { iou: i1 / u1, inMask, kept, changedOutside };
   });
   assert.ok(r.iou >= 0.99, `montage layer vs mask IoU ${r.iou}`); assert.ok(r.inMask > 1000 && r.kept === r.inMask, JSON.stringify(r)); assert.ok(r.changedOutside > 1000, JSON.stringify(r));
-  const dl = page.waitForEvent('download', { timeout: 240000 }); await page.click('#btnMontageExport'); const d = await dl; const zip = fs.readFileSync(await d.path());
+  const dl = page.waitForEvent('download', { timeout: 240000 }); await tab(page, 'photo'); await page.click('#btnMontageExport'); const d = await dl; const zip = fs.readFileSync(await d.path());
   // read the stored ZIP and verify SHA256SUMS
   const entries = {}; let p = 0; while (zip.readUInt32LE(p) === 0x04034b50) { const n = zip.readUInt16LE(p + 26), sz = zip.readUInt32LE(p + 18); const name = zip.slice(p + 30, p + 30 + n).toString(); entries[name] = zip.slice(p + 30 + n, p + 30 + n + sz); p += 30 + n + sz; }
   for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_SK48_E2.png', '3_montage_E1_SK48.png', '4_montage_E2.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
@@ -360,10 +362,41 @@ test('v1.2 photo metadata in the browser: EXIF lens sets the field of view; GPS 
   const m = await page.evaluate(async () => { const a = window.__visual, CM = await import('./js/camera_model.js'), P = await import('./js/photo_meta.js');
     return { hfov: a.cam.hfov, want: CM.hfovFromFocal(300, P.focalPxFrom35(26, 300, 200)), fixF: document.getElementById('fixF').checked, W: a.cam.W }; });
   assert.ok(Math.abs(m.hfov - m.want) < 1e-9 && m.fixF && m.W === 300, JSON.stringify(m));
-  await page.click('#btnGpsPrior'); await settle(page);
+  await tab(page, 'photo'); await unfold(page, '#step2 details.more'); await page.click('#btnGpsPrior'); await settle(page);
   const c = await page.evaluate(() => ({ x: window.__visual.cam.x, y: window.__visual.cam.y, prior: document.getElementById('priorXY').checked, mode: window.__visual.state.mode }));
   assert.ok(Math.abs(c.x - (X.E - 504045)) < 1e-6 && Math.abs(c.y - (X.N - 6966712)) < 1e-6 && c.prior && c.mode === 'free', JSON.stringify(c));
   await page.click('#btnPhotoTime'); await settle(page);
   assert.deepEqual(await page.evaluate(() => [window.__visual.fx.lighting.date, window.__visual.fx.lighting.time, window.__visual.fx.lighting.mode]), [[2026, 6, 21], [8, 30], 'sun']);
   await ctx.close();
+});
+
+test('v1.3 UX: tabs, photo steps unlock in order, on-stage scenario bar, header Save/Share, drag-and-drop photo, Esc stops picking', async () => {
+  const { ctx, page, errors } = await open();
+  assert.equal(await page.evaluate(() => window.__visual.state.preset), 'W01', 'default viewpoint shows both towers');
+  for (const t of ['scene', 'photo', 'about', 'compare']) { await tab(page, t); assert.ok(await page.isVisible(`#tab-${t}`), t); assert.equal(await page.getAttribute(`[data-tab-btn="${t}"]`, 'aria-selected'), 'true'); }
+  await page.focus('[data-tab-btn="compare"]'); await page.keyboard.press('ArrowRight'); assert.ok(await page.isVisible('#tab-scene'), 'arrow keys move between tabs');
+  await tab(page, 'photo');
+  const st0 = await page.evaluate(() => ['step1', 'step2', 'step3', 'step4'].map(id => document.getElementById(id).className));
+  assert.match(st0[0], /current/); assert.match(st0[2], /locked/); assert.match(st0[3], /locked/); assert.ok(await page.isDisabled('#btnMontageExport'));
+  // drop a photo on the view (DataTransfer with a File)
+  const png = await page.screenshot({ clip: { x: 500, y: 200, width: 300, height: 200 } });
+  await page.evaluate(async (b64) => { const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0)); const dt = new DataTransfer(); dt.items.add(new File([bin], 'dropped.png', { type: 'image/png' }));
+    const st = document.getElementById('stage'); st.dispatchEvent(new DragEvent('dragenter', { dataTransfer: dt, bubbles: true })); st.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true })); }, png.toString('base64'));
+  await page.waitForFunction(() => !!window.__visual.match.image); await settle(page);
+  assert.equal(await page.evaluate(() => window.__visual.match.image.name), 'dropped.png'); assert.ok(await page.isHidden('#dropHint'));
+  const st1 = await page.evaluate(() => ['step1', 'step2', 'step4'].map(id => document.getElementById(id).className));
+  assert.match(st1[0], /done/); assert.match(st1[1], /current/); assert.ok(!(await page.isDisabled('#btnMontageExport')));
+  // picking shows a banner; Esc stops it and keeps the camera
+  await page.click('#btnPick'); assert.ok(await page.isVisible('#pickBanner')); const c0 = (await camSnap(page)).cam;
+  await page.keyboard.press('Escape'); assert.ok(await page.isHidden('#pickBanner')); assert.deepEqual((await camSnap(page)).cam, c0);
+  // the on-stage bar switches scenario without moving the camera
+  await page.click('#cbHist'); await settle(page); assert.equal(await page.evaluate(() => window.__visual.state.side), 'historical');
+  assert.deepEqual((await camSnap(page)).cam, c0); assert.equal(await page.getAttribute('#cbHist', 'aria-pressed'), 'true');
+  await page.click('#quickToggle'); assert.equal(await page.evaluate(() => window.__visual.state.side), 'approved');
+  assert.ok(await page.isVisible('#btnExport') && await page.isVisible('#btnCopyLink'), 'Save and Share are always in the header');
+  // the minimap folds from its own button
+  await page.click('#mapToggle'); assert.ok(await page.isHidden('#minimap')); await page.click('#mapToggle'); assert.ok(await page.isVisible('#minimap'));
+  // status bar keeps the exact coordinates readable
+  assert.match(await page.textContent('#hud'), /W01 · station.*E 504057\.91 N 6966719\.97 RL 24\.92/);
+  assert.deepEqual(errors, []); await ctx.close();
 });

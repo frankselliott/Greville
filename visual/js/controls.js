@@ -6,6 +6,7 @@ export function attachControls(el, app) {
   const isTyping = (e) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName);
   el.addEventListener('pointerdown', (e) => {
     if (app.pickActive()) return;                     // perspective-match picking owns clicks
+    if (e.target.closest?.('button, input, select, a, #compareBar, #mapWrap, #pad, #pickBanner')) return;   // on-stage controls get their own clicks
     try { el.setPointerCapture(e.pointerId); } catch (_) { /* synthetic or already-released pointer */ }
     touches.set(e.pointerId, [e.clientX, e.clientY]);
     if (touches.size === 1) drag = { x: e.clientX, y: e.clientY };
