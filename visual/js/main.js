@@ -10,6 +10,7 @@ import { exportPair } from './export.js';
 import { FX, QUALITY } from './render_fx.js';
 import { basemapTexture } from './basemap.js';
 import { UI } from './ui.js';
+import { Montage } from './montage.js';
 
 const $ = (id) => document.getElementById(id);
 const RAD = Math.PI / 180;
@@ -38,7 +39,7 @@ class App {
                    framing: [{ hfov: 55, pitch: 10 }, { hfov: 90, pitch: 38 }, { hfov: 55, pitch: 62 }, { hfov: 110, pitch: 25 }],
                    orbit: { tx: 95, ty: -15, tz: 35, dist: 260, heading: 20, pitch: -35 } };
     this.cam = null; this.applyGround();
-    this.buildUI(); this.match = new MatchUI(this); this.ui = new UI(this); attachControls(this.stage, this);
+    this.buildUI(); this.match = new MatchUI(this); this.montage = new Montage(this); this.ui = new UI(this); attachControls(this.stage, this);
     new ResizeObserver(() => this.render()).observe(this.stage);
     const q = new URLSearchParams(location.search);
     this.selectPreset(q.get('preset') || 'NG57'); this.ui.applyQuery(q); this.updateLightingUI();
@@ -179,7 +180,8 @@ class App {
       this.label(panels[0], `Mask: orange = only in ${B}; blue = only in ${A} (frame-limited)`, 26);
     } else { draw(panels[0], par, cur, 'p0'); guides(panels[0], par); this.label(panels[0], this.scenarios[cur].label, 26); this.lastFrame.scenarios = [cur]; }
     R.setScissorTest(false);
-    this.match?.drawOverlay?.(panels[0]);
+    const montaged = v === 'single' && !!this.montage?.drawScreen(panels[0]);
+    this.match?.drawOverlay?.(panels[0], montaged);
     this.ui?.drawMinimap(); this.ui?.writeURL();
     this.updateCameraUI();
   }
@@ -194,7 +196,7 @@ class App {
     g.visible = false; return g;
   }
   flash(msg, ms = 3500) { const el = $('flash'); el.textContent = msg; el.hidden = false; clearTimeout(this._ft); this._ft = setTimeout(() => { el.hidden = true; }, ms); return false; }
-  pickActive() { return this.match?.picking; }
+  pickActive() { return this.match?.picking || this.montage?.painting; }
   // ---------------------------------------------------------------- UI
   buildUI() {
     const list = $('presets');

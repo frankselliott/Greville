@@ -26,12 +26,12 @@ export class MatchUI {
     if (!/^image\/(png|jpeg)$/.test(file.type)) return this.app.flash('Only PNG or JPEG images are accepted.');
     const buf = await file.arrayBuffer(); const sha = await sha256Hex(buf);
     const url = URL.createObjectURL(new Blob([buf], { type: file.type })); const img = new Image(); img.src = url; await img.decode();
-    this.image = { name: file.name, type: file.type, bytes: buf.byteLength, sha256: sha, W: img.naturalWidth, H: img.naturalHeight, el: img, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null };
-    this.pairs = []; this.fit = null; this.flags = []; this.alts = []; this.useImageFrame(); this.ui();
+    this.image = { name: file.name, type: file.type, bytes: buf.byteLength, sha256: sha, W: img.naturalWidth, H: img.naturalHeight, el: img, bytesBuf: buf, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null };
+    this.pairs = []; this.fit = null; this.flags = []; this.alts = []; this.useImageFrame(); this.app.montage?.onImage(this.image, buf); this.ui();
   }
   useImageFrame() {                                   // frame = image pixel size; principal point at centre until fitted or edited
     if (!this.image) return this.app.flash('Load an image first.');
-    const c = this.app.cam; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2 }; this.app.render();
+    const c = this.app.cam, h = this.app.montage?.meta?.hfov_from_exif; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2, ...(h ? { hfov: h } : {}) }; this.app.render();
   }
   onFrameChange() { if (this.image && $('keepImageFrame').checked) { const c = this.app.cam; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2 }; } }
   toFrame(e, panel) {
@@ -61,8 +61,9 @@ export class MatchUI {
     if (this.pairs.length < 4) return this.app.flash('At least 4 pairs are needed to attempt a fit (8+ for a determined camera).');
     const c = this.app.cam; const X = this.pairs.map(p => p.X), U = this.pairs.map(p => [p.u, p.v]);
     const prior = {}; if ($('priorZ').checked) prior.z = [c.z, +$('priorZsd').value || 0.5]; if ($('priorXY').checked) prior.xy = [c.x, c.y, +$('priorXYsd').value || 3];
-    const opts = { prior: Object.keys(prior).length ? prior : null, fixPP: $('fixPP').checked };
-    const F = FIT.fitCamera(X, U, c.W, c.H, { x: c.x, y: c.y, z: c.z, heading: c.heading, pitch: c.pitch, roll: c.roll, hfov: c.hfov }, opts);
+    const fpx = this.app.montage?.meta?.f_px_from_exif; const fixF = !!(fpx && $('fixF').checked);
+    const opts = { prior: Object.keys(prior).length ? prior : null, fixPP: $('fixPP').checked, fixF };
+    const F = FIT.fitCamera(X, U, c.W, c.H, { x: c.x, y: c.y, z: c.z, heading: c.heading, pitch: c.pitch, roll: c.roll, hfov: c.hfov, f_px: fixF ? fpx : undefined }, opts);
     F.grade = FIT.grade(F); this.alts = this.pairs.length >= 6 ? FIT.alternativeSolutions(X, U, c.W, c.H, F, opts) : [];
     this.flags = FIT.ambiguityFlags(X, U, this.pairs, F, c.W, c.H, this.alts); this.fit = { ...F, options: opts, pair_ids: this.pairs.map(p => p.id) };
     this.ui(); this.app.render();
@@ -95,10 +96,10 @@ export class MatchUI {
                                par: this.fit.par, names: this.fit.names, se: this.fit.se, hfov_deg: this.fit.hfov_deg, options: this.fit.options, condition: this.fit.cond } : null,
              flags: this.flags, alternatives: this.alts.map(x => ({ par: x.par, rms_px: x.rms_px, dpos_m: x.dpos, dang_deg: x.dang, distinct: x.distinct })) };
   }
-  drawOverlay(panel) {
+  drawOverlay(panel, montaged = false) {
     const a = this.app, c = a.octx; if (a.state.view !== 'single') return;
     const sx = panel.w / a.cam.W, sy = panel.h / a.cam.H, P = (u, v) => [panel.x + u * sx, panel.y + v * sy];
-    if (this.image && this.opacity > 0) { c.save(); c.globalAlpha = this.opacity; c.drawImage(this.image.el, panel.x, panel.y, panel.w, panel.h); c.restore(); }
+    if (this.image && this.opacity > 0 && !montaged) { c.save(); c.globalAlpha = this.opacity; c.drawImage(this.image.el, panel.x, panel.y, panel.w, panel.h); c.restore(); }
     const par = a.par();
     if (this.picking && this.step === 'control') {
       c.fillStyle = 'rgba(208,59,59,0.85)';

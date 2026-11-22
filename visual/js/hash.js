@@ -5,7 +5,7 @@ export async function sha256Hex(buf) {
 }
 // hashes of the application files actually served (code identity for the export record)
 export const APP_FILES = ['index.html', 'css/visual.css', 'js/main.js', 'js/coords.js', 'js/camera_model.js', 'js/fit.js', 'js/scene_build.js',
-  'js/controls.js', 'js/compare.js', 'js/match.js', 'js/export.js', 'js/hash.js', 'js/render_fx.js', 'js/sun.js', 'js/basemap.js', 'js/ui.js',
+  'js/controls.js', 'js/compare.js', 'js/match.js', 'js/export.js', 'js/hash.js', 'js/render_fx.js', 'js/sun.js', 'js/basemap.js', 'js/ui.js', 'js/montage.js', 'js/photo_meta.js',
   'vendor/three/three.module.min.js', 'vendor/three/addons/SHA256SUMS', 'version.json'];
 export async function appFileHashes(base) {
   const out = {};

@@ -84,9 +84,15 @@
     <label><input type="checkbox" id="minimapChk" checked> Minimap</label>
   </details>
   <details open data-sec="match">
-    <summary><h2>Perspective match <small>(local only)</small></h2></summary>
+    <summary><h2>Photo match and montage <small>(local only)</small></h2></summary>
+    <p class="note">Use your own photograph (JPEG with its original metadata is best; HEIC: export as JPEG). It is read in this browser and never uploaded.</p>
     <input id="imgFile" type="file" accept="image/png,image/jpeg">
     <p id="imgInfo" class="note mono"></p>
+    <p id="exifInfo" class="note"></p>
+    <div class="grid2">
+      <label><input type="checkbox" id="fixF" disabled> Hold lens from EXIF</label>
+      <button id="btnGpsPrior">Use photo GPS as prior</button>
+    </div>
     <label>Image opacity <input id="imgOpacity" type="range" min="0" max="1" step="0.05" value="0.5"></label>
     <label><input type="checkbox" id="keepImageFrame" checked> Keep the image frame when changing preset</label>
     <button id="btnUseImageFrame">Use image frame</button>
@@ -101,6 +107,15 @@
     <button id="btnFit">Fit camera</button> <button id="btnClearPairs">Clear pairs</button> <button id="btnSynth">Synthetic test</button>
     <div id="fitOut" class="note"></div>
     <p id="synthOut" class="note"></p>
+    <h3 class="sub">Montage</h3>
+    <label><input type="checkbox" id="montageOn"> Show photomontage (single view)</label>
+    <label>Layer <select id="montageLayer"><option value="E2">Approved (E2) massing</option><option value="E1">Historical (E1) massing</option><option value="diff">As-built check: E1 outline + E2-only tint</option><option value="wire">Wireline: E1 and E2 outlines</option></select></label>
+    <button id="btnPhotoTime">Light the model at the photo's time</button>
+    <label>Massing exposure <output id="montageExpOut">1.00</output><input id="montageExposure" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+    <button id="btnPaint">Paint foreground mask</button> <label class="inline">brush <input id="brushSize" type="range" min="4" max="80" value="24"></label> <button id="btnClearMask">Clear mask</button>
+    <p class="note">Paint over trees, poles or fences that stand in front of the towers but are not in the model, so the montage keeps them. The mask is saved with the package.</p>
+    <button id="btnMontageExport" class="primary">Save montage package (.zip)</button>
+    <p class="note">The ZIP holds the unaltered photo, a wireline, E1 and E2 montages, an as-built check, a camera plan, the mask, and record.json (camera, lens, time, alignment residuals, sources, a PPL 15-style checklist) with SHA-256 sums. Camera-matched, not survey-verified.</p>
   </details>
   <details open data-sec="export">
     <summary><h2>Export</h2></summary>

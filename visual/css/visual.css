@@ -41,6 +41,7 @@ input[type=number] { width: 100%; } input[type=range] { width: 100%; }
 button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 4px; cursor: pointer; margin: 2px 2px 2px 0; }
 button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 button.on, button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sub { font-size: 12px; margin: 12px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; } label.inline { display: inline-block; }
 .chips button { font-size: 11px; padding: 2px 7px; border-radius: 12px; }
 .kbd, kbd { font-family: ui-monospace, monospace; font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; color: var(--muted); }
 .seg { display: flex; } .seg button { flex: 1; font-weight: 600; padding: 8px; }

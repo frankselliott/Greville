@@ -167,3 +167,36 @@ test('v1.1 vendored Three.js add-ons match their recorded SHA-256 sums', () => {
   assert.ok(sums.length >= 10);
   for (const [h, f] of sums) assert.equal(createHash('sha256').update(readFileSync(path.join(VIS, 'vendor/three/addons', f))).digest('hex'), h, f);
 });
+
+test('v1.2 EXIF reader (big- and little-endian TIFF), GPS -> MGA56 against pyproj to 1 mm, capture time to AEST', async () => {
+  const P = await import('../js/photo_meta.js'); const X = J('tests/fixtures/exif_expected.json');
+  for (const f of ['be', 'le']) {
+    const b = readFileSync(path.join(VIS, `tests/fixtures/exif_sample_${f}.jpg`)); const s = P.photoSummary(P.parseExif(b.buffer.slice(b.byteOffset, b.byteOffset + b.length)));
+    assert.equal(s.make, X.make, f); assert.equal(s.datetime_original, X.datetime_original); assert.equal(s.offset_time_original, X.offset); assert.ok(Math.abs(s.focal_mm - X.focal_mm) < 1e-9); assert.equal(s.focal_35mm_equiv, X.focal_35);
+    assert.ok(Math.abs(s.gps.lat - X.lat) < 1e-10 && Math.abs(s.gps.lon - X.lon) < 1e-10, f); assert.ok(Math.abs(s.gps.alt_m - X.alt_m) < 1e-9); assert.ok(Math.abs(s.gps.img_direction_deg - X.img_direction) < 1e-9);
+    const m = P.latLonToMGA(s.gps.lat, s.gps.lon); assert.ok(Math.abs(m.E - X.E) < 1e-3 && Math.abs(m.N - X.N) < 1e-3, `${f} ${m.E} ${m.N}`);
+    assert.deepEqual(P.captureTimeAEST(s), { date: [2026, 6, 21], time: [8, 30], assumed_offset: false });
+  }
+  for (const [la, lo, E, N] of X.mga_cases) { const m = P.latLonToMGA(la, lo); assert.ok(Math.abs(m.E - E) < 1e-3 && Math.abs(m.N - N) < 1e-3, `${la},${lo}`); }
+  assert.deepEqual(P.captureTimeAEST({ datetime_original: '2026:01:13 13:30:59', offset_time_original: '+08:00' }), { date: [2026, 1, 13], time: [15, 30], assumed_offset: false });
+  assert.deepEqual(P.captureTimeAEST({ datetime_original: '2026:12:31 23:10:00', offset_time_original: null }), { date: [2026, 12, 31], time: [23, 10], assumed_offset: true });
+  assert.deepEqual(P.parseExif(new Uint8Array([0x89, 0x50, 0x4E, 0x47]).buffer), {});                  // not a JPEG: nothing, never guessed
+  assert.ok(Math.abs(P.focalPxFrom35(26, 4032, 3024) - 26 / Math.hypot(36, 24) * 5040) < 1e-9);
+});
+
+test('v1.2 fit with the lens held from EXIF recovers a synthetic camera and leaves the focal length exactly as given', () => {
+  const W = 4032, H = 3024, f = 26 / Math.hypot(36, 24) * Math.hypot(W, H), truth = [40, -60, 24.5, 30, 12, 0.5, f, W / 2, H / 2];
+  const pts = controls.map(p => [p.x, p.y, p.z]); const S = FIT.synthesize(truth, pts, W, H, 0.3, 5); const k = Math.max(1, Math.floor(S.X.length / 10));
+  const X = S.X.filter((_, i) => i % k === 0).slice(0, 10), U = S.U.filter((_, i) => i % k === 0).slice(0, 10); assert.ok(X.length >= 8, `visible ${S.X.length}`);
+  const F = FIT.fitCamera(X, U, W, H, { x: 42, y: -58, z: 25, heading: 33, pitch: 10, roll: 0, hfov: 60, f_px: f }, { fixF: true });
+  assert.equal(F.par[6], f); assert.equal(F.fix_f, true);
+  assert.ok(Math.hypot(F.par[0] - truth[0], F.par[1] - truth[1], F.par[2] - truth[2]) < 0.10 && Math.abs(F.par[3] - truth[3]) < 0.1, JSON.stringify(F.par));
+});
+
+test('v1.2 montage ZIP writer: valid stored archive (CRC-32, central directory, end record)', async () => {
+  const { zipStore } = await import('../js/montage.js');
+  const enc = new TextEncoder(); const z = zipStore([['a.txt', enc.encode('hello')], ['b/c.bin', new Uint8Array([1, 2, 3])]]); const dv = new DataView(z.buffer);
+  assert.equal(dv.getUint32(0, true), 0x04034b50); assert.equal(dv.getUint32(14, true), 0x3610a686);       // CRC-32 of "hello"
+  const e = z.length - 22; assert.equal(dv.getUint32(e, true), 0x06054b50); assert.equal(dv.getUint16(e + 10, true), 2);
+  assert.equal(dv.getUint32(dv.getUint32(e + 16, true), true), 0x02014b50);
+});

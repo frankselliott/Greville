@@ -27,7 +27,8 @@ export class UI {
     return [
       ['File', [
         { label: 'Save PNG + JSON record', sc: 'Ctrl+S', run: () => a.exportNow() },
-        { label: 'Load perspective image (local only)…', run: () => $('imgFile').click() },
+        { label: 'Load photograph (local only)…', run: () => $('imgFile').click() },
+        { label: 'Save photomontage package (.zip)', run: () => $('btnMontageExport').click() },
         { label: 'Copy link to this view', run: () => this.copyLink() },
         'sep',
         { label: 'Source register', run: () => window.open('SOURCE_REGISTER.md', '_blank', 'noopener') },
@@ -39,6 +40,7 @@ export class UI {
         { label: 'Side panel', type: 'check', get: () => !document.body.classList.contains('panel-hidden'), run: () => { document.body.classList.toggle('panel-hidden'); a.render(); } },
         { label: 'Minimap', sc: 'M', type: 'check', get: () => st.minimap, run: () => setCtl('minimapChk', !st.minimap) },
         { label: 'Compass and elevation guides', sc: 'G', type: 'check', get: () => st.guides, run: () => setCtl('guides', !st.guides) },
+        { label: 'Photomontage (needs a photo)', type: 'check', get: () => !!a.montage?.on, run: () => setCtl('montageOn', !a.montage?.on) },
         'sep',
         { head: 'Quality' },
         ...Object.entries(QUALITY).map(([k, q]) => ({ label: q.label, type: 'radio', get: () => a.fx.quality === k, run: () => setCtl('qualitySel', k) })),

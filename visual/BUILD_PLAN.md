@@ -230,6 +230,29 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 - **G7.1–G7.6 — PASS.** Full suite: protected PASS, unit 15/15, e2e 20/20. Details and numbers are in QA.md §v1.1.
 - **G6.3 (live URL).** Still verified only after the owner merges, as for v1.0.
 
+## v1.2 — Photomontage mode — **DONE**
+
+**Request:** use photo backgrounds to make the views as realistic as possible, at a standard fit for court.
+
+**Finding that shaped the work:** an inventory of the photographs in Drive found none that can carry a court-standard montage of Buildings A and B.
+- The resident's Lot 64 photos face a different building.
+- The Street View captures show Hudson Road houses and have no metadata.
+
+So v1.2 builds the montage pipeline. A private brief, outside this repository, sets out how to collect survey-controlled photographs.
+
+**Gates:**
+
+| Gate | Test |
+|---|---|
+| G8.1 | The EXIF reader handles big- and little-endian files. GPS→MGA56 agrees with pyproj to 1 mm. Capture time converts to AEST correctly. |
+| G8.2 | With the lens held from EXIF, the fit recovers a synthetic camera and leaves the focal length exactly as given. |
+| G8.3 | The montage occlusion equals the tested masks (IoU ≥ 0.99). Painted foreground keeps the photograph pixel for pixel. |
+| G8.4 | The package is complete. The photograph is byte-identical to the input. Every SHA-256 verifies. The record says "not survey-verified". |
+| G8.5 | In the browser, the EXIF lens sets the field of view, GPS sets the station prior, and the capture time sets the sun. |
+| G8.6 | Every earlier gate still passes. |
+
+**Results:** G8.1–G8.6 PASS. Protected PASS; unit 18/18; e2e 22/22. Details in QA.md §v1.2.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

@@ -57,7 +57,7 @@ Any static server also works, for example `python3 -m http.server` from the repo
    - It records the lighting (mode, date, time, sun altitude and azimuth, engine), render quality and pipeline, storey-line status and the ground-map source.
    - The PNG's SHA-256 is in the JSON. Exports are rendered at full quality with seeded ambient-occlusion noise, so re-exporting the same state is byte-identical, and identical on standard and high-DPI screens.
 
-## Matching an external perspective image (for example an applicant-supplied view)
+## Matching an external perspective image or photograph
 
 1. Under *Perspective match*, choose the PNG or JPEG. It is read and hashed **in this browser only and never uploaded**. Its name, size, pixel dimensions and SHA-256 are shown and go into the export record. The image file itself is not exported.
 2. The frame switches to the image's pixel size; *Use image frame* re-applies it. Set the station (E, N, eye RL), heading, pitch, roll, HFOV and shift by hand, and adjust *Image opacity* to compare.
@@ -69,6 +69,33 @@ Any static server also works, for example `python3 -m http.server` from the repo
 5. *Apply fitted camera*, then switch E1 / E2. The fitted camera is kept exactly. Export.
 
 *Synthetic test* checks the implementation on a known model camera. It is QA, not evidence about any real image.
+
+## Photomontage (v1.2)
+
+Use your own photograph as the background. Everything happens in the browser: the photograph is never uploaded.
+
+1. **Load.** Load the original JPEG in *Photo match and montage*. HEIC is not read; export it as JPEG and keep the metadata. The tool reads the EXIF:
+   - **Lens:** the 35 mm-equivalent focal length sets the field of view, by the CIPA diagonal definition. *Hold lens from EXIF* keeps it fixed in the fit.
+   - **Capture time:** *Light the model at the photo's time* sets the sun.
+   - **GPS:** *Use photo GPS as prior* moves the camera there, converted from GDA2020 to MGA56 with the Krüger series (checked against pyproj to 1 mm), and sets the station prior.
+2. **Fit the camera** to landmark pairs (§ matching below). Aim for grade A.
+3. **Show the montage** and choose a layer:
+   - E2 massing;
+   - E1 massing;
+   - *As-built check*: the E1 outline, with the part of E2 outside the E1 envelope tinted. Use this when the photo already shows the built towers.
+   - *Wireline*: E1 and E2 outlines.
+4. **Occlusion and foreground.** The towers are hidden behind every modelled surface by a depth test, using the same rule as the tested masks. *Paint foreground mask* keeps the photograph over trees, poles or fences that the model does not contain.
+5. **Save montage package** writes one ZIP. It contains:
+   - the unaltered photograph;
+   - the wireline;
+   - the E1 and E2 montages;
+   - the as-built check;
+   - a camera plan;
+   - the mask;
+   - `record.json`: camera, lens, time, residuals, sources, and a checklist of the elements NSW LEC Policy PPL 15 asks for, each marked provided / missing / not done;
+   - `SHA256SUMS`.
+
+**Status of the output.** A montage from this tool is **camera-matched, not survey-verified**. It becomes survey-verified only when a registered surveyor coordinates the camera station and the reference points, and an expert adopts the method. See the private photography and survey brief.
 
 ## Camera convention
 

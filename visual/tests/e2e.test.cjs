@@ -314,3 +314,56 @@ test('v1.1 high-DPI regression (deviceScaleFactor 2): masks match the ray-caster
   assert.ok(inter / uni >= 0.99, `DPR 2 mask IoU ${inter / uni}`); assert.deepEqual(two.m, one.m, 'mask identical at 1x and 2x');
   assert.equal(two.png.readUInt32BE(16), 1800); assert.equal(two.png.readUInt32BE(20), 1200); assert.equal(sha(two.png), sha(one.png), 'export identical at 1x and 2x');
 });
+
+test('v1.2 photomontage: occlusion equals the tested masks; foreground mask keeps the photo; package complete and hashes verify', async () => {
+  const { ctx, page, errors } = await open(undefined, {}, '?preset=W01&q=medium', { full: true });
+  // a synthetic "existing photograph": same camera, modelled context only (no towers), full pipeline
+  const png = await page.evaluate(async () => { const a = window.__visual; const THREE = await import('three'); const W = a.cam.W, H = a.cam.H;
+    const rt = new THREE.WebGLRenderTarget(W, H); a.fx.interactive = false; a.renderer.setRenderTarget(rt); a.renderer.clear();
+    a.fx.renderPanel({ target: rt, rect: { x: 0, yGL: 0, w: W, h: H }, par: a.par(), scen: '__none__', key: 'synth', pr: 1 }); a.fx.dropComposers('synth');
+    const px = new Uint8Array(W * H * 4); a.renderer.readRenderTargetPixels(rt, 0, 0, W, H, px); a.renderer.setRenderTarget(null); rt.dispose();
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'); const img = g.createImageData(W, H);
+    for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4); for (let i = 3; i < img.data.length; i += 4) img.data[i] = 255; g.putImageData(img, 0, 0);
+    return Array.from(new Uint8Array(await (await new Promise(r => cv.toBlob(r, 'image/png'))).arrayBuffer())); });
+  const buf = Buffer.from(png);
+  await page.setInputFiles('#imgFile', { name: 'synthetic_existing.png', mimeType: 'image/png', buffer: buf }); await page.waitForFunction(() => !!window.__visual.match.image);
+  const r = await page.evaluate(async () => {
+    const a = window.__visual; a.cam = { ...a.cam, cy: a.cam.H / 2 + 0.2081 * a.cam.W / 2 };          // the exact camera that made the synthetic photo
+    const { renderMaskPixels } = await import('./js/compare.js'); const w = 900, h = 600, par = a.par();
+    const L = a.fx.renderLayerRGBA(par, 'E2', w, h), m = renderMaskPixels(a, par, 'E2', w, h); let i1 = 0, u1 = 0;
+    for (let i = 0; i < w * h; i++) { const p = L[i * 4 + 3] > 127 ? 1 : 0; if (p && m[i]) i1++; if (p || m[i]) u1++; }
+    // foreground mask over a block that overlaps the towers: those pixels must keep the photograph
+    a.montage.resetMask(); a.montage.paintPolygon([[600, 200], [900, 200], [900, 500], [600, 500]]);
+    const comp = a.montage.compose(w, h, 'E2').canvas.getContext('2d').getImageData(0, 0, w, h).data;
+    const ph = document.createElement('canvas'); ph.width = w; ph.height = h; const pg = ph.getContext('2d'); pg.drawImage(a.match.image.el, 0, 0, w, h); const pd = pg.getImageData(0, 0, w, h).data;
+    let kept = 0, inMask = 0, changedOutside = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, inside = x >= 301 && x < 449 && y >= 101 && y < 249; const same = Math.abs(comp[i * 4] - pd[i * 4]) <= 1 && Math.abs(comp[i * 4 + 2] - pd[i * 4 + 2]) <= 1;
+      if (inside && m[i]) { inMask++; if (same) kept++; } if (!inside && m[i] && !same) changedOutside++; }
+    return { iou: i1 / u1, inMask, kept, changedOutside };
+  });
+  assert.ok(r.iou >= 0.99, `montage layer vs mask IoU ${r.iou}`); assert.ok(r.inMask > 1000 && r.kept === r.inMask, JSON.stringify(r)); assert.ok(r.changedOutside > 1000, JSON.stringify(r));
+  const dl = page.waitForEvent('download', { timeout: 240000 }); await page.click('#btnMontageExport'); const d = await dl; const zip = fs.readFileSync(await d.path());
+  // read the stored ZIP and verify SHA256SUMS
+  const entries = {}; let p = 0; while (zip.readUInt32LE(p) === 0x04034b50) { const n = zip.readUInt16LE(p + 26), sz = zip.readUInt32LE(p + 18); const name = zip.slice(p + 30, p + 30 + n).toString(); entries[name] = zip.slice(p + 30 + n, p + 30 + n + sz); p += 30 + n + sz; }
+  for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_SK48_E2.png', '3_montage_E1_SK48.png', '4_montage_E2.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
+  assert.equal(sha(entries['1_existing_synthetic_existing.png']), sha(buf), 'the photograph is included unaltered');
+  for (const line of entries['SHA256SUMS'].toString().trim().split('\n')) { const [h, n] = line.split(/\s+/); assert.equal(sha(entries[n]), h, n); }
+  const rec = JSON.parse(entries['record.json']); assert.equal(rec.camera.surveyed, false); assert.match(rec.status, /NOT survey-verified/); assert.equal(rec.ppl15_checklist.length, 10);
+  assert.equal(rec.photograph.sha256, sha(buf)); assert.ok(rec.occlusion.foreground_mask.pixels > 0);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test('v1.2 photo metadata in the browser: EXIF lens sets the field of view; GPS becomes the station prior; capture time sets the sun', async () => {
+  const { ctx, page } = await open(undefined, {}, '?preset=NG57');
+  const X = FIX('exif_expected.json'); await page.setInputFiles('#imgFile', path.join(VIS, 'tests', 'fixtures', 'exif_sample_be.jpg')); await page.waitForFunction(() => !!window.__visual.montage.meta);
+  const info = await page.textContent('#exifInfo'); assert.match(info, /SyntheticCam/); assert.match(info, /26 mm equiv/); assert.match(info, /GPS → MGA E 503978/);
+  const m = await page.evaluate(async () => { const a = window.__visual, CM = await import('./js/camera_model.js'), P = await import('./js/photo_meta.js');
+    return { hfov: a.cam.hfov, want: CM.hfovFromFocal(300, P.focalPxFrom35(26, 300, 200)), fixF: document.getElementById('fixF').checked, W: a.cam.W }; });
+  assert.ok(Math.abs(m.hfov - m.want) < 1e-9 && m.fixF && m.W === 300, JSON.stringify(m));
+  await page.click('#btnGpsPrior'); await settle(page);
+  const c = await page.evaluate(() => ({ x: window.__visual.cam.x, y: window.__visual.cam.y, prior: document.getElementById('priorXY').checked, mode: window.__visual.state.mode }));
+  assert.ok(Math.abs(c.x - (X.E - 504045)) < 1e-6 && Math.abs(c.y - (X.N - 6966712)) < 1e-6 && c.prior && c.mode === 'free', JSON.stringify(c));
+  await page.click('#btnPhotoTime'); await settle(page);
+  assert.deepEqual(await page.evaluate(() => [window.__visual.fx.lighting.date, window.__visual.fx.lighting.time, window.__visual.fx.lighting.mode]), [[2026, 6, 21], [8, 30], 'sun']);
+  await ctx.close();
+});
