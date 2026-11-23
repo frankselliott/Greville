@@ -57,3 +57,34 @@ Browser: Playwright Chromium (headless; renderer as recorded in each export JSON
 **Cross-check of sun and camera.**
 - At W01 on 21 June 07:30, the rendered sun disc sits at grid bearing ≈ 57°, elevation ≈ 9°.
 - This agrees with the engine (azimuth 57.3°, altitude 9.4°) read off the independently projected compass and elevation guides.
+
+## v1.2 — photomontage mode (branch `claude/visual-montage`, base `46971b9`)
+
+| # | Test | Result |
+|---|---|---|
+| Q8.1 | Protected files | PASS |
+| Q8.2 | Unit tests | 18/18 PASS. New: EXIF big- and little-endian; GPS→MGA56 within 1 mm of pyproj over 7 positions; capture time to AEST with a +08:00 offset and with no offset recorded; fixed-lens fit recovery; ZIP structure and CRC-32. |
+| Q8.3 | End-to-end | 22/22 PASS in 197 s. All v1.0 and v1.1 tests pass with unchanged thresholds; IoU 0.99965 / 0.99968 / 1 / 1. |
+| Q8.4 | Montage occlusion | The tower layer, hidden by the modelled context through a depth-only pre-pass, agrees with the tested mask at IoU ≥ 0.99 at W01. |
+| Q8.5 | Foreground mask | Every masked tower pixel keeps the photograph exactly; pixels outside the mask are changed. |
+| Q8.6 | Package | The photo in the ZIP is byte-identical to the input; every SHA-256 in SHA256SUMS verifies; `record.json` says camera-matched, not survey-verified. |
+
+**Defect found and fixed during development.** The first montage showed the towers in front of the laundry roof, which stands in front of them in the model. The cause was draw order: the depth-only occluders were drawn after the towers, so the depth test had nothing to test against. The occluders are now forced to render first (`renderOrder −10`). The occlusion test (Q8.4) guards against a regression.
+
+**Not a defect, but worth recording.** Loading a photograph resets the principal point to the image centre. This is right for an ordinary photograph. A frame rendered with a lens shift (such as W01's archived 0.2081) needs that shift entered again, either by hand or through the fit.
+
+## v1.3 — usability pass (branch `claude/visual-montage`)
+
+| # | Test | Result |
+|---|---|---|
+| Q9.1 | Protected files | PASS |
+| Q9.2 | Unit tests | 18/18 PASS |
+| Q9.3 | End-to-end | 23/23 PASS in 160 s. IoU unchanged: 0.99965 / 0.99968 / 1 / 1. |
+| Q9.4 | New UX test | PASS. It covers: tabs and arrow keys; step order (photo → align → montage → save) with controls disabled until there is a photo; drop-to-load; the picking banner, with Esc stopping picking and leaving the camera unchanged; the scenario bar swapping E1/E2 without moving the camera; Save and Share in the header; the minimap fold; and the status-bar text. |
+
+**Defects found by the UX test:**
+1. Mouse clicks on on-stage controls were captured by the drag-look handler's pointer capture, so the scenario bar did not respond to a mouse.
+2. Locked photo steps blocked the synthetic self-test, which does not need a photo.
+3. Pill-style radios hid the real input from the pointer.
+
+All three are fixed.

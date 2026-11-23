@@ -112,6 +112,36 @@ export class FX {
     c.render();
     this.blit(c.readBuffer.texture, target, rect, clip);
   }
+  /** Scenario towers only, shaded under the current lighting, with ALPHA, at w x h; every other modelled surface (context,
+   *  terrain, canopy if shown) writes depth only, so it hides the towers exactly as in the tested masks but adds no colour.
+   *  Shadows are kept (context still casts onto the towers). Returns straight (un-premultiplied) RGBA bytes, rows top-down. */
+  renderLayerRGBA(par, scen, w, h, { edges = false, storeys = false } = {}) {
+    const app = this.app, R = app.renderer; const saved = []; const towerKeys = new Set(['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']);
+    app.applyVisibility(scen); app.setCameraMatrices(par, app.cam.W, app.cam.H);
+    const depthOnly = this._depthOnly || (this._depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
+    for (const b of [...this.backgrounds(), app.markers, app.groups.BACKDROP]) { saved.push([b, 'visible', b.visible]); b.visible = false; }
+    app.root.traverse(o => {
+      const r = o.userData?.role;
+      if (o.isLineSegments) { saved.push([o, 'visible', o.visible]); o.visible = o.visible && ((r === 'edge' && edges && towerKeys.has(o.userData.collection)) || (r === 'storeys' && storeys)); return; }
+      if ((o.isMesh || o.isInstancedMesh) && !towerKeys.has(o.userData?.collection)) { saved.push([o, 'material', o.material], [o, 'renderOrder', o.renderOrder]); o.material = depthOnly; o.renderOrder = -10; }   // occluders first: they write depth only
+    });
+    R.shadowMap.needsUpdate = this.sun.castShadow && this.sun.visible;
+    const Q = QUALITY[this.quality], rt = new THREE.WebGLRenderTarget(w, h, { samples: Q.samples || 4, type: this.hdrType });
+    const c = new EffectComposer(R, rt); c.setPixelRatio(1); c.setSize(w, h); c.renderToScreen = false;
+    c.addPass(new RenderPass(app.scene, app.camera, null, 0x000000, 0)); c.addPass(new OutputPass()); c.render();
+    const out = new THREE.WebGLRenderTarget(w, h, { samples: 0 }); const q = this._copyA || (this._copyA = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tDiffuse: { value: null } }, vertexShader: CopyShader.vertexShader,
+      fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main() { gl_FragColor = texture2D(tDiffuse, vUv); }', depthTest: false, depthWrite: false, blending: THREE.NoBlending })));
+    q.material.uniforms.tDiffuse.value = c.readBuffer.texture; const prev = R.getRenderTarget(); out.scissorTest = false; R.setRenderTarget(out); R.setClearColor(0x000000, 0); R.clear(); q.render(R);
+    const px = new Uint8Array(w * h * 4); R.readRenderTargetPixels(out, 0, 0, w, h, px); R.setRenderTarget(prev); R.setClearColor(0xc9ced4, 1);
+    disposeComposer(c); out.dispose();
+    for (const [o, k, v] of saved.reverse()) o[k] = v;
+    const img = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = ((h - 1 - y) * w + x) * 4, j = (y * w + x) * 4, a = px[i + 3];
+      if (a) { const k = 255 / a; img[j] = Math.min(255, px[i] * k); img[j + 1] = Math.min(255, px[i + 1] * k); img[j + 2] = Math.min(255, px[i + 2] * k); img[j + 3] = a; }
+    }
+    return img;
+  }
   // rect: {x, yGL (from the bottom), w, h}; CSS px for the screen (the renderer applies the pixel ratio), target px for a render
   // target (set on the target itself, so the pixel ratio is NOT applied: this is the v1.0 high-DPI export/mask defect, fixed).
   blit(tex, target, rect, clip = null) {

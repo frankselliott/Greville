@@ -18,7 +18,7 @@ export class MatchUI {
     $('btnUseImageFrame').onclick = () => this.useImageFrame();
     $('ctrlSearch').onchange = (e) => this.chooseControl(e.target.value);
     const dl = $('ctrlList'); for (const p of app.controlsLib) { const o = document.createElement('option'); o.value = p.id; dl.appendChild(o); }
-    app.stage.addEventListener('pointerdown', (e) => { if (this.picking) { e.preventDefault(); this.click(e); } });
+    app.stage.addEventListener('pointerdown', (e) => { if (this.picking && !e.target.closest?.('button, input, select, a, #compareBar, #mapWrap, #pad, #pickBanner')) { e.preventDefault(); this.click(e); } });
     this.ui();
   }
   async load(file) {
@@ -26,12 +26,12 @@ export class MatchUI {
     if (!/^image\/(png|jpeg)$/.test(file.type)) return this.app.flash('Only PNG or JPEG images are accepted.');
     const buf = await file.arrayBuffer(); const sha = await sha256Hex(buf);
     const url = URL.createObjectURL(new Blob([buf], { type: file.type })); const img = new Image(); img.src = url; await img.decode();
-    this.image = { name: file.name, type: file.type, bytes: buf.byteLength, sha256: sha, W: img.naturalWidth, H: img.naturalHeight, el: img, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null };
-    this.pairs = []; this.fit = null; this.flags = []; this.alts = []; this.useImageFrame(); this.ui();
+    this.image = { name: file.name, type: file.type, bytes: buf.byteLength, sha256: sha, W: img.naturalWidth, H: img.naturalHeight, el: img, bytesBuf: buf, lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null };
+    this.pairs = []; this.fit = null; this.flags = []; this.alts = []; this.useImageFrame(); this.app.montage?.onImage(this.image, buf); this.ui();
   }
   useImageFrame() {                                   // frame = image pixel size; principal point at centre until fitted or edited
     if (!this.image) return this.app.flash('Load an image first.');
-    const c = this.app.cam; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2 }; this.app.render();
+    const c = this.app.cam, h = this.app.montage?.meta?.hfov_from_exif; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2, ...(h ? { hfov: h } : {}) }; this.app.render();
   }
   onFrameChange() { if (this.image && $('keepImageFrame').checked) { const c = this.app.cam; this.app.cam = { ...c, W: this.image.W, H: this.image.H, cx: this.image.W / 2, cy: this.image.H / 2 }; } }
   toFrame(e, panel) {
@@ -61,8 +61,9 @@ export class MatchUI {
     if (this.pairs.length < 4) return this.app.flash('At least 4 pairs are needed to attempt a fit (8+ for a determined camera).');
     const c = this.app.cam; const X = this.pairs.map(p => p.X), U = this.pairs.map(p => [p.u, p.v]);
     const prior = {}; if ($('priorZ').checked) prior.z = [c.z, +$('priorZsd').value || 0.5]; if ($('priorXY').checked) prior.xy = [c.x, c.y, +$('priorXYsd').value || 3];
-    const opts = { prior: Object.keys(prior).length ? prior : null, fixPP: $('fixPP').checked };
-    const F = FIT.fitCamera(X, U, c.W, c.H, { x: c.x, y: c.y, z: c.z, heading: c.heading, pitch: c.pitch, roll: c.roll, hfov: c.hfov }, opts);
+    const fpx = this.app.montage?.meta?.f_px_from_exif; const fixF = !!(fpx && $('fixF').checked);
+    const opts = { prior: Object.keys(prior).length ? prior : null, fixPP: $('fixPP').checked, fixF };
+    const F = FIT.fitCamera(X, U, c.W, c.H, { x: c.x, y: c.y, z: c.z, heading: c.heading, pitch: c.pitch, roll: c.roll, hfov: c.hfov, f_px: fixF ? fpx : undefined }, opts);
     F.grade = FIT.grade(F); this.alts = this.pairs.length >= 6 ? FIT.alternativeSolutions(X, U, c.W, c.H, F, opts) : [];
     this.flags = FIT.ambiguityFlags(X, U, this.pairs, F, c.W, c.H, this.alts); this.fit = { ...F, options: opts, pair_ids: this.pairs.map(p => p.id) };
     this.ui(); this.app.render();
@@ -95,10 +96,10 @@ export class MatchUI {
                                par: this.fit.par, names: this.fit.names, se: this.fit.se, hfov_deg: this.fit.hfov_deg, options: this.fit.options, condition: this.fit.cond } : null,
              flags: this.flags, alternatives: this.alts.map(x => ({ par: x.par, rms_px: x.rms_px, dpos_m: x.dpos, dang_deg: x.dang, distinct: x.distinct })) };
   }
-  drawOverlay(panel) {
+  drawOverlay(panel, montaged = false) {
     const a = this.app, c = a.octx; if (a.state.view !== 'single') return;
     const sx = panel.w / a.cam.W, sy = panel.h / a.cam.H, P = (u, v) => [panel.x + u * sx, panel.y + v * sy];
-    if (this.image && this.opacity > 0) { c.save(); c.globalAlpha = this.opacity; c.drawImage(this.image.el, panel.x, panel.y, panel.w, panel.h); c.restore(); }
+    if (this.image && this.opacity > 0 && !montaged) { c.save(); c.globalAlpha = this.opacity; c.drawImage(this.image.el, panel.x, panel.y, panel.w, panel.h); c.restore(); }
     const par = a.par();
     if (this.picking && this.step === 'control') {
       c.fillStyle = 'rgba(208,59,59,0.85)';
@@ -113,13 +114,17 @@ export class MatchUI {
     if (this.pending) { const [x, y] = P(this.pending.u, this.pending.v); c.strokeStyle = '#eb6834'; c.lineWidth = 2; c.strokeRect(x - 7, y - 7, 14, 14); }
   }
   ui() {
-    $('imgInfo').textContent = this.image ? `${this.image.name} · ${this.image.W}×${this.image.H} px · ${this.image.bytes} B · SHA-256 ${this.image.sha256}` : 'No image loaded. Images stay in this browser; they are never uploaded.';
-    $('btnPick').textContent = this.picking ? (this.step === 'image' ? 'Picking: click a point on the IMAGE…' : 'Picking: click the matching CONTROL dot (or type its ID)…') : 'Add landmark pairs';
+    $('imgInfo').textContent = this.image ? `${this.image.name} · ${this.image.W}×${this.image.H} px · ${this.image.bytes} B · SHA-256 ${this.image.sha256}` : '';
+    const dz = $('dropzone'); if (dz) dz.innerHTML = this.image ? `<b>Replace photo…</b> (or drop another on the view)` : `<b>Choose photo…</b> or drop it on the view<br><small>JPEG with its original metadata is best (HEIC: export as JPEG)</small>`;
+    $('btnPick').textContent = this.picking ? 'Stop adding pairs' : (this.pairs.length ? 'Add more pairs' : 'Add landmark pairs');
     $('btnPick').classList.toggle('on', this.picking);
+    const bn = $('pickBanner'); if (bn) { bn.hidden = !this.picking;
+      bn.innerHTML = this.step === 'image' ? `<b>Pair ${this.pairs.length + 1}:</b> click a landmark on the photo (a building corner, gutter end, pole top) · <kbd>Esc</kbd> to stop`
+                                           : `<b>Pair ${this.pairs.length + 1}:</b> now click the matching <span style="color:#ff8a80">red dot</span> on the model, or type its ID in the panel · <kbd>Esc</kbd> to stop`; }
     const rows = this.pairs.map((p, i) => `<tr><td>${i + 1}</td><td>${p.id}</td><td>${p.cls}</td><td>${p.u.toFixed(1)}, ${p.v.toFixed(1)}</td><td>${this.fit ? this.fit.resid_px[i].toFixed(2) : '—'}</td><td>${this.fit && this.fit.loo_px.length ? this.fit.loo_px[i].toFixed(2) : '—'}</td></tr>`).join('');
     $('pairTable').innerHTML = `<tr><th>#</th><th>control</th><th>class</th><th>image u, v</th><th>resid px</th><th>LOO px</th></tr>${rows}`;
     const F = this.fit;
-    $('fitOut').innerHTML = !F ? `${this.pairs.length} pair(s). A fit needs 4 or more pairs; a determined camera needs 8 or more well-spread, non-coplanar points, including context beyond the towers.` :
+    $('fitOut').innerHTML = !F ? (this.pairs.length ? `${this.pairs.length} pair${this.pairs.length === 1 ? '' : 's'} so far: ${this.pairs.length < 4 ? `${4 - this.pairs.length} more to try a fit, ` : ''}8+ for a determined camera.` : '') :
       `<b>${this.status()}</b><br>n ${F.n} · RMS ${F.rms_px.toFixed(2)} px · max ${F.max_px.toFixed(2)} px · LOO max ${F.loo_px.length ? Math.max(...F.loo_px).toFixed(2) : 'n/a'} px · cond ${F.cond ? F.cond.toExponential(1) : '—'}<br>` +
       `E ${(F.par[0] + 504045).toFixed(2)} ±${F.se[0].toFixed(2)} · N ${(F.par[1] + 6966712).toFixed(2)} ±${F.se[1].toFixed(2)} · RL ${F.par[2].toFixed(2)} ±${F.se[2].toFixed(2)} · hdg ${F.par[3].toFixed(2)}° · pitch ${F.par[4].toFixed(2)}° · roll ${F.par[5].toFixed(2)}° · HFOV ${F.hfov_deg.toFixed(2)}°` +
       (this.flags.length ? '<ul>' + this.flags.map(f => `<li class="${f.severity}">${f.code}: ${f.text}</li>`).join('') + '</ul>' : '') +

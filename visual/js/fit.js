@@ -55,10 +55,12 @@ function rawResiduals(par, X, U) {
  * X: [[x,y,z],...] local frame; U: [[u,v],...] pixels; init: {x,y,z,heading,pitch,roll,hfov}; prior: {z:[mean,sd], xy:[x,y,sd]}
  * returns the archived fit() fields: par, se, resid_px, rms_px, max_px, loo_px, hfov_deg, n, fix_pp (+ cost, free)
  */
-export function fitCamera(X, U, W, H, init, { prior = null, fixPP = true, headingStarts = [0, -8, 8], loo = true } = {}) {
-  const f0 = focalFromHfov(W, init.hfov ?? 60);
+// fixF: hold the focal length (pixels) at init.f_px, e.g. from the photo's EXIF 35 mm-equivalent focal length, so only the
+// 6 pose parameters (and the principal point if fixPP is false) are estimated. Thresholds and flags are unchanged.
+export function fitCamera(X, U, W, H, init, { prior = null, fixPP = true, fixF = false, headingStarts = [0, -8, 8], loo = true } = {}) {
+  const f0 = fixF && init.f_px ? init.f_px : focalFromHfov(W, init.hfov ?? 60);
   const p0 = [init.x, init.y, init.z, init.heading, init.pitch ?? 0, init.roll ?? 0, f0, W / 2, H / 2];
-  const FREE = fixPP ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  const FREE = [0, 1, 2, 3, 4, 5, ...(fixF && init.f_px ? [] : [6]), ...(fixPP ? [] : [7, 8])];
   const full = (q, base = p0) => { const v = base.slice(); FREE.forEach((k, i) => { v[k] = q[i]; }); return v; };
   const scale = FREE.map(k => SCALE[k]);
   const mkRes = (Xs, Us) => (q) => {
@@ -96,7 +98,7 @@ export function fitCamera(X, U, W, H, init, { prior = null, fixPP = true, headin
   }
   const rms = Math.sqrt(r.reduce((a, v) => a + v * v, 0) / r.length);
   return { par: P, names: ['x', 'y', 'z', 'heading', 'pitch', 'roll', 'f_px', 'cx', 'cy'], se, resid_px: r, rms_px: rms, max_px: Math.max(...r),
-           loo_px: looPx, hfov_deg: hfovFromFocal(W, P[6]), W, H, n: X.length, fix_pp: fixPP, cost: best.cost, cond };
+           loo_px: looPx, hfov_deg: hfovFromFocal(W, P[6]), W, H, n: X.length, fix_pp: fixPP, fix_f: !!(fixF && init.f_px), cost: best.cost, cond };
 }
 function conditionNumber(A) {                       // symmetric PSD: ratio of extreme eigenvalues by Jacobi rotation
   const n = A.length, M = A.map(r => r.slice());
@@ -154,12 +156,12 @@ function symEig3(A) {                                // eigenvalues of a symmetr
 }
 // alternative solutions: restart the fit from a ring of stations (+-dxy) and headings; keep local minima whose cost is within
 // `costFactor` of the best and whose camera differs by > 1 m or > 2 deg ('distinct').
-export function alternativeSolutions(X, U, W, H, F, { prior = null, fixPP = true, dxy = 8, costFactor = 1.5 } = {}) {
+export function alternativeSolutions(X, U, W, H, F, { prior = null, fixPP = true, fixF = false, dxy = 8, costFactor = 1.5 } = {}) {
   const [x, y, z, h, p, r, f] = F.par; const hf = hfovFromFocal(W, f); const out = [];
   const starts = [];
   for (const [ox, oy] of [[dxy, 0], [-dxy, 0], [0, dxy], [0, -dxy], [dxy, dxy], [-dxy, -dxy]]) for (const dh of [0, 15, -15]) starts.push({ x: x + ox, y: y + oy, z, heading: h + dh, pitch: p, roll: r, hfov: hf * (1 + (Math.abs(ox) > 0 ? 0.15 : -0.15)) });
   for (const s of starts) {
-    const G = fitCamera(X, U, W, H, s, { prior, fixPP, headingStarts: [0], loo: false });
+    const G = fitCamera(X, U, W, H, fixF ? { ...s, f_px: f } : s, { prior, fixPP, fixF, headingStarts: [0], loo: false });
     if (!isFinite(G.cost) || G.cost > costFactor * Math.max(F.cost, 1e-9) + 1e-6) continue;
     const dpos = Math.hypot(G.par[0] - x, G.par[1] - y, G.par[2] - z), dang = Math.max(Math.abs(angDiff(G.par[3], h)), Math.abs(G.par[4] - p), Math.abs(G.par[5] - r));
     const distinct = dpos > 1.0 || dang > 2.0;

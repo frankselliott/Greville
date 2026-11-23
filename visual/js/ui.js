@@ -16,7 +16,8 @@ const radioVal = (name) => document.querySelector(`input[name=${name}]:checked`)
 
 export class UI {
   constructor(app) {
-    this.app = app; this.open = null; this.buildMenus(); this.bindKeys(); this.bindHelp(); this.bindPanelMemory(); this.minimapInit();
+    this.app = app; this.open = null; this.buildMenus(); this.bindKeys(); this.bindHelp(); this.bindPanelMemory(); this.minimapInit(); this.bindTabs(); this.bindDrop();
+    $('mapToggle').onclick = () => setCtl('minimapChk', !app.state.minimap);
   }
   // ------------------------------------------------------------------ menus
   menus() {
@@ -27,7 +28,8 @@ export class UI {
     return [
       ['File', [
         { label: 'Save PNG + JSON record', sc: 'Ctrl+S', run: () => a.exportNow() },
-        { label: 'Load perspective image (local only)…', run: () => $('imgFile').click() },
+        { label: 'Load photograph (local only)…', run: () => { this.setTab('photo'); $('imgFile').click(); } },
+        { label: 'Save photomontage package (.zip)', run: () => { this.setTab('photo'); $('btnMontageExport').click(); } },
         { label: 'Copy link to this view', run: () => this.copyLink() },
         'sep',
         { label: 'Source register', run: () => window.open('SOURCE_REGISTER.md', '_blank', 'noopener') },
@@ -39,6 +41,7 @@ export class UI {
         { label: 'Side panel', type: 'check', get: () => !document.body.classList.contains('panel-hidden'), run: () => { document.body.classList.toggle('panel-hidden'); a.render(); } },
         { label: 'Minimap', sc: 'M', type: 'check', get: () => st.minimap, run: () => setCtl('minimapChk', !st.minimap) },
         { label: 'Compass and elevation guides', sc: 'G', type: 'check', get: () => st.guides, run: () => setCtl('guides', !st.guides) },
+        { label: 'Photomontage (needs a photo)', type: 'check', get: () => !!a.montage?.on, run: () => { this.setTab('photo'); setCtl('montageOn', !a.montage?.on); } },
         'sep',
         { head: 'Quality' },
         ...Object.entries(QUALITY).map(([k, q]) => ({ label: q.label, type: 'radio', get: () => a.fx.quality === k, run: () => setCtl('qualitySel', k) })),
@@ -144,6 +147,7 @@ export class UI {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target?.tagName) && !(e.ctrlKey || e.metaKey)) return;
       if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); this.close(); this.app.exportNow(); return; }
       if (e.ctrlKey || e.metaKey || e.altKey || this.keysBlocked()) { if (e.key === 'Escape' && this.open) this.close(true); return; }
+      if (e.key === 'Escape') { const m = this.app.match, mo = this.app.montage; if (m?.picking) { m.picking = false; m.pending = null; m.step = 'image'; m.ui(); this.app.render(); } if (mo?.painting) mo.setPainting(false); return; }
       const views = { 1: 'single', 2: 'side', 3: 'swipe', 4: 'mask', 5: 'framing' };
       if (e.key === '?') { e.preventDefault(); this.help(); }
       else if (views[e.key]) { e.preventDefault(); setRadio('view', views[e.key]); }
@@ -154,10 +158,40 @@ export class UI {
   }
   bindPanelMemory() {                               // remember collapsed panel sections (per browser; convenience only)
     let saved = {}; try { saved = JSON.parse(localStorage.getItem('greville-visual-sections') || '{}'); } catch (_) { saved = {}; }
-    document.querySelectorAll('aside details').forEach(d => {
+    document.querySelectorAll('aside details[data-sec]').forEach(d => {
       if (d.dataset.sec in saved) d.open = !!saved[d.dataset.sec];
       d.addEventListener('toggle', () => { saved[d.dataset.sec] = d.open; try { localStorage.setItem('greville-visual-sections', JSON.stringify(saved)); } catch (_) { /* storage unavailable */ } });
     });
+  }
+  // ------------------------------------------------------------------ tabs, drag & drop, photo steps
+  bindTabs() { document.querySelectorAll('[data-tab-btn]').forEach(b => { b.onclick = () => this.setTab(b.dataset.tabBtn); b.onkeydown = (e) => {
+    const all = [...document.querySelectorAll('[data-tab-btn]')], i = all.indexOf(b); if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); const n = all[(i + (e.key === 'ArrowRight' ? 1 : -1) + all.length) % all.length]; this.setTab(n.dataset.tabBtn); n.focus(); } }; }); }
+  setTab(name) {
+    document.querySelectorAll('[data-tab-btn]').forEach(b => { const on = b.dataset.tabBtn === name; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    document.querySelectorAll('[data-tab]').forEach(s => { s.hidden = s.dataset.tab !== name; }); this.tab = name;
+    if (matchMedia('(max-width: 820px)').matches) document.body.classList.add('panel-open'); else if (document.body.classList.contains('panel-hidden')) { document.body.classList.remove('panel-hidden'); this.app.render(); }
+  }
+  bindDrop() {
+    const st = this.app.stage, hint = $('dropHint'); let depth = 0;
+    const isFile = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+    st.addEventListener('dragenter', (e) => { if (!isFile(e)) return; e.preventDefault(); depth++; hint.hidden = false; });
+    st.addEventListener('dragover', (e) => { if (isFile(e)) e.preventDefault(); });
+    st.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) hint.hidden = true; });
+    st.addEventListener('drop', (e) => { if (!isFile(e)) return; e.preventDefault(); depth = 0; hint.hidden = true; const f = e.dataTransfer.files[0]; if (!f) return;
+      this.setTab('photo'); this.app.match.load(f); });
+  }
+  updateSteps() {
+    const a = this.app, m = a.match, mo = a.montage; if (!m || !mo) return; const img = !!m.image, F = m.fit, blocked = m.flags?.some(f => f.severity === 'block');
+    const fitOK = !!F && !blocked && F.grade !== 'D', n = m.pairs.length;
+    const set = (i, cls, txt) => { const el = $('step' + i); el.classList.remove('done', 'current', 'locked'); if (cls) el.classList.add(cls); $('s' + i + 'state').textContent = txt; };
+    set(1, img ? 'done' : 'current', img ? `${m.image.W}×${m.image.H}` : 'start here');
+    set(2, fitOK ? 'done' : img ? 'current' : '', F ? (fitOK ? `grade ${F.grade} · RMS ${F.rms_px.toFixed(1)} px` : 'fit not reliable yet') : img ? `${n} pair${n === 1 ? '' : 's'} · need 8+` : 'after step 1');
+    set(3, !img ? 'locked' : mo.on ? 'done' : fitOK ? 'current' : '', !img ? 'needs a photo' : mo.on ? 'showing' : fitOK ? 'ready' : 'after step 2');
+    set(4, !img ? 'locked' : mo.on ? 'current' : '', !img ? 'needs a photo' : 'camera-matched');
+    $('btnFit').disabled = n < 4; $('btnFit').title = n < 4 ? 'Needs at least 4 pairs (8+ for a determined camera)' : '';
+    for (const id of ['montageOn', 'montageLayer', 'btnPhotoTime', 'montageExposure', 'btnPaint', 'brushSize', 'btnClearMask', 'btnMontageExport', 'btnUseImageFrame', 'imgOpacity']) $(id).disabled = !img;
+    $('btnGpsPrior').disabled = !mo.meta?.gps_mga; $('btnPhotoTime').disabled = !img || !mo.meta?.capture_aest;
+    const badge = $('photoBadge'); badge.hidden = !img;
   }
   // ------------------------------------------------------------------ URL state
   stateToQuery() {
@@ -219,20 +253,20 @@ export class UI {
       ctx.beginPath(); ctx.moveTo(q[0], panel.y + band); ctx.lineTo(q[0], panel.y + band - len); ctx.stroke();
       if (az % 10 === 0) { ctx.font = card[az] ? 'bold 11px system-ui, sans-serif' : '10px system-ui, sans-serif'; ctx.fillText(card[az] ? `${card[az]}` : `${az}°`, q[0], panel.y + 11); }
     }
-    ctx.textAlign = 'right'; ctx.font = '9px system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(panel.x + panel.w - 62, panel.y + band, 62, 12); ctx.fillStyle = '#444'; ctx.fillText('grid bearing', panel.x + panel.w - 4, panel.y + band + 9); ctx.textAlign = 'left';
+    ctx.textAlign = 'left'; ctx.font = '9px system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(panel.x, panel.y + band, 64, 12); ctx.fillStyle = '#444'; ctx.fillText('grid bearing', panel.x + 4, panel.y + band + 9);
     // elevation ruler along the line of constant bearing through the left edge of the frame centre row
-    const az0 = CM.azEl(CM.pixelRay(par, 0.07 * W, par[8]))[0];
+    const az0 = CM.azEl(CM.pixelRay(par, 0.95 * W, par[8]))[0];
     ctx.strokeStyle = 'rgba(20,20,20,.75)'; ctx.fillStyle = '#111'; ctx.lineWidth = 1; ctx.beginPath(); pen = false;
     for (let el = -30; el <= 89.5; el += 0.5) { const q = proj(az0, el); if (inside(q)) { pen ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); pen = true; } else pen = false; }
     ctx.stroke();
     let lastY = Infinity;
     for (let el = -30; el <= 85; el += 5) {
       const q = proj(az0, el); if (!inside(q)) continue; const major = el % 10 === 0;
-      ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[0] + (major ? 9 : 5), q[1]); ctx.stroke();
-      if (major && Math.abs(q[1] - lastY) > 13) { const t = `${el}°`; const w = ctx.measureText(t).width; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(q[0] + 11, q[1] - 7, w + 4, 13); ctx.fillStyle = '#111'; ctx.fillText(t, q[0] + 13, q[1] + 4); lastY = q[1]; }
+      ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[0] - (major ? 9 : 5), q[1]); ctx.stroke();
+      if (major && Math.abs(q[1] - lastY) > 13) { const t = `${el}°`; const w = ctx.measureText(t).width; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(q[0] - 15 - w, q[1] - 7, w + 4, 13); ctx.fillStyle = '#111'; ctx.fillText(t, q[0] - 13 - w, q[1] + 4); lastY = q[1]; }
     }
     const qBot = [...Array(120).keys()].map(i => proj(az0, -30 + i)).find(inside);           // ruler title at its lowest visible point
-    if (qBot) { const t = `elevation @ bearing ${az0.toFixed(0)}°`; ctx.font = '10px system-ui, sans-serif'; const w = ctx.measureText(t).width, y = Math.min(panel.y + panel.h - 6, qBot[1]); ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(qBot[0] + 11, y - 10, w + 4, 13); ctx.fillStyle = '#333'; ctx.fillText(t, qBot[0] + 13, y); }
+    if (qBot) { const t = `elevation @ bearing ${az0.toFixed(0)}°`; ctx.font = '10px system-ui, sans-serif'; const w = ctx.measureText(t).width, y = Math.min(panel.y + panel.h - 6, qBot[1]); ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(qBot[0] - 15 - w, y - 10, w + 4, 13); ctx.fillStyle = '#333'; ctx.fillText(t, qBot[0] - 13 - w, y); }
     ctx.restore();
   }
   // ------------------------------------------------------------------ minimap
@@ -259,7 +293,7 @@ export class UI {
     return cv;
   }
   drawMinimap() {
-    const a = this.app, cv = this.mm.cv, st = a.state; cv.hidden = !st.minimap; if (!st.minimap || !a.cam) return;
+    const a = this.app, cv = this.mm.cv, st = a.state; cv.hidden = !st.minimap; $('mapToggle').setAttribute('aria-expanded', String(!!st.minimap)); if (!st.minimap || !a.cam) return;
     const S = cv.clientWidth || 220, dpr = Math.min(window.devicePixelRatio || 1, 2);
     if (cv.width !== Math.round(S * dpr)) { cv.width = cv.height = Math.round(S * dpr); this.mm.base = null; }
     if (!this.mm.base || this.mm.baseS !== S) { this.mm.base = this.minimapBase(S, dpr); this.mm.baseS = S; }

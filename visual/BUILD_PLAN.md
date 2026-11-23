@@ -230,6 +230,62 @@ The interactive 3D visual-amenity viewer for the Greville site (development appl
 - **G7.1–G7.6 — PASS.** Full suite: protected PASS, unit 15/15, e2e 20/20. Details and numbers are in QA.md §v1.1.
 - **G6.3 (live URL).** Still verified only after the owner merges, as for v1.0.
 
+## v1.2 — Photomontage mode — **DONE**
+
+**Request:** use photo backgrounds to make the views as realistic as possible, at a standard fit for court.
+
+**Finding that shaped the work:** an inventory of the photographs in Drive found none that can carry a court-standard montage of Buildings A and B.
+- The resident's Lot 64 photos face a different building.
+- The Street View captures show Hudson Road houses and have no metadata.
+
+So v1.2 builds the montage pipeline. A private brief, outside this repository, sets out how to collect survey-controlled photographs.
+
+**Gates:**
+
+| Gate | Test |
+|---|---|
+| G8.1 | The EXIF reader handles big- and little-endian files. GPS→MGA56 agrees with pyproj to 1 mm. Capture time converts to AEST correctly. |
+| G8.2 | With the lens held from EXIF, the fit recovers a synthetic camera and leaves the focal length exactly as given. |
+| G8.3 | The montage occlusion equals the tested masks (IoU ≥ 0.99). Painted foreground keeps the photograph pixel for pixel. |
+| G8.4 | The package is complete. The photograph is byte-identical to the input. Every SHA-256 verifies. The record says "not survey-verified". |
+| G8.5 | In the browser, the EXIF lens sets the field of view, GPS sets the station prior, and the capture time sets the sun. |
+| G8.6 | Every earlier gate still passes. |
+
+**Results:** G8.1–G8.6 PASS. Protected PASS; unit 18/18; e2e 22/22. Details in QA.md §v1.2.
+
+## v1.3 — Usability pass — **DONE**
+
+**Request:** "fix the UX".
+
+**Audit (screenshots, desktop and phone) found:**
+- one long scroll of nine panel sections;
+- an unordered wall of photo controls;
+- the E1/E2 action buried mid-panel, with a cryptic "E2 · E2 ⇄" toggle on the view;
+- overlays colliding (scenario label on the ruler, a large minimap);
+- a truncated monospace status line;
+- a default view of a blank wall at 12 m (NG57).
+
+**Changes:**
+- **Panel:** tabbed (Compare / Scene / Photo / About), with arrow-key navigation.
+- **Photo workflow:** four steps with live state (current / done / locked). The controls a step cannot use yet are disabled, with reasons. Drag-and-drop loads a photo, a picking banner guides landmark pairing, and Esc stops picking or painting.
+- **Scenario control:** an always-visible E1 | ⇄ | E2 bar on the view, placed in the letterbox band when there is room.
+- **Header:** Save image and Share.
+- **Guides:** the elevation ruler moved to the right; the scenario label is dropped in single view (the bar names it).
+- **Minimap:** folds from its own button, and is folded by default on phones.
+- **Status bar:** readable segments.
+- **Default viewpoint:** W01.
+- **Phone:** a bottom sheet with a close button.
+
+**Defects found and fixed:**
+- Mouse clicks on on-stage controls were captured by the drag-look handler, so the scenario bar did not respond. Drag-look, landmark picking and mask painting now ignore on-stage controls.
+- The pill radio buttons were not real pointer targets.
+
+**Gates:**
+- **G9.1** — every earlier gate still passes. The tests now open the right tab first. G2.4's "raise eye" step is pinned to NG57, because W01's archived eye (2.22 m) is at the station limit, where the refusal is correct.
+- **G9.2** — a new UX test covers tabs, step order, drop-to-load, the picking banner with Esc, the scenario bar not moving the camera, header actions, the minimap fold, and the status bar.
+
+**Results:** G9.1–G9.2 PASS. Protected PASS; unit 18/18; e2e 23/23. Details in QA.md §v1.3.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

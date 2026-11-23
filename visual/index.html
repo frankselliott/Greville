@@ -13,116 +13,174 @@
   <button id="panelToggle" aria-label="Show or hide controls" aria-controls="panel">☰</button>
   <h1>Greville <span class="h1sub">3D visual viewer</span></h1>
   <nav id="menubar" role="menubar" aria-label="Main menu"></nav>
-  <span class="badge">Investigative model view · not expert evidence · not survey</span>
+  <span class="badge" title="Investigative model view · not expert evidence · not survey">Not expert evidence · not survey</span>
+  <button id="btnCopyLink" class="hbtn" title="Copy a link that reopens this exact view">Share</button>
+  <button id="btnExport" class="hbtn primary" title="Save the current view as PNG + JSON record (Ctrl+S)">Save image</button>
   <button id="btnHelp" class="iconbtn" aria-label="Help and keyboard shortcuts (?)" title="Help (?)">?</button>
 </header>
 <aside id="panel">
-  <details open data-sec="viewpoint">
-    <summary><h2>Viewpoint</h2></summary>
-    <div id="presets" class="presets"></div>
-    <p id="presetNote" class="note"></p>
-  </details>
-  <details open data-sec="scenario">
-    <summary><h2>Scenario <small>(T toggles; the camera never moves)</small></h2></summary>
-    <div class="seg"><button id="btnHist">E1</button><button id="btnAppr" class="on">E2</button></div>
-    <label>Historical <select id="histSel"></select></label>
-    <label>Approved <select id="apprSel"></select></label>
-    <p id="scenNote" class="note"></p>
-  </details>
-  <details open data-sec="view">
-    <summary><h2>View</h2></summary>
-    <div class="radios">
-      <label><input type="radio" name="view" value="single" checked> Single</label>
-      <label><input type="radio" name="view" value="side"> Side by side</label>
-      <label><input type="radio" name="view" value="swipe"> Swipe</label>
-      <label><input type="radio" name="view" value="mask"> Mask overlay</label>
-      <label><input type="radio" name="view" value="framing"> Framing (lens/pitch)</label>
+  <div class="tabs" role="tablist" aria-label="Panels">
+    <button role="tab" data-tab-btn="compare" aria-selected="true" aria-controls="tab-compare">Compare</button>
+    <button role="tab" data-tab-btn="scene" aria-selected="false" aria-controls="tab-scene">Scene</button>
+    <button role="tab" data-tab-btn="photo" aria-selected="false" aria-controls="tab-photo">Photo <span id="photoBadge" class="tbadge" hidden></span></button>
+    <button role="tab" data-tab-btn="about" aria-selected="false" aria-controls="tab-about">About</button>
+    <button id="sheetClose" class="sheetclose" aria-label="Close the panel" title="Close">✕</button>
+  </div>
+
+  <section id="tab-compare" role="tabpanel" data-tab="compare">
+    <div class="card">
+      <h2>Viewpoint</h2>
+      <div id="presets" class="presets"></div>
+      <details class="more"><summary>About this viewpoint</summary><p id="presetNote" class="note"></p></details>
     </div>
-    <div id="swipeRow" hidden><input id="swipe" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Swipe position"></div>
-    <div id="framingRow" hidden><p class="note">Same station and geometry; only HFOV and pitch differ. A change of framing is not a change of development.</p></div>
-    <p id="maskOut" class="note" hidden></p>
-  </details>
-  <details open data-sec="lighting">
-    <summary><h2>Lighting <small>(illustrative)</small></h2></summary>
-    <div class="radios">
-      <label><input type="radio" name="light" value="sun" checked> Sun at date and time</label>
-      <label><input type="radio" name="light" value="overcast"> Overcast / neutral</label>
+    <div class="card">
+      <h2>Scenarios <small>T swaps · the camera never moves</small></h2>
+      <div class="seg"><button id="btnHist">E1</button><button id="btnAppr" class="on">E2</button></div>
+      <label class="stack">Historical (E1) <select id="histSel"></select></label>
+      <label class="stack">Approved (E2) <select id="apprSel"></select></label>
+      <p id="scenNote" class="note"></p>
     </div>
-    <div class="grid2">
-      <label>Date <input id="lDate" type="date" value="2026-03-21"></label>
-      <label>Time (AEST) <output id="lTimeOut">10:00</output><input id="lTime" type="range" min="300" max="1200" step="5" value="600" aria-label="Time of day, AEST"></label>
+    <div class="card">
+      <h2>View</h2>
+      <div class="pills" role="radiogroup" aria-label="View mode">
+        <label><input type="radio" name="view" value="single" checked><span>Single</span></label>
+        <label><input type="radio" name="view" value="side"><span>Side by side</span></label>
+        <label><input type="radio" name="view" value="swipe"><span>Swipe</span></label>
+        <label><input type="radio" name="view" value="mask"><span>Mask</span></label>
+        <label><input type="radio" name="view" value="framing"><span>Framing</span></label>
+      </div>
+      <div id="swipeRow" hidden><input id="swipe" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Swipe position"></div>
+      <div id="framingRow" hidden><p class="note">Same station and geometry; only HFOV and pitch differ. A change of framing is not a change of development.</p></div>
+      <p id="maskOut" class="note" hidden></p>
     </div>
-    <div class="chips"><button data-date="2026-06-21">21 Jun (winter)</button><button data-date="2026-03-21">21 Mar</button><button data-date="2026-09-23">23 Sep</button><button data-date="2026-12-22">22 Dec (summer)</button></div>
-    <label>Quality <select id="qualitySel"><option value="high">High: soft sun shadows, ambient occlusion, MSAA</option><option value="medium">Medium: shadows, MSAA</option><option value="low">Low: no shadows (fast)</option></select></label>
-    <p id="sunOut" class="note"></p>
-  </details>
-  <details open data-sec="camera">
-    <summary><h2>Camera</h2></summary>
-    <div class="radios">
-      <label><input type="radio" name="mode" value="station" checked> Station (limits on)</label>
-      <label><input type="radio" name="mode" value="free"> Free — NONPHYSICAL</label>
-      <label><input type="radio" name="mode" value="overview"> Overview — NONPHYSICAL</label>
+    <div class="card">
+      <h2>Camera</h2>
+      <div class="pills" role="radiogroup" aria-label="Camera mode">
+        <label><input type="radio" name="mode" value="station" checked><span>Station</span></label>
+        <label><input type="radio" name="mode" value="free"><span>Free</span></label>
+        <label><input type="radio" name="mode" value="overview"><span>Overview</span></label>
+      </div>
+      <p class="note">Station keeps the eye at the viewpoint (limits on). Free and Overview are NONPHYSICAL diagnostics.</p>
+      <button id="btnReset">Reset camera</button>
+      <details class="more"><summary>Exact camera values</summary>
+        <div class="grid2">
+          <label>E <input id="fE" type="number" step="0.01"></label><label>N <input id="fN" type="number" step="0.01"></label>
+          <label>Eye RL <input id="fRL" type="number" step="0.01"></label><label>Heading° <input id="fHead" type="number" step="0.1"></label>
+          <label>Pitch° <input id="fPitch" type="number" step="0.1"></label><label>Roll° <input id="fRoll" type="number" step="0.1"></label>
+          <label>HFOV° <input id="fHfov" type="number" step="0.1"></label><label>Shift <input id="fShift" type="number" step="0.001"></label>
+        </div>
+      </details>
     </div>
-    <div class="grid2">
-      <label>E <input id="fE" type="number" step="0.01"></label><label>N <input id="fN" type="number" step="0.01"></label>
-      <label>Eye RL <input id="fRL" type="number" step="0.01"></label><label>Heading° <input id="fHead" type="number" step="0.1"></label>
-      <label>Pitch° <input id="fPitch" type="number" step="0.1"></label><label>Roll° <input id="fRoll" type="number" step="0.1"></label>
-      <label>HFOV° <input id="fHfov" type="number" step="0.1"></label><label>Shift <input id="fShift" type="number" step="0.001"></label>
+  </section>
+
+  <section id="tab-scene" role="tabpanel" data-tab="scene" hidden>
+    <div class="card">
+      <h2>Lighting <small>illustrative</small></h2>
+      <div class="pills" role="radiogroup" aria-label="Lighting">
+        <label><input type="radio" name="light" value="sun" checked><span>Sun</span></label>
+        <label><input type="radio" name="light" value="overcast"><span>Overcast</span></label>
+      </div>
+      <div class="grid2">
+        <label>Date <input id="lDate" type="date" value="2026-03-21"></label>
+        <label>Time (AEST) <output id="lTimeOut">10:00</output><input id="lTime" type="range" min="300" max="1200" step="5" value="600" aria-label="Time of day, AEST"></label>
+      </div>
+      <div class="chips"><button data-date="2026-06-21">21 Jun</button><button data-date="2026-03-21">21 Mar</button><button data-date="2026-09-23">23 Sep</button><button data-date="2026-12-22">22 Dec</button></div>
+      <p id="sunOut" class="note"></p>
+      <label>Quality <select id="qualitySel"><option value="high">High: soft shadows, ambient occlusion</option><option value="medium">Medium: shadows</option><option value="low">Low: fastest</option></select></label>
     </div>
-    <p class="note">Drag to look · wheel or pinch to zoom (HFOV) · W A S D to move · R / F eye up/down · Home to reset · ? for help</p>
-    <button id="btnReset">Reset to preset</button> <button id="btnCopyLink">Copy link to this view</button>
-  </details>
-  <details open data-sec="layers">
-    <summary><h2>Layers</h2></summary>
-    <label>Context <select id="ctxSel"><option value="CTX_VA2">VA2 context (LiDAR envelopes)</option><option value="CTX_VA4C4">VA4 Cluster 4 plan-derived masses (reconstructed)</option></select></label>
-    <label><input type="checkbox" id="canopy"> LiDAR canopy heightfield (rail corridor)</label>
-    <label><input type="checkbox" id="edges" checked> Edges</label>
-    <label><input type="checkbox" id="storeys" checked> Storey lines (E2 dimensioned RLs; E1 inferred, dashed)</label>
-    <label>Ground <select id="groundSel"><option value="cadastre">Cadastre + 1 m contours (DCDB, LiDAR)</option><option value="cadastre-plain">Cadastre only</option><option value="plain">Plain</option></select></label>
-    <label>Tower colour <select id="colourMode"><option value="neutral">Neutral (same for E1 and E2)</option><option value="scenario">By scenario</option></select></label>
-    <label><input type="checkbox" id="guides" checked> Compass and elevation-angle guides</label>
-    <label><input type="checkbox" id="minimapChk" checked> Minimap</label>
-  </details>
-  <details open data-sec="match">
-    <summary><h2>Perspective match <small>(local only)</small></h2></summary>
-    <input id="imgFile" type="file" accept="image/png,image/jpeg">
-    <p id="imgInfo" class="note mono"></p>
-    <label>Image opacity <input id="imgOpacity" type="range" min="0" max="1" step="0.05" value="0.5"></label>
-    <label><input type="checkbox" id="keepImageFrame" checked> Keep the image frame when changing preset</label>
-    <button id="btnUseImageFrame">Use image frame</button>
-    <button id="btnPick">Add landmark pairs</button>
-    <input id="ctrlSearch" list="ctrlList" placeholder="or type a control ID" aria-label="Control point ID"><datalist id="ctrlList"></datalist>
-    <table id="pairTable" class="pairs"></table>
-    <div class="grid2">
-      <label><input type="checkbox" id="fixPP" checked> Fix principal point at centre</label>
-      <label><input type="checkbox" id="priorZ"> Eye RL prior ± <input id="priorZsd" type="number" value="0.5" step="0.1"></label>
-      <label><input type="checkbox" id="priorXY"> Station prior ± <input id="priorXYsd" type="number" value="3" step="0.5"> m</label>
+    <div class="card">
+      <h2>Layers</h2>
+      <label>Context <select id="ctxSel"><option value="CTX_VA2">VA2 context (LiDAR envelopes)</option><option value="CTX_VA4C4">VA4 Cluster 4 plan-derived masses</option></select></label>
+      <label>Ground <select id="groundSel"><option value="cadastre">Cadastre + 1 m contours</option><option value="cadastre-plain">Cadastre only</option><option value="plain">Plain</option></select></label>
+      <label>Tower colour <select id="colourMode"><option value="neutral">Neutral (same for E1 and E2)</option><option value="scenario">By scenario</option></select></label>
+      <div class="checks">
+        <label><input type="checkbox" id="storeys" checked> Storey lines <small>E2 dimensioned · E1 inferred (dashed)</small></label>
+        <label><input type="checkbox" id="edges" checked> Edges</label>
+        <label><input type="checkbox" id="canopy"> LiDAR canopy (rail corridor)</label>
+        <label><input type="checkbox" id="guides" checked> Compass and elevation guides <small>G</small></label>
+        <label><input type="checkbox" id="minimapChk" checked> Minimap <small>M</small></label>
+      </div>
     </div>
-    <button id="btnFit">Fit camera</button> <button id="btnClearPairs">Clear pairs</button> <button id="btnSynth">Synthetic test</button>
-    <div id="fitOut" class="note"></div>
-    <p id="synthOut" class="note"></p>
-  </details>
-  <details open data-sec="export">
-    <summary><h2>Export</h2></summary>
-    <button id="btnExport" class="primary">Save PNG + JSON</button> <span class="kbd">Ctrl+S</span>
-    <p class="note">Rendered off-screen at the exact frame size, at the selected quality. The JSON records the camera, scenario, lighting, asset hashes and app file hashes.</p>
-  </details>
-  <details data-sec="sources">
-    <summary><h2>Sources and status</h2></summary>
-    <p class="note">Massing is derived from publicly lodged development-application drawings (no drawing is reproduced). Terrain, building envelopes and canopy are derived from Queensland Government LiDAR; the ground map is the Queensland Digital Cadastral Database (both © State of Queensland, CC BY 4.0). Three.js is MIT-licensed. See <a href="SOURCE_REGISTER.md">SOURCE_REGISTER.md</a>, <a href="QA.md">QA.md</a> and <a href="BUILD_PLAN.md">BUILD_PLAN.md</a>.</p>
-    <p class="legend"><span class="tag source-derived">source-derived</span> <span class="tag reconstructed">reconstructed</span> <span class="tag sensitivity">sensitivity</span> <span class="tag hypothetical">hypothetical</span> <span class="tag model-defined">model-defined</span></p>
-    <p id="srcStatus" class="note mono"></p>
-  </details>
+  </section>
+
+  <section id="tab-photo" role="tabpanel" data-tab="photo" hidden>
+    <p class="note lead">Put the model into your own photograph. The photo stays in this browser and is never uploaded.</p>
+    <ol class="steps">
+      <li class="step" id="step1">
+        <div class="shead"><span class="snum">1</span><h3>Load a photo</h3><span class="sstate" id="s1state"></span></div>
+        <label class="dropzone" for="imgFile" id="dropzone"><b>Choose photo…</b> or drop it on the view<br><small>JPEG with its original metadata is best (HEIC: export as JPEG)</small></label>
+        <input id="imgFile" class="vh" type="file" accept="image/png,image/jpeg">
+        <p id="imgInfo" class="note mono"></p>
+        <div id="exifInfo"></div>
+        <label>Photo opacity over the model <input id="imgOpacity" type="range" min="0" max="1" step="0.05" value="0.5"></label>
+        <details class="more"><summary>Frame options</summary>
+          <label><input type="checkbox" id="keepImageFrame" checked> Keep the photo's frame when changing viewpoint</label>
+          <button id="btnUseImageFrame">Reset to the photo's frame</button>
+        </details>
+      </li>
+      <li class="step" id="step2">
+        <div class="shead"><span class="snum">2</span><h3>Align the camera</h3><span class="sstate" id="s2state"></span></div>
+        <p class="note">Click a point on the photo, then the matching red dot on the model. Use 8 or more well-spread points, including buildings beyond the towers.</p>
+        <div class="row"><button id="btnPick" class="primary">Add landmark pairs</button><input id="ctrlSearch" list="ctrlList" placeholder="or type a control ID" aria-label="Control point ID"><datalist id="ctrlList"></datalist></div>
+        <table id="pairTable" class="pairs"></table>
+        <div class="row"><button id="btnFit">Fit camera</button><button id="btnClearPairs">Clear pairs</button></div>
+        <div id="fitOut" class="note"></div>
+        <details class="more"><summary>Fit options and checks</summary>
+          <label><input type="checkbox" id="fixF" disabled> Hold the lens from the photo's EXIF</label>
+          <label><input type="checkbox" id="fixPP" checked> Principal point at the photo centre</label>
+          <label><input type="checkbox" id="priorZ"> Eye RL prior ± <input id="priorZsd" class="num" type="number" value="0.5" step="0.1"> m</label>
+          <label><input type="checkbox" id="priorXY"> Station prior ± <input id="priorXYsd" class="num" type="number" value="3" step="0.5"> m</label>
+          <div class="row"><button id="btnGpsPrior">Use photo GPS as prior</button><button id="btnSynth">Synthetic test</button></div>
+          <p id="synthOut" class="note"></p>
+        </details>
+      </li>
+      <li class="step" id="step3">
+        <div class="shead"><span class="snum">3</span><h3>Show the montage</h3><span class="sstate" id="s3state"></span></div>
+        <label class="switch"><input type="checkbox" id="montageOn"> Show photomontage</label>
+        <label>Layer <select id="montageLayer"><option value="E2">Approved (E2) massing</option><option value="E1">Historical (E1) massing</option><option value="diff">As-built check: E1 outline + E2-only tint</option><option value="wire">Wireline: E1 and E2 outlines</option></select></label>
+        <div class="row"><button id="btnPhotoTime">Light at the photo's time</button></div>
+        <label>Massing exposure <output id="montageExpOut">1.00</output><input id="montageExposure" type="range" min="0.4" max="1.8" step="0.05" value="1"></label>
+        <div class="row"><button id="btnPaint">Paint foreground</button><label class="inline">brush <input id="brushSize" type="range" min="4" max="80" value="24"></label><button id="btnClearMask">Clear</button></div>
+        <p class="note">Paint over trees, poles or fences that stand in front of the towers but are not in the model, so the photo stays on top there. Shift erases.</p>
+      </li>
+      <li class="step" id="step4">
+        <div class="shead"><span class="snum">4</span><h3>Save the package</h3><span class="sstate" id="s4state"></span></div>
+        <button id="btnMontageExport" class="primary">Save montage package (.zip)</button>
+        <p class="note">Unaltered photo, wireline, E1 and E2 montages, as-built check, camera plan, mask and record.json with SHA-256 sums. Camera-matched, not survey-verified.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="tab-about" role="tabpanel" data-tab="about" hidden>
+    <div class="card">
+      <h2>What this is</h2>
+      <p class="note">An investigative model viewer. It is not expert evidence, not a survey and not a photomontage until a photo is matched and surveyed. Geometry and camera are never changed by display settings.</p>
+      <p class="note"><b>Save image</b> (header, Ctrl+S) renders off-screen at the exact frame size and writes a JSON record of camera, scenario, lighting, asset hashes and app hashes. <b>Share</b> copies a link that reopens this exact view.</p>
+      <button id="btnHelp2">Keyboard shortcuts and accuracy notes</button>
+    </div>
+    <div class="card">
+      <h2>Sources</h2>
+      <p class="note">Massing is derived from publicly lodged development-application drawings (no drawing is reproduced). Terrain, building envelopes and canopy are derived from Queensland Government LiDAR; the ground map is the Queensland Digital Cadastral Database (both © State of Queensland, CC BY 4.0). Three.js is MIT-licensed. See <a href="SOURCE_REGISTER.md">SOURCE_REGISTER.md</a>, <a href="QA.md">QA.md</a> and <a href="BUILD_PLAN.md">BUILD_PLAN.md</a>.</p>
+      <p class="legend"><span class="tag source-derived">source-derived</span> <span class="tag reconstructed">reconstructed</span> <span class="tag sensitivity">sensitivity</span> <span class="tag hypothetical">hypothetical</span> <span class="tag model-defined">model-defined</span></p>
+      <p id="srcStatus" class="note mono"></p>
+    </div>
+  </section>
 </aside>
 <main id="stage">
   <canvas id="gl"></canvas>
   <canvas id="overlay"></canvas>
-  <canvas id="minimap" width="220" height="220" aria-label="Minimap: parcels, modelled footprints, viewpoints and the camera's field of view"></canvas>
+  <div id="compareBar" role="group" aria-label="Scenario">
+    <button id="cbHist" title="Show the historical form (E1)"><b>E1</b> <span id="cbHistId"></span></button>
+    <button id="quickToggle" title="Swap E1 / E2 (T). The camera does not move." aria-label="Swap E1 and E2">⇄</button>
+    <button id="cbAppr" title="Show the approved form (E2)"><b>E2</b> <span id="cbApprId"></span></button>
+  </div>
+  <div id="pickBanner" hidden role="status"></div>
+  <div id="mapWrap"><button id="mapToggle" aria-expanded="true" title="Show or hide the minimap (M)">Map</button><canvas id="minimap" width="220" height="220" aria-label="Minimap: parcels, modelled footprints, viewpoints and the camera's field of view"></canvas></div>
+  <div id="dropHint" hidden>Drop a photo to start a photomontage</div>
   <div id="loading">Loading model…</div>
   <div id="nonphysical" hidden></div>
   <div id="flash" hidden role="status" aria-live="polite"></div>
-  <div id="hud" class="mono"></div>
-  <button id="quickToggle" title="Toggle historical / approved (T). The camera does not move.">E2</button>
+  <div id="hud"></div>
   <div id="pad" aria-label="Movement">
     <button id="mvF" aria-label="Forward">▲</button><button id="mvL" aria-label="Left">◀</button><button id="mvR" aria-label="Right">▶</button><button id="mvB" aria-label="Back">▼</button>
     <button id="mvU" aria-label="Eye up">↑eye</button><button id="mvD" aria-label="Eye down">↓eye</button>
@@ -144,8 +202,12 @@
         <tr><td><kbd>1</kbd>–<kbd>5</kbd></td><td>Single · Side by side · Swipe · Mask · Framing</td></tr>
         <tr><td><kbd>L</kbd></td><td>Sun / overcast lighting</td></tr>
         <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save PNG + JSON record</td></tr>
+        <tr><td><kbd>M</kbd> / <kbd>G</kbd></td><td>Minimap / compass and elevation guides</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Stop landmark picking or mask painting; close menus</td></tr>
         <tr><td><kbd>?</kbd></td><td>This help</td></tr>
       </table>
+      <h3>Photomontage in four steps</h3>
+      <p>Open the <b>Photo</b> tab, or drop a photo on the view: <b>1</b> load your photo · <b>2</b> align the camera with landmark pairs · <b>3</b> show the montage · <b>4</b> save the package. The photo never leaves this browser.</p>
       <h3>Mouse and touch</h3>
       <p>Drag to look (orbit in Overview) · wheel or pinch to zoom · the on-screen pad moves on touch screens.</p>
     </section>

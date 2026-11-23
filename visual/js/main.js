@@ -10,6 +10,7 @@ import { exportPair } from './export.js';
 import { FX, QUALITY } from './render_fx.js';
 import { basemapTexture } from './basemap.js';
 import { UI } from './ui.js';
+import { Montage } from './montage.js';
 
 const $ = (id) => document.getElementById(id);
 const RAD = Math.PI / 180;
@@ -34,14 +35,14 @@ class App {
     const ext = this.groups.TERRAIN.userData.extent, maxTex = Math.min(this.renderer.capabilities.maxTextureSize, mobile ? 2048 : 4096);
     this.groundTex = { cadastre: basemapTexture(this.renderer, BM, ext, { maxPx: maxTex, contours: true }), 'cadastre-plain': basemapTexture(this.renderer, BM, ext, { maxPx: maxTex, contours: false }) };
     this.state = { mode: 'station', preset: null, side: 'approved', hist: S.default_scenarios.historical, appr: S.default_scenarios.approved,
-                   context: 'CTX_VA2', canopy: false, edges: true, storeys: true, ground: 'cadastre', colour: 'neutral', view: 'single', swipe: 0.5, guides: true, minimap: true,
+                   context: 'CTX_VA2', canopy: false, edges: true, storeys: true, ground: 'cadastre', colour: 'neutral', view: 'single', swipe: 0.5, guides: true, minimap: !mobile,
                    framing: [{ hfov: 55, pitch: 10 }, { hfov: 90, pitch: 38 }, { hfov: 55, pitch: 62 }, { hfov: 110, pitch: 25 }],
                    orbit: { tx: 95, ty: -15, tz: 35, dist: 260, heading: 20, pitch: -35 } };
     this.cam = null; this.applyGround();
-    this.buildUI(); this.match = new MatchUI(this); this.ui = new UI(this); attachControls(this.stage, this);
+    this.buildUI(); this.match = new MatchUI(this); this.montage = new Montage(this); this.ui = new UI(this); attachControls(this.stage, this);
     new ResizeObserver(() => this.render()).observe(this.stage);
     const q = new URLSearchParams(location.search);
-    this.selectPreset(q.get('preset') || 'NG57'); this.ui.applyQuery(q); this.updateLightingUI();
+    this.selectPreset(q.get('preset') || 'W01'); this.ui.applyQuery(q); this.updateLightingUI();
     window.__visual = this; window.__proj = CM.project;   // test hooks (inspection by the e2e suite)
     this._render(); $('loading').hidden = true; document.body.dataset.ready = '1';
   }
@@ -177,10 +178,13 @@ class App {
       const res = maskCompare(this, par, A, B, Math.min(900, Math.round(panels[0].w)));
       this.octx.drawImage(res.canvas, panels[0].x, panels[0].y, panels[0].w, panels[0].h); this.lastMask = res; guides(panels[0], par);
       this.label(panels[0], `Mask: orange = only in ${B}; blue = only in ${A} (frame-limited)`, 26);
-    } else { draw(panels[0], par, cur, 'p0'); guides(panels[0], par); this.label(panels[0], this.scenarios[cur].label, 26); this.lastFrame.scenarios = [cur]; }
+    } else { draw(panels[0], par, cur, 'p0'); guides(panels[0], par); this.lastFrame.scenarios = [cur]; }   // single view: the on-stage scenario bar names it
     R.setScissorTest(false);
-    this.match?.drawOverlay?.(panels[0]);
-    this.ui?.drawMinimap(); this.ui?.writeURL();
+    { const py = Math.round(panels[0].y), rib = this.state.guides && this.state.mode !== 'overview' ? 30 : 0;   // in the letterbox band if there is room, else just below the compass ribbon
+      $('compareBar').style.top = (py >= 50 ? Math.max(6, py - 46) : py + rib + 8) + 'px'; }
+    const montaged = v === 'single' && !!this.montage?.drawScreen(panels[0]);
+    this.match?.drawOverlay?.(panels[0], montaged);
+    this.ui?.drawMinimap(); this.ui?.writeURL(); this.ui?.updateSteps();
     this.updateCameraUI();
   }
   label(p, text, dy = 0) { const c = this.octx; c.font = '12px system-ui, sans-serif'; const w = c.measureText(text).width + 10; c.fillStyle = 'rgba(255,255,255,0.88)'; c.fillRect(p.x + 6, p.y + 6 + dy, w, 20); c.fillStyle = '#111'; c.fillText(text, p.x + 11, p.y + 20 + dy); }
@@ -194,7 +198,7 @@ class App {
     g.visible = false; return g;
   }
   flash(msg, ms = 3500) { const el = $('flash'); el.textContent = msg; el.hidden = false; clearTimeout(this._ft); this._ft = setTimeout(() => { el.hidden = true; }, ms); return false; }
-  pickActive() { return this.match?.picking; }
+  pickActive() { return this.match?.picking || this.montage?.painting; }
   // ---------------------------------------------------------------- UI
   buildUI() {
     const list = $('presets');
@@ -209,7 +213,7 @@ class App {
     $('histSel').onchange = (e) => { this.state.hist = e.target.value; this.updateScenarioUI(); this.render(); };
     $('apprSel').onchange = (e) => { this.state.appr = e.target.value; this.updateScenarioUI(); this.render(); };
     $('quickToggle').onclick = () => this.toggleScenario();
-    $('btnHist').onclick = () => this.setSide('historical'); $('btnAppr').onclick = () => this.setSide('approved');
+    $('btnHist').onclick = $('cbHist').onclick = () => this.setSide('historical'); $('btnAppr').onclick = $('cbAppr').onclick = () => this.setSide('approved');
     document.querySelectorAll('input[name=view]').forEach(r => r.onchange = () => { this.state.view = r.value; $('swipeRow').hidden = r.value !== 'swipe'; $('framingRow').hidden = r.value !== 'framing'; $('maskOut').hidden = r.value !== 'mask'; this.render(); });
     $('swipe').oninput = (e) => { this.state.swipe = +e.target.value; this.render(); };
     document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => this.setMode(r.value));
@@ -220,7 +224,8 @@ class App {
     $('groundSel').onchange = (e) => { this.state.ground = e.target.value; this.applyGround(); this.render(); };
     $('colourMode').onchange = (e) => { this.state.colour = e.target.value; this.render(); };
     $('guides').onchange = (e) => { this.state.guides = e.target.checked; this.render(); };
-    $('minimapChk').onchange = (e) => { this.state.minimap = e.target.checked; this.render(); };
+    $('minimapChk').checked = this.state.minimap; $('minimap').hidden = !this.state.minimap; $('mapToggle').setAttribute('aria-expanded', String(this.state.minimap));
+    $('minimapChk').onchange = (e) => { this.state.minimap = e.target.checked; $('minimap').hidden = !this.state.minimap; $('mapToggle').setAttribute('aria-expanded', String(this.state.minimap)); this.render(); };
     // lighting
     document.querySelectorAll('input[name=light]').forEach(r => r.onchange = () => this.setLighting({ mode: r.value }));
     $('lDate').onchange = (e) => { const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(e.target.value); if (m) this.setLighting({ date: [+m[1], +m[2], +m[3]] }); };
@@ -231,7 +236,9 @@ class App {
     $('btnReset').onclick = () => this.reset();
     $('btnCopyLink').onclick = () => this.ui.copyLink();
     $('btnExport').onclick = () => this.exportNow();
+    $('btnHelp2').onclick = () => this.ui.help();
     $('panelToggle').onclick = () => document.body.classList.toggle('panel-open');
+    $('sheetClose').onclick = () => document.body.classList.remove('panel-open');
     for (const [id, f] of [['mvF', () => this.move(0.5, 0)], ['mvB', () => this.move(-0.5, 0)], ['mvL', () => this.move(0, -0.5)], ['mvR', () => this.move(0, 0.5)], ['mvU', () => this.eye(0.05)], ['mvD', () => this.eye(-0.05)]]) $(id).onclick = f;
     // numeric camera fields
     const fields = [['fE', 'E'], ['fN', 'N'], ['fRL', 'RL'], ['fHead', 'heading'], ['fPitch', 'pitch'], ['fRoll', 'roll'], ['fHfov', 'hfov'], ['fShift', 'shift']];
@@ -251,9 +258,8 @@ class App {
   }
   updateScenarioUI() {
     const h = this.scenarios[this.state.hist], a = this.scenarios[this.state.appr];
-    $('btnHist').textContent = `E1 · ${h.id}`; $('btnAppr').textContent = `E2 · ${a.id}`;
-    $('btnHist').classList.toggle('on', this.state.side === 'historical'); $('btnAppr').classList.toggle('on', this.state.side === 'approved');
-    $('quickToggle').textContent = (this.state.side === 'historical' ? 'E1 · ' : 'E2 · ') + this.activeScenario() + ' ⇄';
+    $('btnHist').textContent = `E1 · ${h.id}`; $('btnAppr').textContent = `E2 · ${a.id}`; $('cbHistId').textContent = h.id; $('cbApprId').textContent = a.id;
+    const hs = this.state.side === 'historical'; for (const [id, on] of [['btnHist', hs], ['btnAppr', !hs], ['cbHist', hs], ['cbAppr', !hs]]) { $(id).classList.toggle('on', on); $(id).setAttribute('aria-pressed', String(on)); }
     const cur = this.scenarios[this.activeScenario()]; $('scenNote').innerHTML = `<b>${cur.label}</b> <span class="tag ${cur.classification}">${cur.classification}</span><br>${cur.note}`;
   }
   updatePresetUI() {
@@ -268,7 +274,12 @@ class App {
     set('fHfov', c.hfov.toFixed(2)); set('fShift', CM.shiftFromPrincipal(c.W, c.H, c.cy).toFixed(4));
     const moved = Math.hypot(c.x - this.origin.x, c.y - this.origin.y); const s = this.fx?.sunInfo, L = this.fx?.lighting;
     const light = !L ? '' : L.mode !== 'sun' ? ' · overcast' : ` · sun ${pad2(L.time[0])}:${pad2(L.time[1])} alt ${s.alt.toFixed(1)}° az ${s.az.toFixed(1)}°`;
-    $('hud').textContent = `${this.state.preset}${this.state.mode !== 'station' ? ' [NONPHYSICAL]' : ''} · E ${E.toFixed(2)} N ${N.toFixed(2)} RL ${c.z.toFixed(2)} (+${(c.z - g).toFixed(2)} m) · hdg ${c.heading.toFixed(1)}° pitch ${c.pitch.toFixed(1)}° roll ${c.roll.toFixed(1)}° · HFOV ${c.hfov.toFixed(1)}° · frame ${c.W}×${c.H} · moved ${moved.toFixed(2)} m · ${this.activeScenario()}${light}`;
+    const mode = { station: 'station', free: 'free', overview: 'overview', match: 'photo match' }[this.state.mode] || this.state.mode, np = this.state.mode !== 'station';
+    const seg = (t, cls = '', tip = '') => `<span class="h ${cls}"${tip ? ` title="${tip}"` : ''}>${t}</span>`;
+    $('hud').innerHTML = seg(`${this.state.preset} · ${mode}${np ? ' <span class="np">[NONPHYSICAL]</span>' : ''}`) +
+      seg(`E ${E.toFixed(2)} N ${N.toFixed(2)} RL ${c.z.toFixed(2)} <small>(+${(c.z - g).toFixed(2)} m)</small>`, 'num', 'Camera, MGA56 / AHD; eye height above model ground') +
+      seg(`hdg ${c.heading.toFixed(1)}° pitch ${c.pitch.toFixed(1)}° roll ${c.roll.toFixed(1)}° · HFOV ${c.hfov.toFixed(1)}°`, 'num', 'Heading clockwise from grid north') +
+      seg(`frame ${c.W}×${c.H} · moved ${moved.toFixed(2)} m`, 'num') + seg(this.activeScenario()) + (light ? seg(light.replace(/^ · /, '')) : '');
     if (this.state.view === 'mask' && this.lastMask) { const m = this.lastMask; $('maskOut').textContent = `Frame-limited angular areas (this camera and frame only; not an amenity measure): only-${m.B} ${fmt(m.add_deg2, 1)} deg², only-${m.A} ${fmt(m.removed_deg2, 1)} deg², towers ${m.A} ${fmt(m.towerA_deg2, 1)} / ${m.B} ${fmt(m.towerB_deg2, 1)} deg², frame ${fmt(m.frame_deg2, 1)} deg²; top elevation ${fmt(m.topA_deg, 2)}° → ${fmt(m.topB_deg, 2)}° (within frame).`; }
   }
 }
