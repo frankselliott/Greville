@@ -156,7 +156,7 @@ test('G3.2 each scenario shows exactly its manifest collections; G3.3 side-by-si
     return { out, single, par1, side, swipe, members: Object.fromEntries(a.S.scenarios.map(s => [s.id, [...s.members].sort()])) };
   });
   for (const [k, v] of Object.entries(r.members)) assert.deepEqual(r.out[k], v, k);
-  assert.deepEqual(r.side.scen, ['E1_SK48', 'E2']); assert.deepEqual(r.side.par, r.par1); assert.deepEqual(r.side.proj, r.single); assert.deepEqual(r.swipe.par, r.par1);
+  assert.deepEqual(r.side.scen, ['E1_SK48', 'E2c']); assert.deepEqual(r.side.par, r.par1); assert.deepEqual(r.side.proj, r.single); assert.deepEqual(r.swipe.par, r.par1);
   await ctx.close();
 });
 
@@ -347,7 +347,7 @@ test('v1.2 photomontage: occlusion equals the tested masks; foreground mask keep
   const dl = page.waitForEvent('download', { timeout: 240000 }); await tab(page, 'photo'); await page.click('#btnMontageExport'); const d = await dl; const zip = fs.readFileSync(await d.path());
   // read the stored ZIP and verify SHA256SUMS
   const entries = {}; let p = 0; while (zip.readUInt32LE(p) === 0x04034b50) { const n = zip.readUInt16LE(p + 26), sz = zip.readUInt32LE(p + 18); const name = zip.slice(p + 30, p + 30 + n).toString(); entries[name] = zip.slice(p + 30 + n, p + 30 + n + sz); p += 30 + n + sz; }
-  for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_SK48_E2.png', '3_montage_E1_SK48.png', '4_montage_E2.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
+  for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_SK48_E2c.png', '3_montage_E1_SK48.png', '4_montage_E2c.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
   assert.equal(sha(entries['1_existing_synthetic_existing.png']), sha(buf), 'the photograph is included unaltered');
   for (const line of entries['SHA256SUMS'].toString().trim().split('\n')) { const [h, n] = line.split(/\s+/); assert.equal(sha(entries[n]), h, n); }
   const rec = JSON.parse(entries['record.json']); assert.equal(rec.camera.surveyed, false); assert.match(rec.status, /NOT survey-verified/); assert.equal(rec.ppl15_checklist.length, 10);
@@ -399,4 +399,16 @@ test('v1.3 UX: tabs, photo steps unlock in order, on-stage scenario bar, header 
   // status bar keeps the exact coordinates readable
   assert.match(await page.textContent('#hud'), /W01 · station.*E 504057\.91 N 6966719\.97 RL 24\.92/);
   assert.deepEqual(errors, []); await ctx.close();
+});
+
+test('v1.4 default approved form is E2c; its silhouette contains E2 at every viewpoint (it only adds approved geometry)', async () => {
+  const { ctx, page } = await open();
+  const r = await page.evaluate(async () => { const a = window.__visual; const { renderMaskPixels } = await import('./js/compare.js'); const out = { def: a.state.appr, label: a.scenarios.E2c.label, cls: a.scenarios.E2c.classification, views: {} };
+    for (const id of ['W01', 'NG55', 'NG57', 'NG59']) { a.selectPreset(id); const par = a.par(), w = 600, h = 400; const m2 = renderMaskPixels(a, par, 'E2', w, h), mc = renderMaskPixels(a, par, 'E2c', w, h);
+      let lost = 0, gained = 0, n2 = 0; for (let i = 0; i < w * h; i++) { if (m2[i]) n2++; if (m2[i] && !mc[i]) lost++; if (mc[i] && !m2[i]) gained++; } out.views[id] = { n2, lost, gained }; }
+    a.selectPreset('W01'); return out; });
+  assert.equal(r.def, 'E2c'); assert.match(r.label, /default/); assert.equal(r.cls, 'scaled');
+  for (const [id, v] of Object.entries(r.views)) assert.ok(v.lost <= Math.max(2, v.n2 * 1e-4), `${id}: ${JSON.stringify(v)}`);   // anti-aliasing-free rasters: allow a couple of boundary pixels
+  console.log('  E2 -> E2c pixels gained per view (600x400):', JSON.stringify(Object.fromEntries(Object.entries(r.views).map(([k, v]) => [k, v.gained]))));
+  await ctx.close();
 });

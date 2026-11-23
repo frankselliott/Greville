@@ -88,3 +88,12 @@ Browser: Playwright Chromium (headless; renderer as recorded in each export JSON
 3. Pill-style radios hid the real input from the pointer.
 
 All three are fixed.
+
+## v1.4 — default approved form E2c (branch `claude/visual-e2c-default`, base `98e75c4`)
+
+| # | Test | Result |
+|---|---|---|
+| Q10.1 | Asset rebuild determinism | A no-change rebuild from the pinned sources was byte-identical to the committed assets (`sha256sum -c`). |
+| Q10.2 | Rebuild with E2c as default | All 13 build checks PASS. Only `scenarios` and `default_scenarios` changed; collections, terrain and presets are byte-identical. |
+| Q10.3 | Suite | Protected PASS; unit 18/18; e2e 24/24 in 256 s. IoU 0.99965 / 0.99968 / 1 / 1 (on E2, the geometry the archived ray-caster rendered). |
+| Q10.4 | E2c ⊇ E2 at every preset | PASS. Zero E2 pixels lost. Pixels gained at 600 × 400: W01 1,573; NG55 26,283; NG57 13,180; NG59 36,855. |

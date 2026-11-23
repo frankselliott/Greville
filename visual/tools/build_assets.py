@@ -71,10 +71,15 @@ def main(scene_path, va4_code):
              note='Same SK family at RL 52.0 (roof-plant allowance).'),
         dict(id='E1_SK48_POD', label='E1 hypothetical — SK48 + approved podium', members=['E1_SK48', 'POD'], classification='hypothetical', side='historical',
              note='Bounds the unknown 2020 podium by adding the approved podium to SK48. Hypothetical.'),
-        dict(id='E2', label='E2 — approved 2026 form (VA2 massing)', members=['E2'], classification='source-derived', side='approved',
-             note='Approved-plan plates; balcony volumes filled to the plate line; balustrades not modelled separately.'),
-        dict(id='E2c', label='E2c — approved + VA4 corrections (provisional)', members=['E2', 'ARTW', 'POD'], classification='sensitivity', side='approved',
-             note='E2 plus scaled B west balcony line and A/B podium corrections (VA4 Part D). Provisional.')]
+        dict(id='E2', label='E2 — approved 2026 form, VA2 plates only', members=['E2'], classification='source-derived', side='approved',
+             note='Approved-plan plates; balcony volumes filled to the plate line; balustrades not modelled separately. Known under-representation: '
+                  'over part of the Building B west face the plate lies up to 2.88 m inside the approved balcony line, and the podiums outside '
+                  'the tower plates are absent (VA4 Part D). Kept for continuity with VA2; E2c is the default.'),
+        dict(id='E2c', label='E2c — approved 2026 form, VA4-corrected (default)', members=['E2', 'ARTW', 'POD'], classification='scaled', side='approved',
+             note='E2 plates plus the corrections VA4 Part D found necessary: the Building B west balcony line (DA-106 dimensions 3000 / 4100 and '
+                  "Council's \"3 m to balcony, 4.1 m to wall\"; outline traced from DA-107 Rev 15, ±0.15 m) and the A/B west and B south podiums "
+                  '(DA-103 / DA-402 content, ±0.15 m). Scaled from the approved drawings, not dimensioned at every vertex. It includes the approved '
+                  'podiums; the 2020 podium is unknown, so compare with E1_SK48_POD for a like-for-like podium.')]
     T = D['terrain']; ZZ = np.array(T['z'], float).reshape(T['ny'], T['nx'])
     def dem(x, y):
         fx = (x - T['x0']) / T['step']; fy = (y - T['y0']) / T['step']; i = int(math.floor(fx)); j = int(math.floor(fy)); tx = fx - i; ty = fy - j
@@ -139,7 +144,7 @@ def main(scene_path, va4_code):
                    site_lotplan='913SP337678', parcels=parcels, contours=contours, rail=rail)
     scene = dict(schema='greville-visual-scene/1', levels=levels, frame=dict(epsg=7856, E0=E0, N0=N0, vertical='AHD', local='x=E-E0, y=N-N0, z=RL; Z up',
                  three='X=x (east), Y=z (up), Z=-y (north is -Z)', site_grid_rotation_deg=AZ),
-                 collections=collections, scenarios=scenarios, default_scenarios=dict(historical='E1_SK48', approved='E2'),
+                 collections=collections, scenarios=scenarios, default_scenarios=dict(historical='E1_SK48', approved='E2c'),
                  terrain=dict(x0=T['x0'], y0=T['y0'], step=T['step'], nx=T['nx'], ny=T['ny'], z=T['z'], src='S-VA2'),
                  canopy=dict(cell=D['canopy']['cell'], cells=D['canopy']['cells'], src='S-VA2'), presets=presets)
     os.makedirs(OUT, exist_ok=True)
