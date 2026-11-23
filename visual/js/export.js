@@ -23,17 +23,19 @@ function panelsFor(view, W, H) {
 }
 export async function renderExport(app) {
   const st = app.state, c = app.cam, W = c.W, H = c.H; const { OW, OH, rects } = panelsFor(st.view, W, H);
-  const R = app.renderer, rt = new THREE.WebGLRenderTarget(OW, OH, { samples: 0 }); const prev = R.getRenderTarget();
+  const ss = QUALITY[app.fx.quality].ssaa || 1;                                                    // supersampling factor (High: 2)
+  const R = app.renderer, rt = new THREE.WebGLRenderTarget(OW * ss, OH * ss, { samples: 0 }); const prev = R.getRenderTarget();
   const A = app.activeScenario('historical'), B = app.activeScenario('approved'), cur = app.activeScenario(), par = app.renderPar();
   const panels = []; const fx = app.fx, wasInteractive = fx.interactive; fx.interactive = false;     // exports are always full quality
   R.setRenderTarget(rt); R.setClearColor(0xc9ced4, 1); R.clear();
-  const draw = (rect, p, scen, clip = null, i = 0) => { const [x, y, w, h] = rect; fx.renderPanel({ target: rt, rect: { x, yGL: OH - y - h, w, h }, par: p, scen, key: `export${i}`, pr: 1, clip }); };
+  const draw = (rect, p, scen, clip = null, i = 0) => { const [x, y, w, h] = rect.map(v => v * ss); fx.renderPanel({ target: rt, rect: { x, yGL: OH * ss - y - h, w, h }, par: p, scen, key: `export${i}`, pr: 1, clip }); };
   if (st.view === 'side') { draw(rects[0], par, A, null, 0); draw(rects[1], par, B, null, 1); panels.push({ rect: rects[0], scenario: A }, { rect: rects[1], scenario: B }); }
   else if (st.view === 'swipe') { draw(rects[0], par, A, [0, st.swipe], 0); draw(rects[0], par, B, [st.swipe, 1], 1); panels.push({ rect: rects[0], scenario: A, clip: [0, st.swipe] }, { rect: rects[0], scenario: B, clip: [st.swipe, 1] }); }
   else if (st.view === 'framing') st.framing.forEach((fr, i) => { const p = app.par(); p[4] = fr.pitch; p[6] = CM.focalFromHfov(W, fr.hfov); draw(rects[i], p, cur, null, i); panels.push({ rect: rects[i], scenario: cur, hfov_deg: fr.hfov, pitch_deg: fr.pitch, par: p }); });
   else if (st.view === 'mask') { draw(rects[0], par, B); panels.push({ rect: rects[0], scenario: B, overlay: `mask ${B} vs ${A}` }); }
   else { draw(rects[0], par, cur); panels.push({ rect: rects[0], scenario: cur }); }
-  const px = new Uint8Array(OW * OH * 4); R.readRenderTargetPixels(rt, 0, 0, OW, OH, px); R.setRenderTarget(prev); rt.dispose();
+  const big = new Uint8Array(OW * ss * OH * ss * 4); R.readRenderTargetPixels(rt, 0, 0, OW * ss, OH * ss, big); R.setRenderTarget(prev); rt.dispose();
+  const px = ss === 1 ? big : downsampleLinear(big, OW, OH, ss);
   fx.dropComposers('export'); fx.interactive = wasInteractive;
   const cv = document.createElement('canvas'); cv.width = OW; cv.height = OH; const ctx = cv.getContext('2d'); const img = ctx.createImageData(OW, OH);
   for (let y = 0; y < OH; y++) img.data.set(px.subarray((OH - 1 - y) * OW * 4, (OH - y) * OW * 4), y * OW * 4);
@@ -60,6 +62,17 @@ function lightingRecord(app) {
 }
 function storeyRecord(app) {
   const L = app.S.levels; return { E2: { status: L.E2.status, source: L.E2.source, style: 'solid' }, E1: { status: L.E1.status, source: L.E1.source, style: 'dashed' } };
+}
+// box-filter an (ss*W) x (ss*H) sRGB RGBA buffer to W x H, averaging in linear light (exact, deterministic)
+const S2L = new Float64Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+const L2S = (v) => { const c = v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055; return Math.max(0, Math.min(255, Math.round(c * 255))); };
+export function downsampleLinear(src, W, H, ss) {
+  const out = new Uint8Array(W * H * 4), BW = W * ss, n = ss * ss;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let r = 0, g = 0, b = 0; for (let dy = 0; dy < ss; dy++) for (let dx = 0; dx < ss; dx++) { const i = ((y * ss + dy) * BW + x * ss + dx) * 4; r += S2L[src[i]]; g += S2L[src[i + 1]]; b += S2L[src[i + 2]]; }
+    const o = (y * W + x) * 4; out[o] = L2S(r / n); out[o + 1] = L2S(g / n); out[o + 2] = L2S(b / n); out[o + 3] = 255;
+  }
+  return out;
 }
 export async function buildRecord(app, out) {
   const st = app.state, c = app.cam, p = app.preset(st.preset); const [E, N] = K.localToMga(c.x, c.y, c.z); const g = K.demAt(app.S.terrain, c.x, c.y);
@@ -97,7 +110,8 @@ export async function buildRecord(app, out) {
                   'A low-residual image match can still be underdetermined; see image_match.flags.'],
     renderer: { webgl: gl.getParameter(gl.VERSION), renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), three: 'r160.1', quality: app.fx.quality, ...QUALITY[app.fx.quality],
                 pipeline: 'MeshStandardMaterial (PBR, untextured neutral tones); Sky + PMREM image-based light; DirectionalLight at the sun vector with PCF soft shadow map; GTAO ambient occlusion (seeded noise) when quality=high; MSAA; ACES filmic tone mapping; sRGB output',
-                depth: { near: app.camera.near, far: app.camera.far, logarithmic: false } },
+                depth: { near: app.camera.near, far: app.camera.far, logarithmic: false }, supersampling: QUALITY[app.fx.quality].ssaa || 1,
+                aerial_perspective: app.scene.fog ? { model: 'exp(-beta d), beta = 3.912 / visibility (Koschmieder)', ...app.fx.haze, applies_to: 'display render only; never masks' } : 'off' },
     png: { bytes: out.buf.byteLength, sha256: await sha256Hex(out.buf) },
   };
   return rec;

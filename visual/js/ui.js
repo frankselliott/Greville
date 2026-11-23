@@ -82,6 +82,8 @@ export class UI {
       ['Lighting', [
         { label: 'Sun at date and time', sc: 'L', type: 'radio', get: () => a.fx.lighting.mode === 'sun', run: () => setRadio('light', 'sun') },
         { label: 'Overcast / neutral', type: 'radio', get: () => a.fx.lighting.mode !== 'sun', run: () => setRadio('light', 'overcast') },
+        'sep',
+        { label: 'Aerial haze (15 km clear / 8 km overcast visibility)', type: 'check', get: () => a.fx.hazeOn !== false, run: () => { a.fx.setHaze(a.fx.hazeOn === false); a.render(); this.writeURL?.(); } },
         'sep', { head: 'Date' },
         ...dates.map(([d, l]) => ({ label: l, type: 'radio', get: () => $('lDate').value === d, run: () => { setCtl('lDate', d); if (a.fx.lighting.mode !== 'sun') setRadio('light', 'sun'); } })),
         'sep', { head: 'Time (AEST)' },
@@ -208,6 +210,7 @@ export class UI {
     if (L.mode !== 'sun') q.set('light', L.mode);
     q.set('date', `${L.date[0]}-${String(L.date[1]).padStart(2, '0')}-${String(L.date[2]).padStart(2, '0')}`); q.set('time', `${String(L.time[0]).padStart(2, '0')}${String(L.time[1]).padStart(2, '0')}`);
     if (a.fx.quality !== a.defaultQuality) q.set('q', a.fx.quality);
+    if (a.fx.hazeOn === false) q.set('haze', '0');
     return q;
   }
   writeURL() { clearTimeout(this._ut); this._ut = setTimeout(() => { try { history.replaceState(null, '', `${location.pathname}?${this.stateToQuery()}`); } catch (_) { /* sandboxed */ } }, 250); }
@@ -226,6 +229,7 @@ export class UI {
     if (q.get('date') && /^\d{4}-\d\d-\d\d$/.test(q.get('date'))) setCtl('lDate', q.get('date'));
     if (q.get('time') && /^\d{4}$/.test(q.get('time'))) setCtl('lTime', +q.get('time').slice(0, 2) * 60 + +q.get('time').slice(2));
     if (q.get('light') === 'overcast') setRadio('light', 'overcast');
+    if (q.get('haze') === '0') a.fx.setHaze(false);
     if (q.get('q') && QUALITY[q.get('q')]) setCtl('qualitySel', q.get('q'));
     if (q.get('mode') === 'free' || q.get('mode') === 'overview') setRadio('mode', q.get('mode'));
     if (q.get('cam')) { const [E, N, RL, h, p, r, hfov, shift] = num(q.get('cam')); if ([E, N, RL, h, p, r, hfov, shift].every(Number.isFinite)) {

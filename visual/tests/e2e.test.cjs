@@ -412,3 +412,34 @@ test('v1.4 default approved form is E2c; its silhouette contains E2 at every vie
   console.log('  E2 -> E2c pixels gained per view (600x400):', JSON.stringify(Object.fromEntries(Object.entries(r.views).map(([k, v]) => [k, v.gained]))));
   await ctx.close();
 });
+
+test('v1.5 rendering polish: aerial haze is Beer-Lambert at the stated visibility and never touches masks; High exports are 2x supersampled, deterministic and frame-sized', async () => {
+  const { ctx, page, errors } = await open(undefined, {}, '?preset=W01', { full: true });
+  const r = await page.evaluate(async () => {
+    const a = window.__visual, THREE = await import('three'); const { renderMaskPixels } = await import('./js/compare.js');
+    const out = { chunk: THREE.ShaderChunk.fog_fragment.includes('1.0 - exp( - fogDensity * vFogDepth )'), quality: a.fx.quality };
+    out.sun = { type: a.scene.fog?.isFogExp2 ? 'FogExp2' : null, d: a.scene.fog?.density, vis: a.fx.haze.visibility_m };
+    a.setLighting({ mode: 'overcast' }); out.over = { d: a.scene.fog.density, vis: a.fx.haze.visibility_m }; a.setLighting({ mode: 'sun' });
+    out.maskMats = [a.M.black.fog, a.M.white.fog];
+    const par = a.par(), w = 480, h = 320, masks = {};
+    for (const on of [true, false]) { a.fx.setHaze(on); masks[on] = ['E1_SK48', 'E2c'].map(s => Array.from(renderMaskPixels(a, par, s, w, h)).join('')); }
+    out.masksEqual = masks[true][0] === masks[false][0] && masks[true][1] === masks[false][1] && masks[true][1].includes('1');
+    a.fx.setHaze(true); a.render(); const q = a.ui.stateToQuery().toString(); a.fx.setHaze(false); const q0 = a.ui.stateToQuery().toString(); a.fx.setHaze(true);
+    out.query = [/haze=/.test(q), /haze=0/.test(q0)];
+    out.canopyColoured = !!a.groups.CANOPY.instanceColor;
+    return out; });
+  assert.ok(r.chunk, 'fog chunk patched to exp(-beta d)'); assert.equal(r.quality, 'high');
+  assert.equal(r.sun.type, 'FogExp2'); assert.ok(Math.abs(r.sun.d - 3.912 / 15000) < 1e-12 && r.sun.vis === 15000);
+  assert.ok(Math.abs(r.over.d - 3.912 / 8000) < 1e-12 && r.over.vis === 8000);
+  assert.deepEqual(r.maskMats, [false, false]); assert.ok(r.masksEqual, 'masks identical with haze on and off'); assert.deepEqual(r.query, [false, true]); assert.ok(r.canopyColoured);
+  const downloads = []; page.on('download', d => downloads.push(d));
+  const grab = async () => { const n0 = downloads.length; await page.click('#btnExport'); await page.waitForFunction(() => !!window.__visual.lastExport, null, { timeout: 180000 });
+    for (let i = 0; i < 100 && downloads.length < n0 + 2; i++) await page.waitForTimeout(100);
+    const files = {}; for (const d of downloads.slice(n0, n0 + 2)) files[path.extname(d.suggestedFilename())] = fs.readFileSync(await d.path());
+    await page.evaluate(() => { window.__visual.lastExport = null; }); return files; };
+  const a = await grab(), b = await grab(); const rec = JSON.parse(a['.json'].toString());
+  assert.equal(sha(a['.png']), sha(b['.png']), 'supersampled export is byte-reproducible');
+  assert.equal(a['.png'].readUInt32BE(16), 1800); assert.equal(a['.png'].readUInt32BE(20), 1200);
+  assert.equal(rec.renderer.supersampling, 2); assert.equal(rec.renderer.aerial_perspective.visibility_m, 15000); assert.match(rec.renderer.aerial_perspective.applies_to, /never masks/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
