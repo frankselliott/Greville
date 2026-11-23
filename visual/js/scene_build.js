@@ -58,12 +58,13 @@ export function makeMaterials() {
   return {
     ctx: std(COLOURS.ctx), th: std(COLOURS.th), tower: std(COLOURS.tower, 0.72), towerE1: std(COLOURS.E1, 0.72), towerE2: std(COLOURS.E2, 0.72),
     terrain: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.97, metalness: 0, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 }),
-    canopy: std(COLOURS.canopy, 0.95), backdrop: new THREE.MeshStandardMaterial({ color: 0xbfbfb8, roughness: 1, metalness: 0 }),
-    edge: new THREE.LineBasicMaterial({ color: COLOURS.edge, transparent: true, opacity: 0.22 }),
-    edgeTower: new THREE.LineBasicMaterial({ color: COLOURS.edge, transparent: true, opacity: 0.6 }),
+    canopy: std(0xffffff, 0.95),                     // per-cell colour by height (instanceColor)
+    backdrop: new THREE.MeshStandardMaterial({ color: 0xbfbfb8, roughness: 1, metalness: 0 }),
+    edge: new THREE.LineBasicMaterial({ color: COLOURS.edge, transparent: true, opacity: 0.16 }),
+    edgeTower: new THREE.LineBasicMaterial({ color: COLOURS.edge, transparent: true, opacity: 0.45 }),
     storeyE2: new THREE.LineBasicMaterial({ color: COLOURS.storey, transparent: true, opacity: 0.7 }),
     storeyE1: new THREE.LineDashedMaterial({ color: COLOURS.storey, transparent: true, opacity: 0.7, dashSize: 1.2, gapSize: 0.8 }),
-    black: new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide }), white: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
+    black: new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }), white: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }),   // masks: never fogged
   };
 }
 // one group per collection; the context collection is split so the 7 Cluster 4 LiDAR quads can be swapped for the VA4 masses
@@ -100,7 +101,10 @@ export function buildScene(S, M) {
   bd.receiveShadow = false; bd.userData = { role: 'backdrop' }; bd.name = 'BACKDROP'; root.add(bd); groups.BACKDROP = bd;
   // LiDAR canopy cells [x, y, top, ground] as 0.5 m columns (off by default)
   const cells = S.canopy.cells, c = S.canopy.cell; const box = new THREE.BoxGeometry(c, 1, c); const inst = new THREE.InstancedMesh(box, M.canopy, cells.length); const m4 = new THREE.Matrix4();
-  cells.forEach(([x, y, top, g], k) => { const h = Math.max(0.05, top - g); m4.makeScale(1, h, 1).setPosition(x, g + h / 2, -y); inst.setMatrixAt(k, m4); });
+  const lo = new THREE.Color(0x4d6a3a), hi = new THREE.Color(0x8aa766), col = new THREE.Color(); const hs = cells.map(([, , top, g]) => top - g), hmax = Math.max(...hs, 1);
+  cells.forEach(([x, y, top, g], k) => { const h = Math.max(0.05, top - g); m4.makeScale(1, h, 1).setPosition(x, g + h / 2, -y); inst.setMatrixAt(k, m4);
+    const j = ((Math.imul(k + 1, 2654435761) >>> 0) / 4294967296 - 0.5) * 0.12;                            // deterministic variation (colour only)
+    col.copy(lo).lerp(hi, Math.min(1, Math.max(0, h / hmax + j))); inst.setColorAt(k, col); });
   inst.castShadow = true; inst.receiveShadow = true; inst.userData = { role: 'canopy' }; inst.name = 'CANOPY'; inst.visible = false; root.add(inst); groups.CANOPY = inst;
   return { root, groups, info };
 }

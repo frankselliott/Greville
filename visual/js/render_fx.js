@@ -12,12 +12,17 @@ import { CopyShader } from '../vendor/three/addons/shaders/CopyShader.js';
 import { Sky } from '../vendor/three/addons/objects/Sky.js';
 import { sunPosition, sunVectorLocal } from './sun.js';
 
+// Aerial perspective: Beer–Lambert extinction exp(-beta d) with beta = 3.912 / V (Koschmieder; V = meteorological visibility),
+// replacing three's squared FogExp2 term so the stated visibility means what it says. Display only: mask and occlusion renders
+// never use fog (their materials have fog: false).
+THREE.ShaderChunk.fog_fragment = THREE.ShaderChunk.fog_fragment.replace('1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth )', '1.0 - exp( - fogDensity * vFogDepth )');
+export const VISIBILITY_M = { sun: 15000, overcast: 8000, dusk: 8000 };
 const SITE_CENTRE = [60, -10, 30];                                   // local frame, centre of the shadow frustum
 const L2T = (v) => new THREE.Vector3(v[0], v[2], -v[1]);
 export const QUALITY = {
-  high: { label: 'High (sun shadows 4096, AO, MSAA 4x)', shadow: 4096, ao: true, samples: 4 },
-  medium: { label: 'Medium (shadows 2048, MSAA 4x, no AO)', shadow: 2048, ao: false, samples: 4 },
-  low: { label: 'Low (no shadows, no AO)', shadow: 0, ao: false, samples: 0 },
+  high: { label: 'High (sun shadows 4096, AO, MSAA 4x, exports supersampled 2x)', shadow: 4096, ao: true, samples: 4, ssaa: 2 },
+  medium: { label: 'Medium (shadows 2048, MSAA 4x, no AO)', shadow: 2048, ao: false, samples: 4, ssaa: 1 },
+  low: { label: 'Low (no shadows, no AO)', shadow: 0, ao: false, samples: 0, ssaa: 1 },
 };
 
 function seeded(fn, seed = 20261121) {                              // run fn with a fixed Math.random sequence (mulberry32)
@@ -79,7 +84,13 @@ export class FX {
     const envI = !sunMode ? this.envOvercast : up ? this.envI : this.envI * 2.5;    // r160: per-material (scene.environmentIntensity is r163+)
     for (const m of Object.values(this.app.M)) if (m.isMeshStandardMaterial) m.envMapIntensity = envI;
     this.app.renderer.toneMappingExposure = !sunMode ? this.expoOvercast : up ? this.expo : this.expo * 2.2;
+    const hazeKey = !sunMode ? 'overcast' : up ? 'sun' : 'dusk', hazeCol = { sun: 0xcfd9e3, overcast: 0xd6d8da, dusk: 0x6f7178 }[hazeKey];
+    this.haze = { visibility_m: VISIBILITY_M[hazeKey], beta_per_m: 3.912 / VISIBILITY_M[hazeKey], colour: '#' + hazeCol.toString(16) };
+    if (this.hazeOn === false) this.app.scene.fog = null;
+    else if (this.app.scene.fog?.isFogExp2) { this.app.scene.fog.color.setHex(hazeCol); this.app.scene.fog.density = this.haze.beta_per_m; }
+    else this.app.scene.fog = new THREE.FogExp2(hazeCol, this.haze.beta_per_m);
   }
+  setHaze(on) { this.hazeOn = on; this.applyLighting(); }
   describe() {
     const L = this.lighting, p = (n) => String(n).padStart(2, '0');
     if (L.mode !== 'sun') return 'Lighting: overcast / neutral (no sun, no shadows). Illustrative.';

@@ -308,6 +308,32 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 - E2 façade detail from the approved elevations: needs those sheets under 10 MB, or council-portal access.
 - Rendering polish.
 
+## v1.5 — Rendering polish — **DONE**
+
+**Request:** "do the rendering polish too". This affects the display only: geometry, cameras, masks and IoU are unchanged.
+
+**Changes:**
+- **Aerial perspective (haze).** three's `FogExp2` term, `1 − exp(−(βd)²)`, is patched to Beer–Lambert, `1 − exp(−βd)`. β = 3.912 / V (Koschmieder), so the stated visibility V means what it says:
+  - V = 15 km in sun (β ≈ 2.6×10⁻⁴ m⁻¹);
+  - V = 8 km overcast and at dusk.
+  - At the tower distances (about 50–300 m) the blend is 1–8 % in sun.
+  - **Lighting → Aerial haze** turns it off, and `haze=0` goes into the link.
+  - The mask materials carry `fog: false`, and the montage occluders write depth only, so neither the masks nor the occlusion can change.
+- **Supersampled exports.**
+  - At High quality, saved images are rendered at 2× in each direction. They are then box-filtered down in linear light by an exact integer routine (`downsampleLinear`), so they stay byte-reproducible.
+  - The PNG remains W × H.
+  - The record gains `renderer.supersampling` and `renderer.aerial_perspective`.
+- **LiDAR canopy colour.** Each 0.5 m canopy column is now coloured by its LiDAR height: dark green for low, light green for high, plus a fixed per-cell jitter. Only the colour changes: the cells, their heights and the layer's default (off) are unchanged.
+- **Softer outlines.** Edge opacity is 0.16 for context (was 0.22) and 0.45 for towers (was 0.6).
+
+**Gates:**
+- **G11.1** — masks are byte-identical with haze on and off, and the mask materials have `fog: false`.
+- **G11.2** — the haze density equals 3.912 / V for each lighting mode.
+- **G11.3** — a High export is 2× supersampled, 1800 × 1200 and byte-identical on re-export.
+- **G11.4** — every earlier gate still passes, with IoU unchanged.
+
+**Results:** G11.1–G11.4 PASS. Protected PASS; unit 18/18; e2e 25/25. Details in QA.md §v1.5.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.
@@ -316,3 +342,4 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 4. **Matching is manual.** There is no automatic landmark detection: matching is manual pairing plus a robust fit. Control points are model vertices, not survey points.
 5. **Rendering determinism** is proven on one machine and GPU path. The renderer string is recorded in every export.
 6. **Lighting is illustrative** (v1.1). The sun direction is exact for the frozen convention, but the brightness balance is calibrated by eye. Shadow-map resolution is about 0.16 m per texel over ±330 m. Use `/study/` for shadow evidence.
+7. **Haze and canopy colour are depiction choices** (v1.5). The 15 km and 8 km visibilities are typical values, not measured on any date, and the canopy colours are not species or foliage data. Neither affects geometry, masks or any measured quantity.

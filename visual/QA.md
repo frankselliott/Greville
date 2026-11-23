@@ -97,3 +97,14 @@ All three are fixed.
 | Q10.2 | Rebuild with E2c as default | All 13 build checks PASS. Only `scenarios` and `default_scenarios` changed; collections, terrain and presets are byte-identical. |
 | Q10.3 | Suite | Protected PASS; unit 18/18; e2e 24/24 in 256 s. IoU 0.99965 / 0.99968 / 1 / 1 (on E2, the geometry the archived ray-caster rendered). |
 | Q10.4 | E2c ⊇ E2 at every preset | PASS. Zero E2 pixels lost. Pixels gained at 600 × 400: W01 1,573; NG55 26,283; NG57 13,180; NG59 36,855. |
+
+## v1.5 — rendering polish (branch `claude/visual-render-polish`, base `a41d8b6`)
+
+| # | Test | Result |
+|---|---|---|
+| Q11.1 | Haze never touches masks | PASS. `renderMaskPixels` for E1_SK48 and E2c at W01 (480 × 320) is identical with haze on and off. `M.black.fog` and `M.white.fog` are both `false`. |
+| Q11.2 | Haze model | PASS. The fog chunk is patched to `1 − exp(−βd)`. β = 3.912/15000 in sun and 3.912/8000 overcast, exactly. `haze=0` is written to the link only when the haze is off. |
+| Q11.3 | Supersampled export | PASS. At High, `renderer.supersampling` = 2. The PNG is 1800 × 1200, and two exports are byte-identical. The record states the aerial-perspective model and that it applies to the display render only. |
+| Q11.4 | Canopy colour | PASS. The canopy InstancedMesh has per-instance colour. Its matrices (geometry) are unchanged. |
+| Q11.5 | Suite | Protected PASS; unit 18/18; e2e 25/25. IoU 0.99965 / 0.99968 / 1 / 1, unchanged. E2 → E2c gains unchanged. |
+| Q11.6 | Visual check | Screenshots of the overview (sun) and NG57 (overcast) checked by eye. Distant context softens slightly; near geometry is unchanged; no console errors. |
