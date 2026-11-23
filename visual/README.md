@@ -59,7 +59,7 @@ Any static server also works, for example `python3 -m http.server` from the repo
    - **Free and Overview** cameras are labelled **NONPHYSICAL**.
 3. **Compare.**
    - **E1 / E2.** The E1 / E2 buttons, the on-stage toggle or the **T** key switch scenario. The camera, projection, frame and canvas are asserted unchanged by the tests.
-   - **Scenario choices:** E1 `E1_SK48` (reconstructed), `E1_SK52` (sensitivity), `E1_SK48_POD` (hypothetical); E2 `E2` (source-derived), `E2c` (VA4 corrections, provisional).
+   - **Scenario choices:** E1 `E1_SK48` (reconstructed), `E1_SK52` (sensitivity), `E1_SK48_POD` (hypothetical); E2 `E2c` (**default**: approved plates plus the VA4-corrected B west balcony line and podiums, scaled ±0.15 m) and `E2` (plates only, kept for continuity with VA2). E2c includes the approved podiums; the 2020 podium is unknown, so compare with `E1_SK48_POD` for a like-for-like podium.
    - **View modes:** side-by-side, swipe, and a mask overlay. The mask marks orange = only in E2 and blue = only in E1, with frame-limited angular areas and top-elevation readouts.
 4. **Framing.** The framing view renders the same station and geometry with four HFOV and pitch settings. A dramatic or restrained-looking frame is a framing choice, not a change in the development.
 5. **Export.** *Save PNG + JSON* renders off-screen at the exact frame size.

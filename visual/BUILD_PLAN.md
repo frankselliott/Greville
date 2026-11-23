@@ -286,6 +286,28 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 
 **Results:** G9.1–G9.2 PASS. Protected PASS; unit 18/18; e2e 23/23. Details in QA.md §v1.3.
 
+## v1.4 — Default approved form E2c — **DONE**
+
+**Request:** "court accurate; make the reconstruction more accurate". Of the tracks offered, the user chose to make E2c the default.
+
+**Why:** VA4 Part D found that the E2 plate lies up to 2.88 m inside the approved Building B west balcony line (about 29 m² per floor), and that the podiums outside the tower plates were absent. E2c carries those corrections, scaled from the approved drawings (±0.15 m) and corroborated by dimensioned setbacks.
+
+**Changes:**
+- `tools/build_assets.py`: default `approved = E2c`; E2c reclassified **scaled** (was "sensitivity / provisional"); E2 and E2c notes now state the known under-representation and the podium caveat.
+- Assets rebuilt from the hash-pinned sources. A no-change rebuild was first shown to be byte-identical. After the change, only `scenarios` and `default_scenarios` differ: collections, terrain and presets are byte-identical.
+- A `scaled` tag is added to the legend.
+
+**Gates:**
+- **G10.1** — E2c's silhouette contains E2's at every viewpoint (it only adds approved geometry). E2 → E2c pixels gained at 600×400: W01 about 1.6k, NG57 about 13k, NG55 about 26k, NG59 about 37k (mostly the B south podium, near the ground).
+- **G10.2** — every earlier gate still passes. The ray-caster IoU fixtures remain on E2, the geometry the archived ray-caster rendered.
+
+**Results:** G10.1–G10.2 PASS. Protected PASS; unit 18/18; e2e 24/24. Details in QA.md §v1.4.
+
+**Not done (the user did not select them; each needs new sources or access):**
+- LiDAR roof and tree reconstruction: needs a session on the "Greville shadow model" environment.
+- E2 façade detail from the approved elevations: needs those sheets under 10 MB, or council-portal access.
+- Rendering polish.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

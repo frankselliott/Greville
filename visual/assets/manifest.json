@@ -1,7 +1,7 @@
 {
  "schema": "greville-visual-manifest/1",
  "generator": "visual/tools/build_assets.py",
- "generator_sha256": "15efbaee0340090d4861c5762a076369a5583972c9d57d21ced75342b604333a",
+ "generator_sha256": "c0eae60aac24633479c60e2ade1444c204007afa37531850b6f745e49399e94d",
  "sources": {
   "S-VA2": {
    "file": "scene_dump_v2.json",
@@ -34,8 +34,8 @@
  },
  "assets": {
   "scene.json": {
-   "sha256": "5bf8665e5e757a2f599c59e453af02f217b1a9528e5a85dc2c69d9a39ee5b9cf",
-   "bytes": 435790
+   "sha256": "8c35523d458fbf30fc4724596bf5cdb9d278a65d3d3e3b76133204823ecbefab",
+   "bytes": 436432
   },
   "controls.json": {
    "sha256": "9feab0ac976f7b7f3d39fd6bafdb00b66463db43f2913385462fe10c7d5a9eca",
@@ -158,7 +158,7 @@
     "ARTW",
     "POD"
    ],
-   "classification": "sensitivity"
+   "classification": "scaled"
   }
  },
  "transformation": "none to source values; local frame x=E-504045, y=N-6966712, z=RL AHD; viewer maps (x,y,z)->(X=x,Y=z,Z=-y)",

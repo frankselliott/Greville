@@ -1,6 +1,6 @@
 {
  "app": "greville-visual",
- "version": "1.3.0",
- "source_commit": "d3c1e89360d795342f39ee44229e3adee26d5257",
+ "version": "1.4.0",
+ "source_commit": "02f907001270899ae176f802a7ef74c83deb47f5",
  "note": "source_commit is stamped by tools/stamp_version.py with the commit the code was taken from; the stamping commit itself follows it"
 }

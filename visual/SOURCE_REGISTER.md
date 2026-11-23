@@ -19,7 +19,7 @@ Every geometry, camera or control point the viewer displays traces to one entry 
 |---|---|---|---|---|
 | S-VA2 | `scene_dump_v2.json` (VA v2 visual scene, 497,146 B) | `b9d4ca3a19e98454060896ae07a80a58d8be625d60c178bbce613e8ee4aba70c` | Context prisms (266 LiDAR-derived plus heritage-laundry tiers); 166 approved-plan townhouse prisms; E1 SK48 / SK52; E2; 2 m DEM; 0.5 m LiDAR canopy cells; the archived W01 camera | As labelled per collection (§3) |
 | S-VA4 | `GRE_VA4_code_and_results.zip` (177.8 KB) | `a75ad6b31c0241de5a8148eac89711146c5e5a7f461f07f9429b43febed52901` (equals the archive SHA256SUMS) | See S-VA4a to S-VA4d | |
-| S-VA4a | `code/partD_artic.py` | `b82fea3c…f319b0` | ARTW (B west balcony line) and POD (A/B west podium, B south podium) prisms, giving E2c | SCALED from approved DA drawings: sensitivity, provisional |
+| S-VA4a | `code/partD_artic.py` | `b82fea3c…f319b0` | ARTW (B west balcony line) and POD (A/B west podium, B south podium) prisms, giving E2c | SCALED from approved DA drawings (about ±0.15 m), corroborated by dimensioned setbacks (DA-106 3000 / 4100; Council 3 m to balcony / 4.1 m to wall) |
 | S-VA4b | `code/masses.py` | (inside S-VA4) | Plan-derived Cluster 4 (Lots 48–54) masses for the optional VA4 context variant | SCALED (TP plans); L1 FFL inferred |
 | S-VA4c | `code/adr/control_points_library_va4.json` | `1ae589ea…a694` | 628 3D control points (128 tower, 500 context), each with a source status | Model vertices, not survey |
 | S-VA4d | `code/adr/adr_core.py` | `f1e0caa8…94b6` | The camera model (`axes`, `project`), the robust fit and the grade. Ported to `js/fit.js` and `js/camera_model.js`, and cross-checked numerically. | Method |
@@ -44,7 +44,7 @@ The underlying public data and drawings behind S-VA2 and S-VA4 are:
 | `E1_SK52` | S-VA2 `E1_SK52` | The same footprints at RL 52.0 | **Sensitivity** (same SK family) |
 | `E1_SK48_POD` | S-VA2 `E1_SK48` + S-VA4a POD | SK48 with the approved podium added | **Hypothetical** bound (unknown 2020 podium) |
 | `E2` | S-VA2 `E2` | Approved A/B plates, B communal roof, lift overruns | **Source-derived** (approved plans, VA2 massing; balcony volumes filled to the plate) |
-| `E2c` | S-VA2 `E2` + S-VA4a ARTW + POD | E2 with the B west balcony line and the podium corrections | **Sensitivity / provisional** (scaled from DA drawings) |
+| `E2c` (**default approved form from v1.4**) | S-VA2 `E2` + S-VA4a ARTW + POD | E2 with the B west balcony line and the podium corrections | **Scaled** from the approved drawings. It includes the approved podiums; the 2020 podium is unknown, so use `E1_SK48_POD` for a like-for-like podium. `E2` (plates only) is kept for continuity with VA2. |
 
 **Deliberately not used:**
 - **Archive comparators from other families.** `E1_REC48` / `REC52` (an inverse fit), `E1_CUT48` (approved footprints cut to height) and `E1_SK46.5` are not exposed. The SK family is never mixed with REC or CUT.
