@@ -122,3 +122,14 @@ All three are fixed.
 
 Basis for the RL: the sealed v1.1-AB comparator; the best-fitting height to the applicant's DA-600/601 Rev 8 "equivalent 8 storey" line (RL 48.0, `verify/out/ellivo_registration.json`); and approved L08 = RL 48.0 on DA-201 / DA-402. Without-prejudice material is not cited in this repository.
 
+## v1.7 — presentation renders (same branch)
+
+| # | Test | Result |
+|---|---|---|
+| Q13.1 | 8-storey line visibility | PASS. Approved E2c shows RL 48. With historical E1_CUT49 selected it shows RL 49; with a non-CUT form it shows RL 48. It is hidden on the historical side and when toggled off. |
+| Q13.2 | Masks unaffected | PASS. `renderMaskPixels` for E2c and E1_CUT48 at L61 (480 × 270) is identical with the line on and off. |
+| Q13.3 | Light look | PASS. The clear dome is shown, the physical Sky hidden, the dome is in `backgrounds()`, and tower and context use the light materials. `colour=light` round-trips through the URL. |
+| Q13.4 | Presets | PASS. L60–L62 are model-defined, 1920 × 1080, HFOV 75°, pitch 0. The G3.1 camera-invariance test now covers all 7 presets, desktop and mobile. |
+| Q13.5 | Suite | Protected PASS; unit 18/18; e2e 27/27; IoU 0.99965 / 0.99968 / 1 / 1. |
+| Q13.6 | Visual check | L60, L61, L62 and W01 exported at High with Light, 21 Mar 14:00. The red band sits on both towers and steps with the footprints. NG57 was checked: at 7.8 m from the approved B south podium, a level 75° view is filled by the podium face. That is accurate but not useful, so it was not used for sheets. |
+

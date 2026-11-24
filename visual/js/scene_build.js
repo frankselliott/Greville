@@ -66,6 +66,9 @@ export function makeMaterials() {
     edgeTower: new THREE.LineBasicMaterial({ color: COLOURS.edge, transparent: true, opacity: 0.45 }),
     storeyE2: new THREE.LineBasicMaterial({ color: COLOURS.storey, transparent: true, opacity: 0.7 }),
     storeyE1: new THREE.LineDashedMaterial({ color: COLOURS.storey, transparent: true, opacity: 0.7, dashSize: 1.2, gapSize: 0.8 }),
+    // v1.7 'Light' presentation palette (cream towers, white neighbours) and the red 8-storey line (display only; never in masks)
+    towerLight: std(0xe8dcc6, 0.75), ctxLight: std(0xe9e7e2), thLight: std(0xf6f5f2),
+    line8: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff1f26).multiplyScalar(2.2), side: THREE.DoubleSide, toneMapped: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
     black: new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }), white: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }),   // masks: never fogged
   };
 }
@@ -109,5 +112,27 @@ export function buildScene(S, M) {
     col.copy(lo).lerp(hi, Math.min(1, Math.max(0, h / hmax + j))); inst.setColorAt(k, col); });
   inst.castShadow = true; inst.receiveShadow = true; inst.userData = { role: 'canopy' }; inst.name = 'CANOPY'; inst.visible = false; root.add(inst); groups.CANOPY = inst;
   return { root, groups, info };
+}
+// Red 8-storey line: a 0.36 m band centred on the comparator top RL, wrapped 0.06 m outside each footprint edge (approved A/B plates and the
+// Building B west balcony-line volumes), so it lies on the approved faces and the depth test shows only the visible parts.
+function ribbonGeometry(rings, rl, half = 0.30, off = 0.06) {
+  const pos = []; const push = (x, y, z) => pos.push(x, z, -y);
+  for (const R0 of rings) {
+    const P = signedArea(R0) < 0 ? [...R0].reverse() : R0, n = P.length;
+    for (let i = 0; i < n; i++) {
+      const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % n], L = Math.hypot(x1 - x0, y1 - y0); if (L < 1e-6) continue;
+      const nx = (y1 - y0) / L * off, ny = -(x1 - x0) / L * off;                   // outward normal of a CCW ring
+      const a = [x0 + nx, y0 + ny], b = [x1 + nx, y1 + ny];
+      push(a[0], a[1], rl - half); push(b[0], b[1], rl - half); push(b[0], b[1], rl + half);
+      push(a[0], a[1], rl - half); push(b[0], b[1], rl + half); push(a[0], a[1], rl + half);
+    }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g;
+}
+export function buildLine8(S, M) {
+  const g = new THREE.Group(); g.name = 'LINE8'; g.userData = { role: 'overlay' };
+  const rings = [...S.collections.E1_CUT48.prisms.map(q => q.P), ...S.collections.ARTW.prisms.map(q => q.P)];
+  for (const rl of [47, 48, 49]) { const m = new THREE.Mesh(ribbonGeometry(rings, rl), M.line8); m.userData = { role: 'overlay', rl }; m.renderOrder = 5; g.add(m); }
+  return g;
 }
 export function isTowerCls(cls) { return TOWER_CLS.has(cls); }

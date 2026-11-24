@@ -99,7 +99,7 @@ export async function buildRecord(app, out) {
               render_parameters: out.par, frame_px: { W: c.W, H: c.H }, three_matrices: { world_col_major: m.world, projection_col_major: m.proj, near: app.camera.near, far: app.camera.far },
               eye_basis: p.eye_basis, framing_basis: p.framing_basis },
     view: { mode: st.view, swipe: st.view === 'swipe' ? st.swipe : undefined, panels: out.panels.map(q => ({ ...q, par: q.par || undefined })), output_px: { W: out.OW, H: out.OH }, burned_in_annotations: out.annotations },
-    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, storey_lines: st.storeys ? storeyRecord(app) : false, colour_mode: st.colour,
+    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, storey_lines: st.storeys ? storeyRecord(app) : false, line8: app.groups.LINE8.visible ? { rl: Number(/^E1_CUT(\d+)$/.exec(st.hist)?.[1] ?? 48), basis: 'red band ±0.30 m at the comparator top RL on the approved A/B plates and B west balcony line; display only, excluded from all masks' } : false, colour_mode: st.colour,
                                            ground: st.ground === 'plain' ? 'plain' : { layer: st.ground, source: 'assets/basemap.json (DCDB parcels, 1 m contours, rail; (c) State of Queensland, CC BY 4.0)', sha256: app.manifest.assets['basemap.json']?.sha256, note: 'cartographic index, not survey or imagery' } },
     lighting: lightingRecord(app),
     assets: app.manifest.assets, sources: app.manifest.sources, asset_manifest_generator: app.manifest.generator_sha256, context_drawings: DRAWINGS.context,

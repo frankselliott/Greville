@@ -63,6 +63,9 @@ The underlying public data and drawings behind S-VA2 and S-VA4 are:
 | NG55 — candidate | 504155.20 | 6966672.00 | 24.36 | Initial framing set by the viewer (not a source value) | **Hypothetical** near-ground model camera (DEM + 1.6 m); not a surveyed or occupied position |
 | NG57 — candidate | 504144.50 | 6966674.00 | 23.97 | as above | **Hypothetical** |
 | NG59 — candidate | 504130.30 | 6966676.00 | 23.73 | as above | **Hypothetical** |
+| L60 — Lot 60 courtyard (v1.7) | 504034.07 | 6966723.30 | 25.51 | 94.3° / 75° / 0.1193 (1920 × 1080) | **Model-defined.** Centroid of the Lot 60 yard receptor, receiver RL 23.91 + 1.6 m (sealed model v1.1-AB, `model/data`); presentation framing |
+| L61 — Lot 61 courtyard (v1.7) | 504042.24 | 6966722.02 | 25.51 | 93.9° / 75° / 0.1725 | **Model-defined**, as above (receiver RL 23.91) |
+| L62 — Lot 62 courtyard (v1.7) | 504049.66 | 6966720.86 | 25.215 | 93.5° / 75° / 0.2347 | **Model-defined**, as above (receiver RL 23.615) |
 
 The archived upstairs window cameras W03, W04 and W05 are **not** offered as ground or near-ground perspectives.
 

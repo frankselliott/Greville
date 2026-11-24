@@ -1,7 +1,7 @@
 {
  "schema": "greville-visual-manifest/1",
  "generator": "visual/tools/build_assets.py",
- "generator_sha256": "2436b1d68d3f2a69742b77e2f8b808280e8341710deeb2ddddbd9b72e3f2030c",
+ "generator_sha256": "eedf9fdb443eabe8efab33195c5584bc7dec62d2bc89fe37407c432ed6e5a476",
  "sources": {
   "S-VA2": {
    "file": "scene_dump_v2.json",
@@ -34,8 +34,8 @@
  },
  "assets": {
   "scene.json": {
-   "sha256": "e562a887807d45c6f2e035ef4dd93d3ab9ba918d5d6f1ca888db28e6a4041c05",
-   "bytes": 441880
+   "sha256": "4b0e206c64da7160ea122c01debe2183eacde4e9791889adad6419094d502cc8",
+   "bytes": 443638
   },
   "controls.json": {
    "sha256": "9feab0ac976f7b7f3d39fd6bafdb00b66463db43f2913385462fe10c7d5a9eca",

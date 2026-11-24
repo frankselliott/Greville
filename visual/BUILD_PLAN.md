@@ -359,6 +359,36 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 
 **Results:** G12.1–G12.4 PASS. Details in QA.md §v1.6.
 
+## v1.7 — Presentation renders comparable to the applicant's perspective — **DONE**
+
+**Request:** "make comparable (look as much like it as possible whilst accurate) for our better receptors like 63". This follows the applicant's southern-townhouse perspective, received 24 Nov 2026. That image is not reproduced or stored in this repository.
+
+**Accurate equivalents of its conventions:**
+- **The 8-storey red line:** the comparator's top RL drawn on the approved form. It's exact here because E1_CUT48 shares the approved footprints.
+- **Camera:** a 16:9, wide (75°), level two-point view.
+- **Palette:** cream towers, white neighbours, deep-blue clear sky.
+- **Key-plan inset** with a camera dot and arrow (done on the private sheets, not in the viewer).
+- **Not copied:** façades, trees, landscaping and finishes, which are not in the evidence base.
+
+**Changes:**
+- **`scene_build.js`:** `buildLine8` builds bands at RL 47, 48 and 49 on the E1_CUT48 and ARTW rings, with role `overlay`, and adds a Light palette.
+- **`main.js`:**
+  - the line shows on the approved side only, at the CUT RL of the selected historical form (RL 48 for non-CUT forms);
+  - the Light colour mode swaps the tower and context materials.
+- **`render_fx.js`:** a `clearDome` presentation sky, part of `backgrounds()` so it is never in masks. Lighting is still the physical Sky.
+- **`compare.js` and `renderLayerRGBA`:** hide overlays.
+- **UI, URL and export:** a Layers toggle, `line8=0` and `colour=light` URL parameters, and an export record entry.
+- **Presets:** `build_assets.py` adds L60, L61 and L62 (sealed yard receptor centroid, receiver RL + 1.6 m, presentation framing).
+
+**Gates:**
+- **G13.1** — the line is visible on the approved form only, at the CUT RL, off when toggled.
+- **G13.2** — masks are identical with the line on and off.
+- **G13.3** — the Light look uses the clear dome, which is in `backgrounds()`, and light materials.
+- **G13.4** — presets L60–L62 are model-defined, 1920 × 1080, 75°, level.
+- **G13.5** — every earlier gate still passes.
+
+**Results:** G13.1–G13.5 PASS. Protected PASS; unit 18/18; e2e 27/27. Details in QA.md §v1.7.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

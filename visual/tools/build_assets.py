@@ -114,6 +114,22 @@ def main(scene_path, va4_code):
                             classification='hypothetical', eye_basis='DEM + 1.6 m (model ground; hypothetical)',
                             framing_basis='initial heading = site-grid north (8.864 deg), level, HFOV 90 deg: chosen by the viewer, NOT a source camera', radius=3.0,
                             note='Hypothetical near-ground model camera in the modelled gap south of Building B. Not surveyed, not an occupied or verified position.'))
+    # ---- v1.7 receptor presets: Lots 60-62 courtyards (Lot 63 is W01), from the sealed v1.1-AB yard receptors and receiver RLs (repository
+    # model/data, read only). Comparable framing: 16:9, HFOV 75 deg, level (two-point) view aimed at the approved towers, vertical shift chosen
+    # so the tallest approved roof sits 10% below the frame top.
+    from shapely.geometry import Polygon as _Poly
+    SM = json.load(open(os.path.join(VIS, '..', 'model', 'data', 'greville_model_v1.1-AB.json')))
+    tw = [v for q in col['E2'] for v in [(x, y, q['zt']) for x, y in q['P']]]
+    tcx, tcy = float(np.mean([v[0] for v in tw])), float(np.mean([v[1] for v in tw]))
+    for lot in ('60', '61', '62'):
+        key = f'{lot}SP354191'; c = _Poly(SM['receptors']['yard'][key]).centroid; z = SM['receiver_rl'][key] + 1.6
+        hd = (math.degrees(math.atan2(tcx - c.x, tcy - c.y)) + 360) % 360; W_, H_, hf = 1920, 1080, 75.0; f = W_ / 2 / math.tan(math.radians(hf / 2))
+        top = max(math.atan2(v[2] - z, math.hypot(v[0] - c.x, v[1] - c.y)) for v in tw); cy = min(0.10 * H_ + f * math.tan(top), 0.90 * H_)
+        presets.append(dict(id=f'L{lot}', label=f'L{lot} — Lot {lot} courtyard', E=round(c.x + E0, 2), N=round(c.y + N0, 2), RL=round(z, 3), heading=round(hd, 3), pitch=0.0, roll=0.0,
+                            hfov=hf, shift=round((cy - H_ / 2) / (W_ / 2), 6), W=W_, H=H_, classification='model-defined',
+                            eye_basis=f'receiver RL {SM["receiver_rl"][key]} (finished floor, sealed model v1.1-AB) + 1.6 m standing eye',
+                            framing_basis='comparable presentation framing: 16:9, HFOV 75 deg, level two-point view aimed at the approved towers; not a source camera', radius=2.5,
+                            note=f'Centroid of the Lot {lot} SP354191 courtyard receptor (sealed model v1.1-AB). Model-defined, not surveyed.'))
     # ---- M1 regression checks
     checks = []
     for p in presets:

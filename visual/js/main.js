@@ -2,7 +2,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import * as K from './coords.js';
 import * as CM from './camera_model.js';
-import { buildScene, makeMaterials, COLOURS, SCEN_KEYS } from './scene_build.js';
+import { buildScene, makeMaterials, COLOURS, SCEN_KEYS, buildLine8 } from './scene_build.js';
 import { attachControls } from './controls.js';
 import { maskCompare } from './compare.js';
 import { MatchUI } from './match.js';
@@ -27,6 +27,7 @@ class App {
     this.stage = $('stage'); this.canvas = $('gl'); this.overlay = $('overlay'); this.octx = this.overlay.getContext('2d');
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     this.M = makeMaterials(); const built = buildScene(S, this.M); this.root = built.root; this.groups = built.groups; this.info = built.info;
+    this.groups.LINE8 = buildLine8(S, this.M); this.root.add(this.groups.LINE8);
     this.scene = new THREE.Scene(); this.scene.add(this.root);
     this.camera = new THREE.PerspectiveCamera(); this.camera.matrixAutoUpdate = false; this.camera.near = NEAR; this.camera.far = FAR;
     this.markers = this.makeMarkers(); this.scene.add(this.markers);
@@ -35,7 +36,7 @@ class App {
     const ext = this.groups.TERRAIN.userData.extent, maxTex = Math.min(this.renderer.capabilities.maxTextureSize, mobile ? 2048 : 4096);
     this.groundTex = { cadastre: basemapTexture(this.renderer, BM, ext, { maxPx: maxTex, contours: true }), 'cadastre-plain': basemapTexture(this.renderer, BM, ext, { maxPx: maxTex, contours: false }) };
     this.state = { mode: 'station', preset: null, side: 'approved', hist: S.default_scenarios.historical, appr: S.default_scenarios.approved,
-                   context: 'CTX_VA2', canopy: false, edges: true, storeys: true, ground: 'cadastre', colour: 'neutral', view: 'single', swipe: 0.5, guides: true, minimap: !mobile,
+                   context: 'CTX_VA2', canopy: false, edges: true, storeys: true, line8: true, ground: 'cadastre', colour: 'neutral', view: 'single', swipe: 0.5, guides: true, minimap: !mobile,
                    framing: [{ hfov: 55, pitch: 10 }, { hfov: 90, pitch: 38 }, { hfov: 55, pitch: 62 }, { hfov: 110, pitch: 25 }],
                    orbit: { tx: 95, ty: -15, tz: 35, dist: 260, heading: 20, pitch: -35 } };
     this.cam = null; this.applyGround();
@@ -56,8 +57,14 @@ class App {
     this.groups.CTX_VA4C4_ADD.visible = this.state.context === 'CTX_VA4C4';
     this.groups.CANOPY.visible = this.state.canopy;
     this.root.traverse(o => { const r = o.userData?.role; if (r === 'edge') o.visible = this.state.edges; else if (r === 'storeys') o.visible = this.state.storeys; });
-    const towerMat = this.state.colour === 'scenario' ? (sc?.side === 'historical' ? this.M.towerE1 : this.M.towerE2) : this.M.tower;
+    const light = this.state.colour === 'light';
+    const towerMat = this.state.colour === 'scenario' ? (sc?.side === 'historical' ? this.M.towerE1 : this.M.towerE2) : light ? this.M.towerLight : this.M.tower;
     for (const k of SCEN_KEYS) this.groups[k].children.forEach(c => { if (c.isMesh) c.material = towerMat; });
+    for (const k of ['CTX_BASE', 'CTX_C4_LIDAR', 'CTX_VA4C4_ADD']) this.groups[k].children.forEach(c => { if (c.isMesh) c.material = light ? this.M[c.userData.matKey + 'Light'] : this.M[c.userData.matKey]; });
+    // red 8-storey line: on the approved form only, at the selected comparator's RL when it is an approved-footprint cut (else RL 48)
+    const rl = /^E1_CUT(\d+)$/.exec(this.state.hist)?.[1] ?? '48';
+    this.groups.LINE8.visible = this.state.line8 && sc?.side === 'approved';
+    this.groups.LINE8.children.forEach(m => { m.visible = String(m.userData.rl) === rl; });
   }
   applyGround() { const t = this.groundTex[this.state.ground] || null; if (this.M.terrain.map !== t) { this.M.terrain.map = t; this.M.terrain.color.set(t ? 0xffffff : COLOURS.terrain); this.M.terrain.needsUpdate = true; } }
   visiblePrisms(scenarioId) {                       // solids for collision tests in the current context/scenario
@@ -221,8 +228,9 @@ class App {
     $('canopy').onchange = (e) => { this.state.canopy = e.target.checked; this.render(); };
     $('edges').onchange = (e) => { this.state.edges = e.target.checked; this.render(); };
     $('storeys').onchange = (e) => { this.state.storeys = e.target.checked; this.render(); };
+    $('line8').onchange = (e) => { this.state.line8 = e.target.checked; this.render(); };
     $('groundSel').onchange = (e) => { this.state.ground = e.target.value; this.applyGround(); this.render(); };
-    $('colourMode').onchange = (e) => { this.state.colour = e.target.value; this.render(); };
+    $('colourMode').onchange = (e) => { this.state.colour = e.target.value; this.fx.setSkyStyle(e.target.value === 'light' ? 'clear' : 'standard'); this.render(); };
     $('guides').onchange = (e) => { this.state.guides = e.target.checked; this.render(); };
     $('minimapChk').checked = this.state.minimap; $('minimap').hidden = !this.state.minimap; $('mapToggle').setAttribute('aria-expanded', String(this.state.minimap));
     $('minimapChk').onchange = (e) => { this.state.minimap = e.target.checked; $('minimap').hidden = !this.state.minimap; $('mapToggle').setAttribute('aria-expanded', String(this.state.minimap)); this.render(); };

@@ -12,6 +12,7 @@ export function renderMaskPixels(app, par, scen, w, h) {
   const bgs = app.fx?.backgrounds() || [], bgV = bgs.map(b => b.visible); bgs.forEach(b => { b.visible = false; });   // sky and backdrop never count
   saved.push([app.groups.BACKDROP, 'visible', app.groups.BACKDROP.visible]); app.groups.BACKDROP.visible = false;
   app.root.traverse(o => {
+    if (o.userData?.role === 'overlay') { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
     if (o.isLineSegments) { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
     if (o.isMesh || o.isInstancedMesh) { saved.push([o, 'material', o.material]); const coll = o.userData?.collection; o.material = coll && towerKeys.has(coll) ? app.M.white : app.M.black; }
   });

@@ -34,7 +34,7 @@ test('M2/G5.4 page loads under the /Greville/ sub-path with no errors and no ext
   await page.waitForTimeout(1500);                                   // let the full-quality (ambient occlusion) frame run as well
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   const info = await page.evaluate(() => ({ presets: window.__visual.S.presets.map(p => p.id), webgl: !!window.__visual.renderer.getContext() }));
-  assert.deepEqual(info.presets, ['W01', 'NG55', 'NG57', 'NG59']); assert.ok(info.webgl);
+  assert.deepEqual(info.presets, ['W01', 'NG55', 'NG57', 'NG59', 'L60', 'L61', 'L62']); assert.ok(info.webgl);
   await ctx.close();
 });
 
@@ -126,7 +126,7 @@ test('G2.5 station mode refuses solids and the local radius; free/overview are l
 for (const vp of [{ name: 'desktop', viewport: { width: 1400, height: 900 } }, { name: 'mobile', dev: devices['Pixel 7'] }]) {
   test(`G3.1 scenario switching never changes the camera, projection, frame or canvas (${vp.name}; every preset; every scenario)`, async () => {
     const { ctx, page } = await open(vp.viewport, vp.dev ? { ...vp.dev } : {});
-    const ids = ['W01', 'NG55', 'NG57', 'NG59'];
+    const ids = ['W01', 'NG55', 'NG57', 'NG59', 'L60', 'L61', 'L62'];
     for (const id of ids) {
       await page.evaluate((id) => window.__visual.selectPreset(id), id); await settle(page);
       await page.evaluate(() => window.__visual.setCam({ ...window.__visual.cam, pitch: 23.4, roll: 1.7, hfov: 81.3 })); await settle(page);
@@ -468,4 +468,27 @@ test('v1.6 default historical comparator is E1_CUT48 (approved footprints at RL 
     for (const k of ['cut48_outside_E2', 'cut47_outside_48', 'cut48_outside_49']) assert.ok(v[k] <= 2, `${id} ${k}: ${v[k]}`);   // anti-aliasing-free rasters: at most a boundary pixel or two
   }
   await ctx.close();
+});
+
+test('v1.7 presentation: red 8-storey line on the approved form only, at the comparator RL, never in masks; Light look; Lot 60-62 courtyard presets', async () => {
+  const { ctx, page, errors } = await open(undefined, {}, '?preset=L61&colour=light');
+  const r = await page.evaluate(async () => {
+    const a = window.__visual; const { renderMaskPixels } = await import('./js/compare.js'); const out = {};
+    const vis = () => a.groups.LINE8.visible ? a.groups.LINE8.children.filter(m => m.visible).map(m => m.userData.rl) : [];
+    a.applyVisibility('E2c'); out.appr = vis(); a.applyVisibility('E1_CUT48'); out.hist = vis();
+    a.state.hist = 'E1_CUT49'; a.applyVisibility('E2c'); out.appr49 = vis(); a.state.hist = 'E1_SK48'; a.applyVisibility('E2c'); out.apprSK = vis(); a.state.hist = 'E1_CUT48';
+    a.state.line8 = false; a.applyVisibility('E2c'); out.off = vis(); a.state.line8 = true;
+    const par = a.par(), w = 480, h = 270, ms = {};
+    for (const on of [true, false]) { a.state.line8 = on; ms[on] = ['E2c', 'E1_CUT48'].map(s => Array.from(renderMaskPixels(a, par, s, w, h)).join('')); }
+    a.state.line8 = true; out.masksEqual = ms[true][0] === ms[false][0] && ms[true][1] === ms[false][1];
+    out.sky = { clear: a.fx.clearDome.visible, phys: a.fx.sky.visible, inBackgrounds: a.fx.backgrounds().includes(a.fx.clearDome) };
+    out.mats = { tower: a.groups.E2.children.find(c => c.isMesh).material === a.M.towerLight, ctx: a.groups.CTX_BASE.children.filter(c => c.isMesh).every(c => c.material === a.M[c.userData.matKey + 'Light']) };
+    const p = a.preset('L61'); out.preset = { cls: p.classification, W: p.W, H: p.H, hfov: p.hfov, pitch: p.pitch };
+    out.query = a.ui.stateToQuery().toString();
+    return out; });
+  assert.deepEqual(r.appr, [48]); assert.deepEqual(r.hist, []); assert.deepEqual(r.appr49, [49]); assert.deepEqual(r.apprSK, [48]); assert.deepEqual(r.off, []);
+  assert.ok(r.masksEqual, 'masks identical with the 8-storey line on and off');
+  assert.deepEqual(r.sky, { clear: true, phys: false, inBackgrounds: true }); assert.deepEqual(r.mats, { tower: true, ctx: true });
+  assert.deepEqual(r.preset, { cls: 'model-defined', W: 1920, H: 1080, hfov: 75, pitch: 0 }); assert.match(r.query, /colour=light/);
+  assert.deepEqual(errors, []); await ctx.close();
 });

@@ -71,6 +71,7 @@ export class UI {
         { label: 'LiDAR canopy heightfield', type: 'check', get: () => st.canopy, run: () => setCtl('canopy', !st.canopy) },
         { label: 'Edges', type: 'check', get: () => st.edges, run: () => setCtl('edges', !st.edges) },
         { label: 'Storey lines', type: 'check', get: () => st.storeys, run: () => setCtl('storeys', !st.storeys) },
+        { label: '8-storey line (red, on the approved form)', type: 'check', get: () => st.line8, run: () => setCtl('line8', !st.line8) },
         'sep', { head: 'Ground' },
         { label: 'Cadastre + 1 m contours', type: 'radio', get: () => st.ground === 'cadastre', run: () => setCtl('groundSel', 'cadastre') },
         { label: 'Cadastre only', type: 'radio', get: () => st.ground === 'cadastre-plain', run: () => setCtl('groundSel', 'cadastre-plain') },
@@ -78,6 +79,7 @@ export class UI {
         'sep', { head: 'Tower colour' },
         { label: 'Neutral (same for E1 and E2)', type: 'radio', get: () => st.colour === 'neutral', run: () => setCtl('colourMode', 'neutral') },
         { label: 'By scenario', type: 'radio', get: () => st.colour === 'scenario', run: () => setCtl('colourMode', 'scenario') },
+        { label: 'Light (presentation)', type: 'radio', get: () => st.colour === 'light', run: () => setCtl('colourMode', 'light') },
       ]],
       ['Lighting', [
         { label: 'Sun at date and time', sc: 'L', type: 'radio', get: () => a.fx.lighting.mode === 'sun', run: () => setRadio('light', 'sun') },
@@ -205,7 +207,7 @@ export class UI {
     const differs = Math.abs(E - p.E) > 1e-4 || Math.abs(N - p.N) > 1e-4 || Math.abs(c.z - p.RL) > 1e-4 || c.heading !== p.heading || c.pitch !== p.pitch || c.roll !== p.roll || c.hfov !== p.hfov || Math.abs(shift - p.shift) > 1e-9;
     if (differs && st.mode !== 'match') q.set('cam', [E.toFixed(3), N.toFixed(3), c.z.toFixed(3), +c.heading.toFixed(4), +c.pitch.toFixed(4), +c.roll.toFixed(4), +c.hfov.toFixed(4), +shift.toFixed(6)].join(','));
     if (st.mode === 'overview') { const o = st.orbit; q.set('orbit', [o.tx, o.ty, o.tz, o.dist, o.heading, o.pitch].map(v => +v.toFixed(2)).join(',')); }
-    if (st.context !== 'CTX_VA2') q.set('ctx', st.context); if (st.canopy) q.set('canopy', '1'); if (!st.edges) q.set('edges', '0'); if (!st.storeys) q.set('storeys', '0');
+    if (st.context !== 'CTX_VA2') q.set('ctx', st.context); if (st.canopy) q.set('canopy', '1'); if (!st.edges) q.set('edges', '0'); if (!st.storeys) q.set('storeys', '0'); if (!st.line8) q.set('line8', '0');
     if (st.ground !== 'cadastre') q.set('ground', st.ground); if (st.colour !== 'neutral') q.set('colour', st.colour);
     if (L.mode !== 'sun') q.set('light', L.mode);
     q.set('date', `${L.date[0]}-${String(L.date[1]).padStart(2, '0')}-${String(L.date[2]).padStart(2, '0')}`); q.set('time', `${String(L.time[0]).padStart(2, '0')}${String(L.time[1]).padStart(2, '0')}`);
@@ -222,7 +224,7 @@ export class UI {
   }
   applyQuery(q) {                                   // called once at start-up, after the preset is selected
     const a = this.app, st = a.state, num = (s) => s.split(',').map(Number);
-    if (q.get('ctx')) setCtl('ctxSel', q.get('ctx')); if (q.get('canopy') === '1') setCtl('canopy', true); if (q.get('edges') === '0') setCtl('edges', false); if (q.get('storeys') === '0') setCtl('storeys', false);
+    if (q.get('ctx')) setCtl('ctxSel', q.get('ctx')); if (q.get('canopy') === '1') setCtl('canopy', true); if (q.get('edges') === '0') setCtl('edges', false); if (q.get('storeys') === '0') setCtl('storeys', false); if (q.get('line8') === '0') setCtl('line8', false);
     if (q.get('ground')) setCtl('groundSel', q.get('ground')); if (q.get('colour')) setCtl('colourMode', q.get('colour'));
     if (q.get('hist') && a.scenarios[q.get('hist')]) setCtl('histSel', q.get('hist')); if (q.get('appr') && a.scenarios[q.get('appr')]) setCtl('apprSel', q.get('appr'));
     if (q.get('side') === 'historical') a.setSide('historical');
