@@ -111,7 +111,12 @@ test('G1.2 scenario identity: members exist, one comparator family per scenario,
     for (const m of s.members) assert.ok(C[m], `${s.id} member ${m}`);
     const fams = new Set(s.members.map(m => C[m].family).filter(Boolean)); assert.ok(fams.size <= 1, `${s.id} mixes ${[...fams]}`);
   }
-  for (const banned of ['E1_REC48', 'E1_REC52', 'E1_CUT48', 'SENS_trees12_opaque', 'SENS_C5_verge_trees']) assert.ok(!C[banned], banned);
+  for (const banned of ['E1_REC48', 'E1_REC52', 'SENS_trees12_opaque', 'SENS_C5_verge_trees']) assert.ok(!C[banned], banned);
+  // v1.6: E1_CUT48 is admitted by the user's instruction (24 Nov 2026) as the default comparator; it must be exactly the approved footprints
+  assert.equal(C.E1_CUT48.family, 'CUT'); assert.equal(scene.default_scenarios.historical, 'E1_CUT48');
+  const e2 = Object.fromEntries(C.E2.prisms.map(q => [q.id, q.P]));
+  assert.deepEqual(C.E1_CUT48.prisms.map(q => q.P), [e2['E2-building_A'], e2['E2-building_B_plate']]);
+  for (const k of ['E1_CUT47', 'E1_CUT48', 'E1_CUT49']) assert.deepEqual(C[k].prisms.map(q => q.P), C.E1_CUT48.prisms.map(q => q.P), k);
   const ids = Object.values(C).flatMap(c => c.prisms.map(p => p.id)); assert.equal(ids.length, new Set(ids).size);
 });
 

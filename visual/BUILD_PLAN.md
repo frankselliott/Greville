@@ -334,6 +334,31 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 
 **Results:** G11.1–G11.4 PASS. Protected PASS; unit 18/18; e2e 25/25. Details in QA.md §v1.5.
 
+## v1.6 — Default 8-storey comparator: approved footprints at RL 48.0 — **DONE**
+
+**Request:** "update our comparator with these new refined figures". The user chose to add the comparator and make it the default.
+
+**Why:** the applicant's "equivalent 8 storey approved built form" line fits the **approved** footprints, not the SK00.03 2020 envelope plan, at a top of about RL 48 ± 1 m. The sealed v1.1-AB incremental tables and the public study already use this comparator; the viewer did not.
+
+**Changes:**
+- `tools/build_assets.py`:
+  - copies S-VA2 `E1_CUT48` verbatim, and asserts that its footprints equal the approved A footprint and B plate;
+  - derives `E1_CUT47` and `E1_CUT49` by changing the top RL only;
+  - adds the three scenarios, and sets `default_scenarios.historical = 'E1_CUT48'`;
+  - `E1_SK48`, `E1_SK52` and `E1_SK48_POD` stay available, with their notes updated.
+  - A no-change rebuild was first shown to be byte-identical. After the change only `collections`, `scenarios` and `default_scenarios` differ.
+- **Viewer.** One shared `SCEN_KEYS` list replaces six hard-coded copies (scene build, visibility, colour, masks, montage layer).
+  - `E1_CUT*` storey lines use the approved, dimensioned levels (solid lines; L08 = RL 48.0).
+  - The export record lists the drawings and the storey-line rule.
+
+**Gates:**
+- **G12.1** — `E1_CUT48` is the default. Its footprints are the approved footprints. Its tops are 48.0 (47.0 and 49.0 for the sensitivities).
+- **G12.2** — at every viewpoint, `E1_CUT48` never shows outside E2's silhouette, and RL 47 ⊆ RL 48 ⊆ RL 49 (≤ 2 boundary pixels).
+- **G12.3** — `E1_CUT48` storey lines are DIMENSIONED, at 25.3 … 44.9.
+- **G12.4** — every earlier gate still passes; the ray-caster IoU fixtures stay on `E1_SK48` / `E2`.
+
+**Results:** G12.1–G12.4 PASS. Details in QA.md §v1.6.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

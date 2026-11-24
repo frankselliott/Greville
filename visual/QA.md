@@ -108,3 +108,17 @@ All three are fixed.
 | Q11.4 | Canopy colour | PASS. The canopy InstancedMesh has per-instance colour. Its matrices (geometry) are unchanged. |
 | Q11.5 | Suite | Protected PASS; unit 18/18; e2e 25/25. IoU 0.99965 / 0.99968 / 1 / 1, unchanged. E2 → E2c gains unchanged. |
 | Q11.6 | Visual check | Screenshots of the overview (sun) and NG57 (overcast) checked by eye. Distant context softens slightly; near geometry is unchanged; no console errors. |
+
+## v1.6 — default 8-storey comparator E1_CUT48 (branch `claude/visual-comparator-app48`, base `6815881`)
+
+| # | Test | Result |
+|---|---|---|
+| Q12.1 | Asset rebuild determinism | A no-change rebuild from the pinned sources was byte-identical (`sha256sum -c`). After the change, only `collections` (+E1_CUT47/48/49), `scenarios` and `default_scenarios` differ. |
+| Q12.2 | Source identity | Build check PASS: S-VA2 `E1_CUT48` footprints equal the approved `E2-building_A` and `E2-building_B_plate` footprints (atol 1e-9), with top 48.0. CUT47 and CUT49 differ in top RL only. All 16 build checks PASS. |
+| Q12.3 | Unit G1.2 (amended) | `E1_CUT48` is no longer banned: the user asked for it on 24 Nov 2026. In its place the test asserts family `CUT`, footprints equal to the approved footprints, CUT47/49 sharing those footprints, and `E1_CUT48` as the default. REC48, REC52 and the invented-tree sensitivities stay banned. |
+| Q12.4 | e2e v1.6 | PASS. Default historical `E1_CUT48`, classified reconstructed. At W01, NG55, NG57 and NG59: CUT48 ⊆ E2, CUT47 ⊆ CUT48 ⊆ CUT49 (≤ 2 boundary px). Storey lines DIMENSIONED at 25.3 … 44.9 (ground + L01–L07; L08 = RL 48.0). |
+| Q12.5 | Suite | Protected PASS; unit 18/18; e2e 26/26. IoU 0.99965 / 0.99968 / 1 / 1 (fixtures remain E1_SK48 / E2, as archived). E2 → E2c gains unchanged. |
+| Q12.6 | Visual check | W01 side by side, E1_CUT48 against E2c: identical footprints, comparator topped at RL 48; no console errors. |
+
+Basis for the RL: the sealed v1.1-AB comparator; the best-fitting height to the applicant's DA-600/601 Rev 8 "equivalent 8 storey" line (RL 48.0, `verify/out/ellivo_registration.json`); and approved L08 = RL 48.0 on DA-201 / DA-402. Without-prejudice material is not cited in this repository.
+

@@ -40,6 +40,8 @@ The underlying public data and drawings behind S-VA2 and S-VA4 are:
 | `CTX_VA4C4` (optional context) | S-VA2 context with the 7 Cluster 4 LiDAR template quads replaced by S-VA4b masses | Plan-derived Cluster 4 Lots 48–54 | **Reconstructed** (scaled) |
 | `TERRAIN` | S-VA2 `terrain` | 2 m DEM, 260 × 210 | Source-derived (LiDAR DEM) |
 | `CANOPY` | S-VA2 `canopy` | 2,392 LiDAR canopy cells at 0.5 m (rail corridor), as a heightfield | Source-derived. Off by default. Nothing else about vegetation is modelled; **no trees are invented.** |
+| `E1_CUT48` (**default historical form from v1.6**) | S-VA2 `E1_CUT48` (verbatim) | Approved Building A footprint and Building B plate, cut at RL 48.0 | **Reconstructed** 8-storey comparator. The build checks that its footprints equal the approved E2 footprints exactly. RL 48.0 is the approved L08 floor RL (DA-201 / DA-402), so the cut leaves ground + L01–L07 = 8 storeys. It is the comparator of the sealed v1.1-AB incremental tables and the best fit to the applicant's "equivalent 8 storey" line on DA-600/601 Rev 8 (`verify/out/ellivo_registration.json`). The 2020 approval fixed storeys, not an RL. |
+| `E1_CUT47`, `E1_CUT49` | Derived from S-VA2 `E1_CUT48` | The same footprints with the top RL set to 47.0 / 49.0 (no plan geometry changed) | **Sensitivity**: RL 48 ± 1 m |
 | `E1_SK48` | S-VA2 `E1_SK48` | SK00.03 A A/B footprints, extruded to RL 48.0 | **Reconstructed** historical lower form. The 2020 envelope plan was received, not approved, and no RL was ever fixed. |
 | `E1_SK52` | S-VA2 `E1_SK52` | The same footprints at RL 52.0 | **Sensitivity** (same SK family) |
 | `E1_SK48_POD` | S-VA2 `E1_SK48` + S-VA4a POD | SK48 with the approved podium added | **Hypothetical** bound (unknown 2020 podium) |

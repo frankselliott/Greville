@@ -2,7 +2,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import * as K from './coords.js';
 import * as CM from './camera_model.js';
-import { buildScene, makeMaterials, COLOURS } from './scene_build.js';
+import { buildScene, makeMaterials, COLOURS, SCEN_KEYS } from './scene_build.js';
 import { attachControls } from './controls.js';
 import { maskCompare } from './compare.js';
 import { MatchUI } from './match.js';
@@ -50,14 +50,14 @@ class App {
   activeScenario(side = this.state.side) { return side === 'historical' ? this.state.hist : this.state.appr; }
   applyVisibility(scenarioId) {
     const sc = this.scenarios[scenarioId]; const members = new Set(sc ? sc.members : []);
-    for (const k of ['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']) this.groups[k].visible = members.has(k);
+    for (const k of SCEN_KEYS) this.groups[k].visible = members.has(k);
     this.groups.CTX_BASE.visible = true;
     this.groups.CTX_C4_LIDAR.visible = this.state.context === 'CTX_VA2';
     this.groups.CTX_VA4C4_ADD.visible = this.state.context === 'CTX_VA4C4';
     this.groups.CANOPY.visible = this.state.canopy;
     this.root.traverse(o => { const r = o.userData?.role; if (r === 'edge') o.visible = this.state.edges; else if (r === 'storeys') o.visible = this.state.storeys; });
     const towerMat = this.state.colour === 'scenario' ? (sc?.side === 'historical' ? this.M.towerE1 : this.M.towerE2) : this.M.tower;
-    for (const k of ['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']) this.groups[k].children.forEach(c => { if (c.isMesh) c.material = towerMat; });
+    for (const k of SCEN_KEYS) this.groups[k].children.forEach(c => { if (c.isMesh) c.material = towerMat; });
   }
   applyGround() { const t = this.groundTex[this.state.ground] || null; if (this.M.terrain.map !== t) { this.M.terrain.map = t; this.M.terrain.color.set(t ? 0xffffff : COLOURS.terrain); this.M.terrain.needsUpdate = true; } }
   visiblePrisms(scenarioId) {                       // solids for collision tests in the current context/scenario

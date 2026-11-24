@@ -3,6 +3,7 @@
 // same composer into an off-screen target and then copied, pixel for pixel, into its rectangle on screen or in an export target.
 // Lighting is ILLUSTRATIVE: it never changes geometry or camera, and shadows here are not a shadow study (see /study/).
 import * as THREE from 'three';
+import { SCEN_KEYS } from './scene_build.js';
 import { EffectComposer } from '../vendor/three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from '../vendor/three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from '../vendor/three/addons/postprocessing/GTAOPass.js';
@@ -127,7 +128,7 @@ export class FX {
    *  terrain, canopy if shown) writes depth only, so it hides the towers exactly as in the tested masks but adds no colour.
    *  Shadows are kept (context still casts onto the towers). Returns straight (un-premultiplied) RGBA bytes, rows top-down. */
   renderLayerRGBA(par, scen, w, h, { edges = false, storeys = false } = {}) {
-    const app = this.app, R = app.renderer; const saved = []; const towerKeys = new Set(['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']);
+    const app = this.app, R = app.renderer; const saved = []; const towerKeys = new Set(SCEN_KEYS);
     app.applyVisibility(scen); app.setCameraMatrices(par, app.cam.W, app.cam.H);
     const depthOnly = this._depthOnly || (this._depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
     for (const b of [...this.backgrounds(), app.markers, app.groups.BACKDROP]) { saved.push([b, 'visible', b.visible]); b.visible = false; }

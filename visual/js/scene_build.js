@@ -9,6 +9,8 @@ export const COLOURS = {
   E1: 0x1baf7a, E2: 0xeb6834, add: 0xeb6834, removed: 0x2a78d6,      // validated categorical slots (aqua / orange / blue)
 };
 const TOWER_CLS = new Set(['A', 'B', 'Aroof', 'Broof']);
+// every scenario collection (tower massing); scenarios are made of these
+export const SCEN_KEYS = ['E1_CUT48', 'E1_CUT47', 'E1_CUT49', 'E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD'];
 const signedArea = (P) => { let s = 0; for (let i = 0, n = P.length; i < n; i++) { const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % n]; s += x0 * y1 - x1 * y0; } return s / 2; };
 
 function prismGeometry(prisms) {                    // closed prisms, outward-facing (CCW footprint walls; +z top; -z bottom)
@@ -79,7 +81,7 @@ export function buildScene(S, M) {
     }
     const e = new THREE.LineSegments(edgeGeometry(prisms), role === 'scenario' ? M.edgeTower : M.edge); e.userData = { role: 'edge', collection: key }; g.add(e);
     if (role === 'scenario') {
-      const e1 = key.startsWith('E1'), lv = S.levels?.[e1 ? 'E1' : 'E2'], sg = storeyGeometry(prisms, lv);
+      const e1 = key.startsWith('E1_SK'), lv = S.levels?.[e1 ? 'E1' : 'E2'], sg = storeyGeometry(prisms, lv);   // E1_CUT* sit on the approved plates: approved (dimensioned) levels
       if (sg) { const s = new THREE.LineSegments(sg, e1 ? M.storeyE1 : M.storeyE2); if (e1) s.computeLineDistances(); s.userData = { role: 'storeys', collection: key, status: lv.status }; g.add(s); }
     }
     groups[key] = g; info[key] = { prisms, role }; root.add(g);
@@ -88,7 +90,7 @@ export function buildScene(S, M) {
   add('CTX_BASE', ctx.filter(p => !rep.has(p.id)), 'context');
   add('CTX_C4_LIDAR', ctx.filter(p => rep.has(p.id)), 'context');
   add('CTX_VA4C4_ADD', S.collections.CTX_VA4C4_ADD.prisms, 'context');
-  for (const k of ['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']) add(k, S.collections[k].prisms, 'scenario');
+  for (const k of SCEN_KEYS) add(k, S.collections[k].prisms, 'scenario');
   // terrain (LiDAR DEM, 2 m) with UVs over its own extent for the cadastral basemap texture; faces up (+z)
   const T = S.terrain, pos = [], uv = [], idx = []; const Lx = (T.nx - 1) * T.step, Ly = (T.ny - 1) * T.step;
   for (let j = 0; j < T.ny; j++) for (let i = 0; i < T.nx; i++) { const x = T.x0 + i * T.step, y = T.y0 + j * T.step; pos.push(x, T.z[j * T.nx + i], -y); uv.push((x - T.x0) / Lx, (y - T.y0) / Ly); }
