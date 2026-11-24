@@ -3,6 +3,7 @@
 // same composer into an off-screen target and then copied, pixel for pixel, into its rectangle on screen or in an export target.
 // Lighting is ILLUSTRATIVE: it never changes geometry or camera, and shadows here are not a shadow study (see /study/).
 import * as THREE from 'three';
+import { SCEN_KEYS } from './scene_build.js';
 import { EffectComposer } from '../vendor/three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from '../vendor/three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from '../vendor/three/addons/postprocessing/GTAOPass.js';
@@ -36,6 +37,14 @@ function overcastDome() {
     fragmentShader: 'uniform float Lz; varying vec3 vDir; void main() { float s = normalize(vDir).y; vec3 c = s >= 0.0 ? vec3(0.96, 0.97, 1.0) * Lz * (1.0 + 2.0 * s) / 3.0 : vec3(0.42, 0.41, 0.39) * Lz / 3.0; gl_FragColor = vec4(c, 1.0); }' });
   const d = new THREE.Mesh(new THREE.SphereGeometry(1000, 48, 24), m); d.name = 'OVERCAST_DOME'; d.frustumCulled = false; d.renderOrder = -1; return d;
 }
+// presentation sky for the 'Light' look: a stylised clear-sky gradient (display only; lighting still comes from the physical Sky)
+function clearDome() {
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: 'varying vec3 vDir; void main() { vDir = normalize((modelMatrix * vec4(position, 1.0)).xyz - cameraPosition); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position.z = gl_Position.w; }',
+    fragmentShader: 'varying vec3 vDir; void main() { float s = clamp(normalize(vDir).y, 0.0, 1.0); vec3 hz = vec3(0.115, 0.165, 0.330), zt = vec3(0.028, 0.045, 0.135);'
+      + ' vec3 c = s > 0.0 ? mix(hz, zt, pow(s, 0.55)) : vec3(0.30, 0.30, 0.29); gl_FragColor = vec4(normalize(vDir).y < 0.0 ? vec3(0.30, 0.30, 0.29) : c, 1.0); }' });
+  const d = new THREE.Mesh(new THREE.SphereGeometry(1000, 48, 24), m); d.name = 'CLEAR_DOME'; d.frustumCulled = false; d.renderOrder = -1; d.visible = false; return d;
+}
 function disposeComposer(c) { for (const p of c.passes) p.dispose?.(); c.dispose?.(); }
 
 export class FX {
@@ -50,7 +59,7 @@ export class FX {
     this.envSky = new Sky(); this.envSky.scale.setScalar(2500); this.envScene = new THREE.Scene(); this.envScene.add(this.envSky);
     for (const s of [this.sky, this.envSky]) { const u = s.material.uniforms; u.turbidity.value = 3.5; u.rayleigh.value = 1.1; u.mieCoefficient.value = 0.004; u.mieDirectionalG.value = 0.8; }
     // overcast: CIE standard overcast sky, L(theta) = Lz (1 + 2 sin(elevation)) / 3, neutral; below the horizon a dim neutral ground
-    this.dome = overcastDome(); app.scene.add(this.dome); this.envDome = overcastDome(); this.envScene.add(this.envDome);
+    this.dome = overcastDome(); app.scene.add(this.dome); this.clearDome = clearDome(); app.scene.add(this.clearDome); this.envDome = overcastDome(); this.envScene.add(this.envDome);
     this.pmrem = new THREE.PMREMGenerator(R);
     this.hemi = new THREE.HemisphereLight(0xdfe8f5, 0x8f8a7e, 0.35); app.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff4e5, 3.2); this.sun.castShadow = true; app.scene.add(this.sun); app.scene.add(this.sun.target);
@@ -70,13 +79,14 @@ export class FX {
   }
   dropComposers(prefix) { for (const [k, c] of [...this.composers]) if (k.startsWith(prefix + '')) { disposeComposer(c); this.composers.delete(k); } }
   sunNow() { const [y, m, d] = this.lighting.date, [hh, mi] = this.lighting.time; return sunPosition(y, m, d, hh, mi); }
-  backgrounds() { return [this.sky, this.dome]; }
+  backgrounds() { return [this.sky, this.dome, this.clearDome]; }
   applyLighting() {
     const L = this.lighting; const sunMode = L.mode === 'sun'; let up = false, v = new THREE.Vector3(0, 1, 0);
     if (sunMode) { const s = this.sunNow(); this.sunInfo = s; up = s.alt > 0.5; v = L2T(sunVectorLocal(Math.max(s.alt, -8), s.az)).normalize(); }
     else this.sunInfo = null;
     for (const s of [this.sky, this.envSky]) { s.visible = sunMode; s.material.uniforms.sunPosition.value.copy(v); }
     for (const d of [this.dome, this.envDome]) d.visible = !sunMode;
+    this.sky.visible = sunMode && this.skyStyle !== 'clear'; this.clearDome.visible = sunMode && this.skyStyle === 'clear';
     this.sun.visible = sunMode && up; this.sun.intensity = this.sunI * Math.min(1, Math.max(0, (this.sunInfo?.alt ?? 0) / 4));   // fade in over the first 4 deg
     this.sun.position.copy(L2T(SITE_CENTRE)).addScaledVector(v, 900);
     this.hemi.intensity = sunMode ? (up ? this.hemiI : 0.05) : 0;
@@ -91,6 +101,10 @@ export class FX {
     else this.app.scene.fog = new THREE.FogExp2(hazeCol, this.haze.beta_per_m);
   }
   setHaze(on) { this.hazeOn = on; this.applyLighting(); }
+  /** 'clear': a cleaner, deeper-blue sky for the Light presentation look (lower turbidity, stronger Rayleigh); display only. */
+  setSkyStyle(style) {
+    this.skyStyle = style; this.applyLighting();
+  }
   describe() {
     const L = this.lighting, p = (n) => String(n).padStart(2, '0');
     if (L.mode !== 'sun') return 'Lighting: overcast / neutral (no sun, no shadows). Illustrative.';
@@ -127,12 +141,13 @@ export class FX {
    *  terrain, canopy if shown) writes depth only, so it hides the towers exactly as in the tested masks but adds no colour.
    *  Shadows are kept (context still casts onto the towers). Returns straight (un-premultiplied) RGBA bytes, rows top-down. */
   renderLayerRGBA(par, scen, w, h, { edges = false, storeys = false } = {}) {
-    const app = this.app, R = app.renderer; const saved = []; const towerKeys = new Set(['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']);
+    const app = this.app, R = app.renderer; const saved = []; const towerKeys = new Set(SCEN_KEYS);
     app.applyVisibility(scen); app.setCameraMatrices(par, app.cam.W, app.cam.H);
     const depthOnly = this._depthOnly || (this._depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
     for (const b of [...this.backgrounds(), app.markers, app.groups.BACKDROP]) { saved.push([b, 'visible', b.visible]); b.visible = false; }
     app.root.traverse(o => {
       const r = o.userData?.role;
+      if (r === 'overlay') { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
       if (o.isLineSegments) { saved.push([o, 'visible', o.visible]); o.visible = o.visible && ((r === 'edge' && edges && towerKeys.has(o.userData.collection)) || (r === 'storeys' && storeys)); return; }
       if ((o.isMesh || o.isInstancedMesh) && !towerKeys.has(o.userData?.collection)) { saved.push([o, 'material', o.material], [o, 'renderOrder', o.renderOrder]); o.material = depthOnly; o.renderOrder = -10; }   // occluders first: they write depth only
     });

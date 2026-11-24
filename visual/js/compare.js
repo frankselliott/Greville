@@ -2,15 +2,17 @@
 // off-screen targets with every non-tower surface black and the scenario's tower solids white (so context, terrain and the other
 // scenario's absence are all respected by the depth test). Areas are summed with the exact pinhole pixel solid angle.
 import * as THREE from '../vendor/three/three.module.min.js';
+import { SCEN_KEYS } from './scene_build.js';
 import * as CM from './camera_model.js';
 const SQD = (180 / Math.PI) ** 2;
 export function renderMaskPixels(app, par, scen, w, h) {
   const R = app.renderer, rt = new THREE.WebGLRenderTarget(w, h, { samples: 0 });
-  const saved = []; const towerKeys = new Set(['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD']);
+  const saved = []; const towerKeys = new Set(SCEN_KEYS);
   app.applyVisibility(scen); const mv = app.markers.visible; app.markers.visible = false;
   const bgs = app.fx?.backgrounds() || [], bgV = bgs.map(b => b.visible); bgs.forEach(b => { b.visible = false; });   // sky and backdrop never count
   saved.push([app.groups.BACKDROP, 'visible', app.groups.BACKDROP.visible]); app.groups.BACKDROP.visible = false;
   app.root.traverse(o => {
+    if (o.userData?.role === 'overlay') { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
     if (o.isLineSegments) { saved.push([o, 'visible', o.visible]); o.visible = false; return; }
     if (o.isMesh || o.isInstancedMesh) { saved.push([o, 'material', o.material]); const coll = o.userData?.collection; o.material = coll && towerKeys.has(coll) ? app.M.white : app.M.black; }
   });

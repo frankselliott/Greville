@@ -92,10 +92,11 @@
       <h2>Layers</h2>
       <label>Context <select id="ctxSel"><option value="CTX_VA2">VA2 context (LiDAR envelopes)</option><option value="CTX_VA4C4">VA4 Cluster 4 plan-derived masses</option></select></label>
       <label>Ground <select id="groundSel"><option value="cadastre">Cadastre + 1 m contours</option><option value="cadastre-plain">Cadastre only</option><option value="plain">Plain</option></select></label>
-      <label>Tower colour <select id="colourMode"><option value="neutral">Neutral (same for E1 and E2)</option><option value="scenario">By scenario</option></select></label>
+      <label>Tower colour <select id="colourMode"><option value="neutral">Neutral (same for E1 and E2)</option><option value="scenario">By scenario</option><option value="light">Light (cream towers, white neighbours, clear sky)</option></select></label>
       <div class="checks">
         <label><input type="checkbox" id="storeys" checked> Storey lines <small>E2 dimensioned · E1 inferred (dashed)</small></label>
         <label><input type="checkbox" id="edges" checked> Edges</label>
+        <label><input type="checkbox" id="line8" checked> 8-storey line <small>red, on the approved form, at the comparator RL</small></label>
         <label><input type="checkbox" id="canopy"> LiDAR canopy (rail corridor)</label>
         <label><input type="checkbox" id="guides" checked> Compass and elevation guides <small>G</small></label>
         <label><input type="checkbox" id="minimapChk" checked> Minimap <small>M</small></label>

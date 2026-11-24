@@ -52,21 +52,41 @@ def main(scene_path, va4_code):
     C4 = [prism(p, 'S-VA4b') for n in range(48, 55) for p in spec.lot(n)['prisms']]
     C4_REMOVE = list(spec.LIDAR_C4)
     # ---- collections from S-VA2 (verbatim)
-    col = {k: [prism(p, 'S-VA2') for p in D['collections'][k]] for k in ('E0_context_v2', 'E0_townhouses', 'E1_SK48', 'E1_SK52', 'E2')}
+    col = {k: [prism(p, 'S-VA2') for p in D['collections'][k]] for k in ('E0_context_v2', 'E0_townhouses', 'E1_SK48', 'E1_SK52', 'E1_CUT48', 'E2')}
+    # E1_CUT48 (S-VA2, verbatim) is the approved A footprint and B plate cut at RL 48.0: the sealed v1.1-AB comparator. Check that its footprints
+    # ARE the approved E2 footprints, then derive the RL 47.0 / 49.0 bracket by changing the top RL only (no plan geometry is altered).
+    e2fp = {q['id']: q['P'] for q in col['E2']}
+    for q, k in zip(col['E1_CUT48'], ('E2-building_A', 'E2-building_B_plate')):
+        assert q['zt'] == 48.0 and np.allclose(q['P'], e2fp[k], atol=1e-9), (q['id'], k)
+    for rl in (47.0, 49.0):
+        col[f'E1_CUT{rl:g}'] = [dict(q, id=q['id'].replace('CUT48', f'CUT{rl:g}'), zt=rl, src='S-VA2 (E1_CUT48 footprints; top RL set to %.1f)' % rl) for q in col['E1_CUT48']]
     names = [p['id'] for p in col['E0_context_v2']]; assert all(n in names for n in C4_REMOVE), 'C4 LiDAR quads not found in context'
     collections = {
         'CTX_VA2': dict(label='Context (VA2): LiDAR envelopes, heritage laundry, approved townhouse massing', classification='source-derived', source=['S-VA2'],
                         prisms=col['E0_context_v2'] + col['E0_townhouses']),
         'CTX_VA4C4_ADD': dict(label='VA4 plan-derived Cluster 4 masses (Lots 48-54), replacing 7 LiDAR template quads', classification='reconstructed', source=['S-VA4b'],
                               prisms=C4, replaces=C4_REMOVE),
+        'E1_CUT48': dict(label='Approved A/B footprints cut at RL 48.0 (sealed 8-storey comparator)', classification='reconstructed', source=['S-VA2'], family='CUT', prisms=col['E1_CUT48']),
+        'E1_CUT47': dict(label='Approved A/B footprints cut at RL 47.0', classification='sensitivity', source=['S-VA2'], family='CUT', prisms=col['E1_CUT47']),
+        'E1_CUT49': dict(label='Approved A/B footprints cut at RL 49.0', classification='sensitivity', source=['S-VA2'], family='CUT', prisms=col['E1_CUT49']),
         'E1_SK48': dict(label='SK00.03 A footprints extruded to RL 48.0', classification='reconstructed', source=['S-VA2'], family='SK', prisms=col['E1_SK48']),
         'E1_SK52': dict(label='SK00.03 A footprints extruded to RL 52.0', classification='sensitivity', source=['S-VA2'], family='SK', prisms=col['E1_SK52']),
         'E2': dict(label='Approved Buildings A/B massing (VA2 plates, B communal roof, lift overruns)', classification='source-derived', source=['S-VA2'], family='E2', prisms=col['E2']),
         'ARTW': dict(label='VA4 Part D: Building B west balcony line (scaled, DA-106/107)', classification='sensitivity', source=['S-VA4a'], prisms=ARTW),
         'POD': dict(label='VA4 Part D: A/B west podium and B south podium (scaled, DA-103/402)', classification='sensitivity', source=['S-VA4a'], prisms=POD)}
     scenarios = [
-        dict(id='E1_SK48', label='E1 — historical lower form, SK48', members=['E1_SK48'], classification='reconstructed', side='historical',
-             note='Received (not approved) 2020 envelope plan SK00.03 A, extruded to RL 48.0. No RL was ever fixed; not an exact approved 2020 envelope.'),
+        dict(id='E1_CUT48', label='E1 — 8-storey comparator, approved footprints at RL 48.0 (default)', members=['E1_CUT48'], classification='reconstructed', side='historical',
+             note='The approved Building A footprint and Building B plate cut at RL 48.0: the comparator of the sealed v1.1-AB incremental tables. '
+                  "It matches the applicant's own 'equivalent 8 storey approved built form' line on DA-600/601 Rev 8 (best-fitting height RL 48.0; "
+                  'verify/out/ellivo_registration.json). Same footprints as the approved towers, so any difference from E2/E2c is height alone. '
+                  'The 2020 approval fixed eight storeys, not an RL: RL 47.0 and 49.0 bracket the fit.'),
+        dict(id='E1_CUT47', label='E1 sensitivity — approved footprints at RL 47.0', members=['E1_CUT47'], classification='sensitivity', side='historical',
+             note='Lower bound of the RL 48 ± 1 m fit; plan geometry identical to E1_CUT48.'),
+        dict(id='E1_CUT49', label='E1 sensitivity — approved footprints at RL 49.0', members=['E1_CUT49'], classification='sensitivity', side='historical',
+             note='Upper bound of the RL 48 ± 1 m fit; plan geometry identical to E1_CUT48.'),
+        dict(id='E1_SK48', label='E1 — 2020 reconstruction, SK48', members=['E1_SK48'], classification='reconstructed', side='historical',
+             note='Received (not approved) 2020 envelope plan SK00.03 A, extruded to RL 48.0. No RL was ever fixed; not an exact approved 2020 envelope. '
+                  'Its footprints differ from the approved towers, so E1_SK48 vs E2 mixes footprint position with height; E1_CUT48 isolates height.'),
         dict(id='E1_SK52', label='E1 sensitivity — SK52', members=['E1_SK52'], classification='sensitivity', side='historical',
              note='Same SK family at RL 52.0 (roof-plant allowance).'),
         dict(id='E1_SK48_POD', label='E1 hypothetical — SK48 + approved podium', members=['E1_SK48', 'POD'], classification='hypothetical', side='historical',
@@ -94,6 +114,22 @@ def main(scene_path, va4_code):
                             classification='hypothetical', eye_basis='DEM + 1.6 m (model ground; hypothetical)',
                             framing_basis='initial heading = site-grid north (8.864 deg), level, HFOV 90 deg: chosen by the viewer, NOT a source camera', radius=3.0,
                             note='Hypothetical near-ground model camera in the modelled gap south of Building B. Not surveyed, not an occupied or verified position.'))
+    # ---- v1.7 receptor presets: Lots 60-62 courtyards (Lot 63 is W01), from the sealed v1.1-AB yard receptors and receiver RLs (repository
+    # model/data, read only). Comparable framing: 16:9, HFOV 75 deg, level (two-point) view aimed at the approved towers, vertical shift chosen
+    # so the tallest approved roof sits 10% below the frame top.
+    from shapely.geometry import Polygon as _Poly
+    SM = json.load(open(os.path.join(VIS, '..', 'model', 'data', 'greville_model_v1.1-AB.json')))
+    tw = [v for q in col['E2'] for v in [(x, y, q['zt']) for x, y in q['P']]]
+    tcx, tcy = float(np.mean([v[0] for v in tw])), float(np.mean([v[1] for v in tw]))
+    for lot in ('60', '61', '62'):
+        key = f'{lot}SP354191'; c = _Poly(SM['receptors']['yard'][key]).centroid; z = SM['receiver_rl'][key] + 1.6
+        hd = (math.degrees(math.atan2(tcx - c.x, tcy - c.y)) + 360) % 360; W_, H_, hf = 1920, 1080, 75.0; f = W_ / 2 / math.tan(math.radians(hf / 2))
+        top = max(math.atan2(v[2] - z, math.hypot(v[0] - c.x, v[1] - c.y)) for v in tw); cy = min(0.10 * H_ + f * math.tan(top), 0.90 * H_)
+        presets.append(dict(id=f'L{lot}', label=f'L{lot} — Lot {lot} courtyard', E=round(c.x + E0, 2), N=round(c.y + N0, 2), RL=round(z, 3), heading=round(hd, 3), pitch=0.0, roll=0.0,
+                            hfov=hf, shift=round((cy - H_ / 2) / (W_ / 2), 6), W=W_, H=H_, classification='model-defined',
+                            eye_basis=f'receiver RL {SM["receiver_rl"][key]} (finished floor, sealed model v1.1-AB) + 1.6 m standing eye',
+                            framing_basis='comparable presentation framing: 16:9, HFOV 75 deg, level two-point view aimed at the approved towers; not a source camera', radius=2.5,
+                            note=f'Centroid of the Lot {lot} SP354191 courtyard receptor (sealed model v1.1-AB). Model-defined, not surveyed.'))
     # ---- M1 regression checks
     checks = []
     for p in presets:
@@ -144,7 +180,7 @@ def main(scene_path, va4_code):
                    site_lotplan='913SP337678', parcels=parcels, contours=contours, rail=rail)
     scene = dict(schema='greville-visual-scene/1', levels=levels, frame=dict(epsg=7856, E0=E0, N0=N0, vertical='AHD', local='x=E-E0, y=N-N0, z=RL; Z up',
                  three='X=x (east), Y=z (up), Z=-y (north is -Z)', site_grid_rotation_deg=AZ),
-                 collections=collections, scenarios=scenarios, default_scenarios=dict(historical='E1_SK48', approved='E2c'),
+                 collections=collections, scenarios=scenarios, default_scenarios=dict(historical='E1_CUT48', approved='E2c'),
                  terrain=dict(x0=T['x0'], y0=T['y0'], step=T['step'], nx=T['nx'], ny=T['ny'], z=T['z'], src='S-VA2'),
                  canopy=dict(cell=D['canopy']['cell'], cells=D['canopy']['cells'], src='S-VA2'), presets=presets)
     os.makedirs(OUT, exist_ok=True)
@@ -164,7 +200,7 @@ def main(scene_path, va4_code):
                     scenarios={s['id']: dict(members=s['members'], classification=s['classification']) for s in scenarios},
                     transformation='none to source values; local frame x=E-504045, y=N-6966712, z=RL AHD; viewer maps (x,y,z)->(X=x,Y=z,Z=-y)',
                     licence='Derived numeric massing from publicly lodged DA drawings (no drawing reproduced); LiDAR/DEM/canopy derived from Queensland Government data (CC BY 4.0).',
-                    excluded=['E1_REC48', 'E1_REC52', 'E1_CUT48', 'E1_SK46.5 (other families / not exposed)', 'SENS_trees12_opaque', 'SENS_C5_verge_trees (invented crowns)',
+                    excluded=['E1_REC48', 'E1_REC52', 'E1_SK46.5 (other families / not exposed)', 'SENS_trees12_opaque', 'SENS_C5_verge_trees (invented crowns)',
                               'SENS_C3_laundry_flat_top', 'model/ shadow-model geometry (different method)'],
                     checks=[dict(gate=g, ok=bool(o), detail=d) for g, o, d in checks])
     json.dump(manifest, open(os.path.join(OUT, 'manifest.json'), 'w'), indent=1)

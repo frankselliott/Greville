@@ -34,7 +34,7 @@ test('M2/G5.4 page loads under the /Greville/ sub-path with no errors and no ext
   await page.waitForTimeout(1500);                                   // let the full-quality (ambient occlusion) frame run as well
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   const info = await page.evaluate(() => ({ presets: window.__visual.S.presets.map(p => p.id), webgl: !!window.__visual.renderer.getContext() }));
-  assert.deepEqual(info.presets, ['W01', 'NG55', 'NG57', 'NG59']); assert.ok(info.webgl);
+  assert.deepEqual(info.presets, ['W01', 'NG55', 'NG57', 'NG59', 'L60', 'L61', 'L62']); assert.ok(info.webgl);
   await ctx.close();
 });
 
@@ -126,7 +126,7 @@ test('G2.5 station mode refuses solids and the local radius; free/overview are l
 for (const vp of [{ name: 'desktop', viewport: { width: 1400, height: 900 } }, { name: 'mobile', dev: devices['Pixel 7'] }]) {
   test(`G3.1 scenario switching never changes the camera, projection, frame or canvas (${vp.name}; every preset; every scenario)`, async () => {
     const { ctx, page } = await open(vp.viewport, vp.dev ? { ...vp.dev } : {});
-    const ids = ['W01', 'NG55', 'NG57', 'NG59'];
+    const ids = ['W01', 'NG55', 'NG57', 'NG59', 'L60', 'L61', 'L62'];
     for (const id of ids) {
       await page.evaluate((id) => window.__visual.selectPreset(id), id); await settle(page);
       await page.evaluate(() => window.__visual.setCam({ ...window.__visual.cam, pitch: 23.4, roll: 1.7, hfov: 81.3 })); await settle(page);
@@ -147,7 +147,7 @@ test('G3.2 each scenario shows exactly its manifest collections; G3.3 side-by-si
   const { ctx, page } = await open();
   const r = await page.evaluate(async () => {
     const a = window.__visual, out = {};
-    for (const s of a.S.scenarios) { a.applyVisibility(s.id); out[s.id] = ['E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD'].filter(k => a.groups[k].visible).sort(); }
+    for (const s of a.S.scenarios) { a.applyVisibility(s.id); out[s.id] = ['E1_CUT48', 'E1_CUT47', 'E1_CUT49', 'E1_SK48', 'E1_SK52', 'E2', 'ARTW', 'POD'].filter(k => a.groups[k].visible).sort(); }
     a.applyVisibility(a.activeScenario());
     const single = [...a.camera.projectionMatrix.elements]; const par1 = a.renderPar();
     a.state.view = 'side'; a._render(); const side = { scen: a.lastFrame.scenarios, par: a.lastFrame.par, proj: [...a.camera.projectionMatrix.elements] };
@@ -156,7 +156,7 @@ test('G3.2 each scenario shows exactly its manifest collections; G3.3 side-by-si
     return { out, single, par1, side, swipe, members: Object.fromEntries(a.S.scenarios.map(s => [s.id, [...s.members].sort()])) };
   });
   for (const [k, v] of Object.entries(r.members)) assert.deepEqual(r.out[k], v, k);
-  assert.deepEqual(r.side.scen, ['E1_SK48', 'E2c']); assert.deepEqual(r.side.par, r.par1); assert.deepEqual(r.side.proj, r.single); assert.deepEqual(r.swipe.par, r.par1);
+  assert.deepEqual(r.side.scen, ['E1_CUT48', 'E2c']); assert.deepEqual(r.side.par, r.par1); assert.deepEqual(r.side.proj, r.single); assert.deepEqual(r.swipe.par, r.par1);
   await ctx.close();
 });
 
@@ -347,7 +347,7 @@ test('v1.2 photomontage: occlusion equals the tested masks; foreground mask keep
   const dl = page.waitForEvent('download', { timeout: 240000 }); await tab(page, 'photo'); await page.click('#btnMontageExport'); const d = await dl; const zip = fs.readFileSync(await d.path());
   // read the stored ZIP and verify SHA256SUMS
   const entries = {}; let p = 0; while (zip.readUInt32LE(p) === 0x04034b50) { const n = zip.readUInt16LE(p + 26), sz = zip.readUInt32LE(p + 18); const name = zip.slice(p + 30, p + 30 + n).toString(); entries[name] = zip.slice(p + 30 + n, p + 30 + n + sz); p += 30 + n + sz; }
-  for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_SK48_E2c.png', '3_montage_E1_SK48.png', '4_montage_E2c.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
+  for (const k of ['1_existing_synthetic_existing.png', '2_wireline_E1_CUT48_E2c.png', '3_montage_E1_CUT48.png', '4_montage_E2c.png', '6_camera_plan.png', '7_foreground_mask.png', 'record.json', 'SHA256SUMS']) assert.ok(entries[k], k);
   assert.equal(sha(entries['1_existing_synthetic_existing.png']), sha(buf), 'the photograph is included unaltered');
   for (const line of entries['SHA256SUMS'].toString().trim().split('\n')) { const [h, n] = line.split(/\s+/); assert.equal(sha(entries[n]), h, n); }
   const rec = JSON.parse(entries['record.json']); assert.equal(rec.camera.surveyed, false); assert.match(rec.status, /NOT survey-verified/); assert.equal(rec.ppl15_checklist.length, 10);
@@ -441,5 +441,54 @@ test('v1.5 rendering polish: aerial haze is Beer-Lambert at the stated visibilit
   assert.equal(sha(a['.png']), sha(b['.png']), 'supersampled export is byte-reproducible');
   assert.equal(a['.png'].readUInt32BE(16), 1800); assert.equal(a['.png'].readUInt32BE(20), 1200);
   assert.equal(rec.renderer.supersampling, 2); assert.equal(rec.renderer.aerial_perspective.visibility_m, 15000); assert.match(rec.renderer.aerial_perspective.applies_to, /never masks/);
+  assert.deepEqual(errors, []); await ctx.close();
+});
+
+test('v1.6 default historical comparator is E1_CUT48 (approved footprints at RL 48.0): height-only, nested RL 47 < 48 < 49, approved levels', async () => {
+  const { ctx, page } = await open();
+  const r = await page.evaluate(async () => {
+    const a = window.__visual; const { renderMaskPixels } = await import('./js/compare.js'); const C = a.S.collections;
+    const fpSame = ['A', 'B'].every((t, i) => JSON.stringify(C.E1_CUT48.prisms[i].P) === JSON.stringify(C.E2.prisms.find(q => q.id === (t === 'A' ? 'E2-building_A' : 'E2-building_B_plate')).P));
+    const tops = Object.fromEntries(['E1_CUT47', 'E1_CUT48', 'E1_CUT49'].map(k => [k, C[k].prisms.map(q => q.zt)]));
+    const out = { def: a.state.hist, cls: a.scenarios.E1_CUT48.classification, fpSame, tops, views: {} };
+    const st = a.groups.E1_CUT48.children.find(c => c.userData.role === 'storeys'); out.storeyStatus = st?.userData.status;
+    const pos = st.geometry.attributes.position; const zs = new Set(); for (let i = 0; i < pos.count; i++) zs.add(+pos.getY(i).toFixed(3)); out.storeyZ = [...zs].sort((p, q) => p - q);
+    for (const id of ['W01', 'NG55', 'NG57', 'NG59']) {
+      a.selectPreset(id); const par = a.par(), w = 600, h = 400; const m = {};
+      for (const s of ['E1_CUT47', 'E1_CUT48', 'E1_CUT49', 'E2']) m[s] = renderMaskPixels(a, par, s, w, h);
+      const outside = (x, y) => { let n = 0; for (let i = 0; i < w * h; i++) if (x[i] && !y[i]) n++; return n; }; let n48 = 0; for (let i = 0; i < w * h; i++) n48 += m.E1_CUT48[i];
+      out.views[id] = { n48, cut48_outside_E2: outside(m.E1_CUT48, m.E2), cut47_outside_48: outside(m.E1_CUT47, m.E1_CUT48), cut48_outside_49: outside(m.E1_CUT48, m.E1_CUT49) };
+    }
+    a.selectPreset('W01'); return out; });
+  assert.equal(r.def, 'E1_CUT48'); assert.equal(r.cls, 'reconstructed'); assert.ok(r.fpSame, 'E1_CUT48 footprints are the approved footprints');
+  assert.deepEqual(r.tops, { E1_CUT47: [47, 47], E1_CUT48: [48, 48], E1_CUT49: [49, 49] });
+  assert.equal(r.storeyStatus, 'DIMENSIONED'); assert.deepEqual(r.storeyZ, [25.3, 29.4, 32.5, 35.6, 38.7, 41.8, 44.9]);   // ground + L01-L07 = 8 storeys below RL 48.0 (= L08)
+  for (const [id, v] of Object.entries(r.views)) {
+    assert.ok(v.n48 > 0, id);
+    for (const k of ['cut48_outside_E2', 'cut47_outside_48', 'cut48_outside_49']) assert.ok(v[k] <= 2, `${id} ${k}: ${v[k]}`);   // anti-aliasing-free rasters: at most a boundary pixel or two
+  }
+  await ctx.close();
+});
+
+test('v1.7 presentation: red 8-storey line on the approved form only, at the comparator RL, never in masks; Light look; Lot 60-62 courtyard presets', async () => {
+  const { ctx, page, errors } = await open(undefined, {}, '?preset=L61&colour=light');
+  const r = await page.evaluate(async () => {
+    const a = window.__visual; const { renderMaskPixels } = await import('./js/compare.js'); const out = {};
+    const vis = () => a.groups.LINE8.visible ? a.groups.LINE8.children.filter(m => m.visible).map(m => m.userData.rl) : [];
+    a.applyVisibility('E2c'); out.appr = vis(); a.applyVisibility('E1_CUT48'); out.hist = vis();
+    a.state.hist = 'E1_CUT49'; a.applyVisibility('E2c'); out.appr49 = vis(); a.state.hist = 'E1_SK48'; a.applyVisibility('E2c'); out.apprSK = vis(); a.state.hist = 'E1_CUT48';
+    a.state.line8 = false; a.applyVisibility('E2c'); out.off = vis(); a.state.line8 = true;
+    const par = a.par(), w = 480, h = 270, ms = {};
+    for (const on of [true, false]) { a.state.line8 = on; ms[on] = ['E2c', 'E1_CUT48'].map(s => Array.from(renderMaskPixels(a, par, s, w, h)).join('')); }
+    a.state.line8 = true; out.masksEqual = ms[true][0] === ms[false][0] && ms[true][1] === ms[false][1];
+    out.sky = { clear: a.fx.clearDome.visible, phys: a.fx.sky.visible, inBackgrounds: a.fx.backgrounds().includes(a.fx.clearDome) };
+    out.mats = { tower: a.groups.E2.children.find(c => c.isMesh).material === a.M.towerLight, ctx: a.groups.CTX_BASE.children.filter(c => c.isMesh).every(c => c.material === a.M[c.userData.matKey + 'Light']) };
+    const p = a.preset('L61'); out.preset = { cls: p.classification, W: p.W, H: p.H, hfov: p.hfov, pitch: p.pitch };
+    out.query = a.ui.stateToQuery().toString();
+    return out; });
+  assert.deepEqual(r.appr, [48]); assert.deepEqual(r.hist, []); assert.deepEqual(r.appr49, [49]); assert.deepEqual(r.apprSK, [48]); assert.deepEqual(r.off, []);
+  assert.ok(r.masksEqual, 'masks identical with the 8-storey line on and off');
+  assert.deepEqual(r.sky, { clear: true, phys: false, inBackgrounds: true }); assert.deepEqual(r.mats, { tower: true, ctx: true });
+  assert.deepEqual(r.preset, { cls: 'model-defined', W: 1920, H: 1080, hfov: 75, pitch: 0 }); assert.match(r.query, /colour=light/);
   assert.deepEqual(errors, []); await ctx.close();
 });

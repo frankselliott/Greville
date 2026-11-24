@@ -45,11 +45,20 @@ Any static server also works, for example `python3 -m http.server` from the repo
 
 **Rendering.** Physically based materials in neutral, untextured tones; sky and image-based light; a sun at the true position for the chosen date and time (the repository's frozen NOAA convention, AEST, no refraction) with soft shadow maps; ground-truth ambient occlusion; 4× MSAA; ACES tone mapping. *Overcast* uses a CIE standard overcast sky (no sun, no shadows). Distant surfaces take a light aerial haze (Beer–Lambert, 15 km visibility in sun, 8 km overcast; *Lighting → Aerial haze* turns it off). The haze is never applied to masks or occlusion. Quality High / Medium / Low trades effects for speed (mobile defaults to Medium); while you move, frames skip ambient occlusion and the full frame follows when you stop. **Lighting is illustrative**: it changes no geometry or camera, and the shadows are not a shadow study (see `/study/`).
 
+**Presentation look and the 8-storey line (v1.7).**
+- **Light look:** *Tower colour → Light* gives cream towers, white neighbours and a stylised clear-sky backdrop. Lighting is still computed from the physical sky and sun.
+- **8-storey line:** shown on the approved form, a red band ±0.30 m around the comparator's top RL (RL 48.0 = approved Level 08, or 47.0 / 49.0 for the sensitivities). It is wrapped on the approved plates and the B west balcony line; the depth test shows only the visible parts. It is display only, excluded from every mask and from the montage occluders, and recorded in the export JSON. *Layers → 8-storey line* turns it off.
+- **Not modelled:** façades, trees, landscaping and finishes. They are not in the evidence base.
+
 **Storey lines and ground.** E2 storey lines are drawn at the floor RLs dimensioned on the approved drawings (solid); E1 at inferred equal 3.3 m storeys (dashed, labelled INFERRED). The ground carries the Queensland cadastre (DCDB parcels, road parcels, the site parcel outlined) and 1 m LiDAR contours — a cartographic index, not survey or imagery. A plain grey plane beyond the terrain edge is outside the model and sits below every modelled surface.
 
 1. **Viewpoint.** Pick a preset.
    - **W01** is the model-defined Lot 63 courtyard viewpoint. It uses the archived camera: heading 87°, HFOV 73.7°, vertical shift 0.2081, frame 1800 × 1200, and an assumed standing eye at RL 24.92.
    - **NG55, NG57 and NG59** are *hypothetical* near-ground model cameras (DEM + 1.6 m) in the modelled gap south of Building B. Their initial heading, level pitch and 90° HFOV are chosen by the viewer, not taken from a source.
+   - **L60, L61 and L62** (v1.7) are model-defined courtyard viewpoints for Lots 60, 61 and 62.
+     - **Eye:** the centroid of each lot's yard receptor in the sealed model, at its receiver RL + 1.6 m.
+     - **Framing:** a presentation framing (16:9, 75° HFOV, level two-point view aimed at the approved towers), not a source camera.
+     - Lot 63 is W01.
    - Every preset shows its MGA coordinates, eye RL, model ground and classification.
 2. **Look around.**
    - **Mouse:** drag to look; the wheel changes HFOV (zoom).
@@ -59,7 +68,7 @@ Any static server also works, for example `python3 -m http.server` from the repo
    - **Free and Overview** cameras are labelled **NONPHYSICAL**.
 3. **Compare.**
    - **E1 / E2.** The E1 / E2 buttons, the on-stage toggle or the **T** key switch scenario. The camera, projection, frame and canvas are asserted unchanged by the tests.
-   - **Scenario choices:** E1 `E1_SK48` (reconstructed), `E1_SK52` (sensitivity), `E1_SK48_POD` (hypothetical); E2 `E2c` (**default**: approved plates plus the VA4-corrected B west balcony line and podiums, scaled ±0.15 m) and `E2` (plates only, kept for continuity with VA2). E2c includes the approved podiums; the 2020 podium is unknown, so compare with `E1_SK48_POD` for a like-for-like podium.
+   - **Scenario choices:** E1 `E1_CUT48` (**default** from v1.6: the approved Building A footprint and Building B plate cut at RL 48.0, which is the approved L08 floor RL, leaving 8 storeys; this is the sealed v1.1-AB comparator and matches the applicant's own "equivalent 8 storey" line on DA-600/601 Rev 8; same footprints as the approved towers, so any E1 → E2 difference is height alone), `E1_CUT47` / `E1_CUT49` (sensitivities: RL 48 ± 1 m), `E1_SK48` (reconstructed 2020 envelope plan SK00.03 A; its footprints differ, so it mixes position with height), `E1_SK52` (sensitivity), `E1_SK48_POD` (hypothetical); E2 `E2c` (**default**: approved plates plus the VA4-corrected B west balcony line and podiums, scaled ±0.15 m) and `E2` (plates only, kept for continuity with VA2). E2c includes the approved podiums; the 2020 podium is unknown, so compare with `E1_SK48_POD` for a like-for-like podium.
    - **View modes:** side-by-side, swipe, and a mask overlay. The mask marks orange = only in E2 and blue = only in E1, with frame-limited angular areas and top-elevation readouts.
 4. **Framing.** The framing view renders the same station and geometry with four HFOV and pitch settings. A dramatic or restrained-looking frame is a framing choice, not a change in the development.
 5. **Export.** *Save PNG + JSON* renders off-screen at the exact frame size.

@@ -1,7 +1,7 @@
 {
  "schema": "greville-visual-manifest/1",
  "generator": "visual/tools/build_assets.py",
- "generator_sha256": "c0eae60aac24633479c60e2ade1444c204007afa37531850b6f745e49399e94d",
+ "generator_sha256": "eedf9fdb443eabe8efab33195c5584bc7dec62d2bc89fe37407c432ed6e5a476",
  "sources": {
   "S-VA2": {
    "file": "scene_dump_v2.json",
@@ -34,8 +34,8 @@
  },
  "assets": {
   "scene.json": {
-   "sha256": "8c35523d458fbf30fc4724596bf5cdb9d278a65d3d3e3b76133204823ecbefab",
-   "bytes": 436432
+   "sha256": "4b0e206c64da7160ea122c01debe2183eacde4e9791889adad6419094d502cc8",
+   "bytes": 443638
   },
   "controls.json": {
    "sha256": "9feab0ac976f7b7f3d39fd6bafdb00b66463db43f2913385462fe10c7d5a9eca",
@@ -74,6 +74,36 @@
     "ctx-3013153",
     "ctx-3013154"
    ]
+  },
+  "E1_CUT48": {
+   "label": "Approved A/B footprints cut at RL 48.0 (sealed 8-storey comparator)",
+   "classification": "reconstructed",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "CUT",
+   "n_prisms": 2,
+   "replaces": null
+  },
+  "E1_CUT47": {
+   "label": "Approved A/B footprints cut at RL 47.0",
+   "classification": "sensitivity",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "CUT",
+   "n_prisms": 2,
+   "replaces": null
+  },
+  "E1_CUT49": {
+   "label": "Approved A/B footprints cut at RL 49.0",
+   "classification": "sensitivity",
+   "source": [
+    "S-VA2"
+   ],
+   "family": "CUT",
+   "n_prisms": 2,
+   "replaces": null
   },
   "E1_SK48": {
    "label": "SK00.03 A footprints extruded to RL 48.0",
@@ -127,6 +157,24 @@
   }
  },
  "scenarios": {
+  "E1_CUT48": {
+   "members": [
+    "E1_CUT48"
+   ],
+   "classification": "reconstructed"
+  },
+  "E1_CUT47": {
+   "members": [
+    "E1_CUT47"
+   ],
+   "classification": "sensitivity"
+  },
+  "E1_CUT49": {
+   "members": [
+    "E1_CUT49"
+   ],
+   "classification": "sensitivity"
+  },
   "E1_SK48": {
    "members": [
     "E1_SK48"
@@ -166,7 +214,6 @@
  "excluded": [
   "E1_REC48",
   "E1_REC52",
-  "E1_CUT48",
   "E1_SK46.5 (other families / not exposed)",
   "SENS_trees12_opaque",
   "SENS_C5_verge_trees (invented crowns)",
@@ -205,6 +252,21 @@
    "detail": "E1 67.10 (archive 67.1), E2 71.91 (archive 71.9); d_E2 12.79 m"
   },
   {
+   "gate": "G1.2 E1_CUT48 single family",
+   "ok": true,
+   "detail": "{'CUT'}"
+  },
+  {
+   "gate": "G1.2 E1_CUT47 single family",
+   "ok": true,
+   "detail": "{'CUT'}"
+  },
+  {
+   "gate": "G1.2 E1_CUT49 single family",
+   "ok": true,
+   "detail": "{'CUT'}"
+  },
+  {
    "gate": "G1.2 E1_SK48 single family",
    "ok": true,
    "detail": "{'SK'}"
@@ -232,7 +294,7 @@
   {
    "gate": "G1.2 prism ids unique across collections",
    "ok": true,
-   "detail": "477 prisms"
+   "detail": "483 prisms"
   },
   {
    "gate": "controls count 628",

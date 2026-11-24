@@ -334,6 +334,61 @@ So v1.2 builds the montage pipeline. A private brief, outside this repository, s
 
 **Results:** G11.1–G11.4 PASS. Protected PASS; unit 18/18; e2e 25/25. Details in QA.md §v1.5.
 
+## v1.6 — Default 8-storey comparator: approved footprints at RL 48.0 — **DONE**
+
+**Request:** "update our comparator with these new refined figures". The user chose to add the comparator and make it the default.
+
+**Why:** the applicant's "equivalent 8 storey approved built form" line fits the **approved** footprints, not the SK00.03 2020 envelope plan, at a top of about RL 48 ± 1 m. The sealed v1.1-AB incremental tables and the public study already use this comparator; the viewer did not.
+
+**Changes:**
+- `tools/build_assets.py`:
+  - copies S-VA2 `E1_CUT48` verbatim, and asserts that its footprints equal the approved A footprint and B plate;
+  - derives `E1_CUT47` and `E1_CUT49` by changing the top RL only;
+  - adds the three scenarios, and sets `default_scenarios.historical = 'E1_CUT48'`;
+  - `E1_SK48`, `E1_SK52` and `E1_SK48_POD` stay available, with their notes updated.
+  - A no-change rebuild was first shown to be byte-identical. After the change only `collections`, `scenarios` and `default_scenarios` differ.
+- **Viewer.** One shared `SCEN_KEYS` list replaces six hard-coded copies (scene build, visibility, colour, masks, montage layer).
+  - `E1_CUT*` storey lines use the approved, dimensioned levels (solid lines; L08 = RL 48.0).
+  - The export record lists the drawings and the storey-line rule.
+
+**Gates:**
+- **G12.1** — `E1_CUT48` is the default. Its footprints are the approved footprints. Its tops are 48.0 (47.0 and 49.0 for the sensitivities).
+- **G12.2** — at every viewpoint, `E1_CUT48` never shows outside E2's silhouette, and RL 47 ⊆ RL 48 ⊆ RL 49 (≤ 2 boundary pixels).
+- **G12.3** — `E1_CUT48` storey lines are DIMENSIONED, at 25.3 … 44.9.
+- **G12.4** — every earlier gate still passes; the ray-caster IoU fixtures stay on `E1_SK48` / `E2`.
+
+**Results:** G12.1–G12.4 PASS. Details in QA.md §v1.6.
+
+## v1.7 — Presentation renders comparable to the applicant's perspective — **DONE**
+
+**Request:** "make comparable (look as much like it as possible whilst accurate) for our better receptors like 63". This follows the applicant's southern-townhouse perspective, received 24 Nov 2026. That image is not reproduced or stored in this repository.
+
+**Accurate equivalents of its conventions:**
+- **The 8-storey red line:** the comparator's top RL drawn on the approved form. It's exact here because E1_CUT48 shares the approved footprints.
+- **Camera:** a 16:9, wide (75°), level two-point view.
+- **Palette:** cream towers, white neighbours, deep-blue clear sky.
+- **Key-plan inset** with a camera dot and arrow (done on the private sheets, not in the viewer).
+- **Not copied:** façades, trees, landscaping and finishes, which are not in the evidence base.
+
+**Changes:**
+- **`scene_build.js`:** `buildLine8` builds bands at RL 47, 48 and 49 on the E1_CUT48 and ARTW rings, with role `overlay`, and adds a Light palette.
+- **`main.js`:**
+  - the line shows on the approved side only, at the CUT RL of the selected historical form (RL 48 for non-CUT forms);
+  - the Light colour mode swaps the tower and context materials.
+- **`render_fx.js`:** a `clearDome` presentation sky, part of `backgrounds()` so it is never in masks. Lighting is still the physical Sky.
+- **`compare.js` and `renderLayerRGBA`:** hide overlays.
+- **UI, URL and export:** a Layers toggle, `line8=0` and `colour=light` URL parameters, and an export record entry.
+- **Presets:** `build_assets.py` adds L60, L61 and L62 (sealed yard receptor centroid, receiver RL + 1.6 m, presentation framing).
+
+**Gates:**
+- **G13.1** — the line is visible on the approved form only, at the CUT RL, off when toggled.
+- **G13.2** — masks are identical with the line on and off.
+- **G13.3** — the Light look uses the clear dome, which is in `backgrounds()`, and light materials.
+- **G13.4** — presets L60–L62 are model-defined, 1920 × 1080, 75°, level.
+- **G13.5** — every earlier gate still passes.
+
+**Results:** G13.1–G13.5 PASS. Protected PASS; unit 18/18; e2e 27/27. Details in QA.md §v1.7.
+
 ## Outstanding limitations and source gaps
 
 1. **Surveys.** There are no surveyed receiver positions. NG55, NG57 and NG59 are hypothetical, and the W01 eye RL is assumed.

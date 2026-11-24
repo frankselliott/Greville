@@ -9,6 +9,9 @@ import { QUALITY } from './render_fx.js';
 import { SITE } from './sun.js';
 
 const DRAWINGS = {   // drawing references as recorded in the archive source registers (SOURCE_REGISTER.md §2)
+  E1_CUT48: ['A006835434 approved Building A footprint and Building B plate (VA2), cut at RL 48.0 = approved L08 floor RL (DA-201 / DA-402); the sealed v1.1-AB comparator'],
+  E1_CUT47: ['As E1_CUT48, top RL 47.0 (sensitivity)'],
+  E1_CUT49: ['As E1_CUT48, top RL 49.0 (sensitivity)'],
   E1_SK48: ['SK00.03 Rev A Building Envelope Plan (received, not approved; A005453331); RL 48.0 inferred'],
   E1_SK52: ['SK00.03 Rev A (received, not approved; A005453331); RL 52.0 sensitivity'],
   E1_SK48_POD: ['SK00.03 Rev A; plus approved podium DA-103 Rev 16 / DA-402 Rev 10 (hypothetical addition)'],
@@ -61,7 +64,7 @@ function lightingRecord(app) {
            engine: 'NOAA geometric algorithm, no refraction; port of model/greville_model/solar.py (unit-tested to 1e-9 deg)', site: SITE };
 }
 function storeyRecord(app) {
-  const L = app.S.levels; return { E2: { status: L.E2.status, source: L.E2.source, style: 'solid' }, E1: { status: L.E1.status, source: L.E1.source, style: 'dashed' } };
+  const L = app.S.levels; return { E2: { status: L.E2.status, source: L.E2.source, style: 'solid' }, E1: { status: L.E1.status, source: L.E1.source, style: 'dashed', applies_to: 'E1_SK*' }, E1_CUT: { status: L.E2.status, source: 'E2 dimensioned levels below the cut RL (L08 = RL 48.0)', style: 'solid' } };
 }
 // box-filter an (ss*W) x (ss*H) sRGB RGBA buffer to W x H, averaging in linear light (exact, deterministic)
 const S2L = new Float64Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
@@ -96,7 +99,7 @@ export async function buildRecord(app, out) {
               render_parameters: out.par, frame_px: { W: c.W, H: c.H }, three_matrices: { world_col_major: m.world, projection_col_major: m.proj, near: app.camera.near, far: app.camera.far },
               eye_basis: p.eye_basis, framing_basis: p.framing_basis },
     view: { mode: st.view, swipe: st.view === 'swipe' ? st.swipe : undefined, panels: out.panels.map(q => ({ ...q, par: q.par || undefined })), output_px: { W: out.OW, H: out.OH }, burned_in_annotations: out.annotations },
-    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, storey_lines: st.storeys ? storeyRecord(app) : false, colour_mode: st.colour,
+    scenarios: shown.map(scen), context: { variant: st.context, canopy_layer: st.canopy, edges: st.edges, storey_lines: st.storeys ? storeyRecord(app) : false, line8: app.groups.LINE8.visible ? { rl: Number(/^E1_CUT(\d+)$/.exec(st.hist)?.[1] ?? 48), basis: 'red band ±0.30 m at the comparator top RL on the approved A/B plates and B west balcony line; display only, excluded from all masks' } : false, colour_mode: st.colour,
                                            ground: st.ground === 'plain' ? 'plain' : { layer: st.ground, source: 'assets/basemap.json (DCDB parcels, 1 m contours, rail; (c) State of Queensland, CC BY 4.0)', sha256: app.manifest.assets['basemap.json']?.sha256, note: 'cartographic index, not survey or imagery' } },
     lighting: lightingRecord(app),
     assets: app.manifest.assets, sources: app.manifest.sources, asset_manifest_generator: app.manifest.generator_sha256, context_drawings: DRAWINGS.context,
