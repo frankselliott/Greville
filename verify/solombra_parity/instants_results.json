@@ -1,0 +1,1613 @@
+[
+ {
+  "table": "attribution",
+  "key": "yard/f000/60SP354191",
+  "field": "full",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.00000000594237,
+  "engine": 34.99938698,
+  "difference": -0.0006130259423713369
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/60SP354191",
+  "field": "A_only",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/60SP354191",
+  "field": "B_only",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.00000000594237,
+  "engine": 34.99938698,
+  "difference": -0.0006130259423713369
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/60SP354191",
+  "field": "base",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.00000000594237,
+  "engine": 34.99938698,
+  "difference": -0.0006130259423713369
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/61SP354191",
+  "field": "full",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.989401746231763,
+  "engine": 31.989294475,
+  "difference": -0.0001072712317622404
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/61SP354191",
+  "field": "A_only",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/61SP354191",
+  "field": "B_only",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.989401746231763,
+  "engine": 31.989294475,
+  "difference": -0.0001072712317622404
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/61SP354191",
+  "field": "base",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.989401746231763,
+  "engine": 31.989294475,
+  "difference": -0.0001072712317622404
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/62SP354191",
+  "field": "full",
+  "instant": "2026-01-22T07:15:00",
+  "recorded": 31.855295819794534,
+  "engine": 31.85511796,
+  "difference": -0.00017785979453321943
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/62SP354191",
+  "field": "A_only",
+  "instant": "2026-01-22T07:15:00",
+  "recorded": -3.552713678800501e-15,
+  "engine": 0.0,
+  "difference": 3.552713678800501e-15
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/62SP354191",
+  "field": "B_only",
+  "instant": "2026-01-22T07:15:00",
+  "recorded": 31.855295819794534,
+  "engine": 31.85511796,
+  "difference": -0.00017785979453321943
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/62SP354191",
+  "field": "base",
+  "instant": "2026-01-22T07:15:00",
+  "recorded": 31.855295819794534,
+  "engine": 31.85511796,
+  "difference": -0.00017785979453321943
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/63SP354191",
+  "field": "full",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294403907407826,
+  "engine": 32.294542895,
+  "difference": 0.00013898759217312318
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/63SP354191",
+  "field": "A_only",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 7.105427357601002e-15,
+  "engine": 0.0,
+  "difference": -7.105427357601002e-15
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/63SP354191",
+  "field": "B_only",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294403907407826,
+  "engine": 32.294542895,
+  "difference": 0.00013898759217312318
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f000/63SP354191",
+  "field": "base",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294403907407826,
+  "engine": 32.294542895,
+  "difference": 0.00013898759217312318
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/60SP354191",
+  "field": "full",
+  "instant": "2026-11-12T06:35:00",
+  "recorded": 20.021792196704222,
+  "engine": 20.02379284,
+  "difference": 0.0020006432957764275
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/60SP354191",
+  "field": "A_only",
+  "instant": "2026-11-12T06:35:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/60SP354191",
+  "field": "B_only",
+  "instant": "2026-11-12T06:35:00",
+  "recorded": 20.021792196704222,
+  "engine": 20.02379284,
+  "difference": 0.0020006432957764275
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/60SP354191",
+  "field": "base",
+  "instant": "2026-11-12T06:35:00",
+  "recorded": 20.121644557063398,
+  "engine": 20.109973755,
+  "difference": -0.011670802063399321
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/61SP354191",
+  "field": "full",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555054370123376,
+  "engine": 17.55625942,
+  "difference": 0.0012050498766242868
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/61SP354191",
+  "field": "A_only",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 3.552713678800501e-15,
+  "engine": 0.0,
+  "difference": -3.552713678800501e-15
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/61SP354191",
+  "field": "B_only",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555054370123376,
+  "engine": 17.55625942,
+  "difference": 0.0012050498766242868
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/61SP354191",
+  "field": "base",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555054370123376,
+  "engine": 17.55625942,
+  "difference": 0.0012050498766242868
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/62SP354191",
+  "field": "full",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.747753282988434,
+  "engine": 18.744490665,
+  "difference": -0.003262617988433192
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/62SP354191",
+  "field": "A_only",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 3.552713678800501e-15,
+  "engine": 0.0,
+  "difference": -3.552713678800501e-15
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/62SP354191",
+  "field": "B_only",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.747753282988434,
+  "engine": 18.744490665,
+  "difference": -0.003262617988433192
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/62SP354191",
+  "field": "base",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.747753282988434,
+  "engine": 18.744490665,
+  "difference": -0.003262617988433192
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/63SP354191",
+  "field": "full",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.51303784406661,
+  "engine": 20.51329634,
+  "difference": 0.00025849593339088983
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/63SP354191",
+  "field": "A_only",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": -3.552713678800501e-15,
+  "engine": 0.0,
+  "difference": 3.552713678800501e-15
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/63SP354191",
+  "field": "B_only",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.51303784406661,
+  "engine": 20.51329634,
+  "difference": 0.00025849593339088983
+ },
+ {
+  "table": "attribution",
+  "key": "yard/f150/63SP354191",
+  "field": "base",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.51303784406661,
+  "engine": 20.51329634,
+  "difference": 0.00025849593339088983
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "peak",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.0,
+  "engine": 34.99938698,
+  "difference": -0.0006130200000029618
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.0,
+  "engine": 34.99938698,
+  "difference": -0.0006130200000029618
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-02-02T07:02:00",
+  "recorded": 35.0,
+  "engine": 34.99938698,
+  "difference": -0.0006130200000029618
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "peak",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.989,
+  "engine": 31.989294475,
+  "difference": 0.00029447500000046034
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.988400000000002,
+  "engine": 31.989294475,
+  "difference": 0.000894474999999062
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.988400000000002,
+  "engine": 31.989294475,
+  "difference": 0.000894474999999062
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.988400000000002,
+  "engine": 31.989294475,
+  "difference": 0.000894474999999062
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 31.988400000000002,
+  "engine": 31.989294475,
+  "difference": 0.000894474999999062
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 0.0005999999999986017,
+  "engine": 0.0,
+  "difference": -0.0005999999999986017
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-10-29T05:54:00",
+  "recorded": 0.0005999999999986017,
+  "engine": 0.0,
+  "difference": -0.0005999999999986017
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "peak",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 31.855,
+  "engine": 31.85511796,
+  "difference": 0.00011796000000074969
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 31.855,
+  "engine": 31.85511796,
+  "difference": 0.00011796000000074969
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/62SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-21T07:17:00",
+  "recorded": 31.855,
+  "engine": 31.85511796,
+  "difference": 0.00011796000000074969
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "peak",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294,
+  "engine": 32.294542895,
+  "difference": 0.0005428950000023747
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294,
+  "engine": 32.294542895,
+  "difference": 0.0005428950000023747
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f000/63SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-11T07:20:00",
+  "recorded": 32.294,
+  "engine": 32.294542895,
+  "difference": 0.0005428950000023747
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "peak",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.114,
+  "engine": 20.11852076,
+  "difference": 0.004520759999998347
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.114,
+  "engine": 20.11852076,
+  "difference": 0.004520759999998347
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.114,
+  "engine": 20.11852076,
+  "difference": 0.004520759999998347
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "peak",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555,
+  "engine": 17.55625942,
+  "difference": 0.0012594200000002331
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": -6.653499999842438e-05,
+  "difference": -6.653499999842438e-05
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": -1.0280000001472445e-05,
+  "difference": -1.0280000001472445e-05
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555,
+  "engine": 17.55625942,
+  "difference": 0.0012594200000002331
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 17.555,
+  "engine": 17.5562697,
+  "difference": 0.0012697000000017056
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "peak",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.748,
+  "engine": 18.744490665,
+  "difference": -0.003509335000000391
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.748,
+  "engine": 18.744490665,
+  "difference": -0.003509335000000391
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/62SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 18.748,
+  "engine": 18.744490665,
+  "difference": -0.003509335000000391
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "peak",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.513,
+  "engine": 20.51329634,
+  "difference": 0.00029633999999845173
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.513,
+  "engine": 20.51329634,
+  "difference": 0.00029633999999845173
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f150/63SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-14T07:24:00",
+  "recorded": 20.513,
+  "engine": 20.51329634,
+  "difference": 0.00029633999999845173
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "peak",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.144000465,
+  "difference": 0.005000465000001952
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.144000465,
+  "difference": 0.005000465000001952
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.144000465,
+  "difference": 0.005000465000001952
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "peak",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 14.667,
+  "engine": 14.6687659,
+  "difference": 0.001765900000000542
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": -2.5940000000446162e-05,
+  "difference": -2.5940000000446162e-05
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": -4.027499999992301e-05,
+  "difference": -4.027499999992301e-05
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": -4.790000000198802e-06,
+  "difference": -4.790000000198802e-06
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 14.667,
+  "engine": 14.66879184,
+  "difference": 0.0017918400000009882
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-26T07:11:00",
+  "recorded": 14.667,
+  "engine": 14.66877069,
+  "difference": 0.0017706900000007408
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "peak",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 16.125,
+  "engine": 16.121714115,
+  "difference": -0.003285885000000377
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 16.125,
+  "engine": 16.121714115,
+  "difference": -0.003285885000000377
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "yard/f180/62SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-22T06:52:00",
+  "recorded": 16.125,
+  "engine": 16.121714115,
+  "difference": -0.003285885000000377
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "peak",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 34.918,
+  "engine": 34.917449685,
+  "difference": -0.000550314999998136
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 34.918,
+  "engine": 34.917449685,
+  "difference": -0.000550314999998136
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 34.918,
+  "engine": 34.917449685,
+  "difference": -0.000550314999998136
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "peak",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 34.899,
+  "engine": 34.89840316,
+  "difference": -0.0005968400000000429
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 34.899,
+  "engine": 34.89840316,
+  "difference": -0.0005968400000000429
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-03-13T07:41:00",
+  "recorded": 34.899,
+  "engine": 34.89840316,
+  "difference": -0.0005968400000000429
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "peak",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 34.865,
+  "engine": 34.86600734,
+  "difference": 0.0010073400000010224
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 34.867200000000004,
+  "engine": 34.86600734,
+  "difference": -0.0011926600000009557
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 34.867200000000004,
+  "engine": 34.86600734,
+  "difference": -0.0011926600000009557
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 34.867200000000004,
+  "engine": 34.86600734,
+  "difference": -0.0011926600000009557
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 34.867200000000004,
+  "engine": 34.86600734,
+  "difference": -0.0011926600000009557
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/62SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-04-26T07:00:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "peak",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 34.948,
+  "engine": 34.947806125,
+  "difference": -0.00019387500000078717
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 34.948,
+  "engine": 34.947806125,
+  "difference": -0.00019387500000078717
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f000/63SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-23T07:26:00",
+  "recorded": 34.948,
+  "engine": 34.947806125,
+  "difference": -0.00019387500000078717
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "peak",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.07,
+  "engine": 20.073284665,
+  "difference": 0.0032846649999989097
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.07,
+  "engine": 20.073284665,
+  "difference": 0.0032846649999989097
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-02-01T07:04:00",
+  "recorded": 20.07,
+  "engine": 20.073284665,
+  "difference": 0.0032846649999989097
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "peak",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 18.712,
+  "engine": 18.699614175,
+  "difference": -0.012385824999999073
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 18.712,
+  "engine": 18.699614175,
+  "difference": -0.012385824999999073
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 18.712,
+  "engine": 18.699614175,
+  "difference": -0.012385824999999073
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "peak",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 20.053,
+  "engine": 20.046662715,
+  "difference": -0.0063372850000007475
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 20.053,
+  "engine": 20.046662715,
+  "difference": -0.0063372850000007475
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/62SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-15T06:51:00",
+  "recorded": 20.053,
+  "engine": 20.046662715,
+  "difference": -0.0063372850000007475
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "peak",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 21.961,
+  "engine": 21.957408445,
+  "difference": -0.0035915549999998575
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 21.961,
+  "engine": 21.957408445,
+  "difference": -0.0035915549999998575
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f150/63SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-23T07:03:00",
+  "recorded": 21.961,
+  "engine": 21.957408445,
+  "difference": -0.0035915549999998575
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "peak",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.14349853,
+  "difference": 0.0044985299999993344
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.14349853,
+  "difference": 0.0044985299999993344
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/60SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-01-30T07:04:00",
+  "recorded": 17.139,
+  "engine": 17.14349853,
+  "difference": 0.0044985299999993344
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "peak",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 15.486,
+  "engine": 15.473248695,
+  "difference": -0.012751305000000102
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "comp_RL48 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "comp_RL48 (rectangular envelopes)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 6.846500000001754e-05,
+  "difference": 6.846500000001754e-05
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "comp_RL5575 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "comp_RL5575 (rectangular envelopes)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 0.0,
+  "engine": 0.0,
+  "difference": 0.0
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "incr_RL48 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 15.486,
+  "engine": 15.473248695,
+  "difference": -0.012751305000000102
+ },
+ {
+  "table": "comp_at_peaks",
+  "key": "sched/f180/61SP354191",
+  "field": "incr_RL5575 (cut footprints)",
+  "instant": "2026-11-13T06:42:00",
+  "recorded": 15.486,
+  "engine": 15.473248695,
+  "difference": -0.012751305000000102
+ }
+]
